@@ -1,0 +1,9 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/gupon/PythonFix/src
+__init__.py;4294967295;3;1349876904;
+AFTF.py;1057623383;3;1349876904;
+executor.py;4108969479;3;1349876904;
+FixServer.py;1578652087;3;1349876904;
+PySender.py;489731687;3;1349876904;
+test.py;4075466520;3;1349876904;
+XMLTestReader.py;2514015050;3;1349876904;

@@ -1,0 +1,14 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/gupon/Script_Install
+__init__.py;4294967295;1;1349876904;
+alghoster.ini;1878042350;1;1349876904;
+alghoster_dev.ini;665195933;1;1349876904;
+algocore.ini;4028684661;1;1349876904;
+ConfigParser_NL.py;1186301787;1;1349876905;
+ConfigParser_NL.pyc;803372002;1;1349876905;
+generate_userini.py;143655620;1;1349876905;
+install_AlgoBox.py;3064654041;39;1349876905;
+installTactic.py;1050802459;8;1349876905;
+simodconfigurator.py;3650187805;1;1349876905;
+test.py;1746777177;1;1349876905;
+XMLTestReader.py;2514015050;1;1349876905;

@@ -1,0 +1,9 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/midan/agents
+__init__.py;747955063;1;1340872932;
+decision_tree.py;2077344423;1;1340872932;
+decision_tree_modified_vilec.py;2731486536;1;1340872932;
+dfa_float.py;1008632941;1;1340872932;
+dfa_float2.py;364084964;1;1340872932;
+ScriptedPVOL.py;2264861640;10;1340872932;
+volumelimitnticks.py;4133639873;1;1340872932;

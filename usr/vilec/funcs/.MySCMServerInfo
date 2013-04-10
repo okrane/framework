@@ -1,0 +1,8 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/vilec/funcs
+__init__.py;4294967295;1;1340872944;
+lob_recorder.py;2413265560;1;1340872944;
+OpportunitySignalCalculator.py;744710124;2;1340872944;
+orderbook_calculator;4294967295;1;1340881740;
+orderbook_calculator.py;2748687872;1;1340881740;
+orderbook_calculator.pyc;1190236438;1;1340881740;

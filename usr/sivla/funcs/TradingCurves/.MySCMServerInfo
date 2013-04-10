@@ -1,0 +1,13 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/sivla/funcs/TradingCurves
+.project;4073161239;1;1340872934;
+.pydevproject;763245543;1;1340872934;
+__init__.py;4294967295;1;1340872934;
+_TradingCurves.pyd;4089973019;1;1340872935;
+QRLib.py;3528871201;1;1340872935;
+script.py;781429331;1;1340872935;
+test.py;2482621976;1;1340872935;
+TradingCurves.py;1086174135;1;1340872935;
+__init__.pyc;1429711610;1;1340881728;
+QRLib.pyc;268246378;1;1340881729;
+TradingCurves.pyc;3341553577;1;1340881729;

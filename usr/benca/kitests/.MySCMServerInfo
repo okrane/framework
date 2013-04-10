@@ -1,0 +1,6 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/benca/kitests
+__init__.py;4294967295;1;1340881717;
+kitestobs_bnpp_binary.py;2121658665;1;1340881717;
+kitestobs_bnpp_tbt2.py;1165981850;1;1340881717;
+kitesttrader_bnpp_tbt2.py;3898757303;1;1340881717;

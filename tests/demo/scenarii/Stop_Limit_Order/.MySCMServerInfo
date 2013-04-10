@@ -1,0 +1,4 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/tests/demo/scenarii/Stop_Limit_Order
+test_01_demo_STOPL_orders_Simple_LOB_TIF=DAY.py;2295361341;1;1340872947;
+test_01_demo_STOPL_orders_Simple_LOB_TIF=DAY.txt;3922634538;1;1340872947;

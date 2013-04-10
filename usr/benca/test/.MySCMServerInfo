@@ -1,0 +1,16 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/benca/test
+decorators.py;3561097704;1;1340872921;
+decorators_test_1.py;420153071;1;1340872921;
+finding_min_index.py;23654599;1;1340872921;
+list_vs_vectors.py;229268978;1;1340872921;
+map_vs_for.py;263933156;1;1340872921;
+map_vs_lcomp.py;2142075705;1;1340872921;
+map_vs_lcomp_2args.py;221153287;1;1340872922;
+matlab_writer.py;2557483287;1;1340872922;
+sorting_algos.py;2079909926;1;1340872922;
+stm_analysis.py;269926443;1;1340872922;
+typecasting.py;3895512849;1;1340872922;
+__init__.py;4294967295;1;1340881721;
+GenerateLOBs.py;283887105;1;1340881721;
+MyTest1.py;4023568223;1;1340881721;

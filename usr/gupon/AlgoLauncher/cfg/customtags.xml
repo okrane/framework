@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<fix>
+	<field fixtag="847" name="TargetStrategy" default="TargetClose"/>
+	<field fixtag="38" name="OrderQty" default="10000"/>
+	<field fixtag="126" name="endtime" default="16:30:00"/>
+</fix>

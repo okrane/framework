@@ -1,0 +1,23 @@
+<test>
+<description>
+"This test validate the behavior of the Market State Manager, a State MAchine aimed at giving a valid market state, using feeds and trading hours if needed"
+</description>
+
+<venue id="LONDON_PRIM">
+	<orderbook>
+			
+			<MarketDataEntry> 
+				<Size>30000</Size>
+				<Price>52</Price>
+				<Side>Sell</Side>
+			</MarketDataEntry>
+	</orderbook>
+</venue>
+
+<venue id="CHIX_L">
+</venue>
+
+</test>
+
+
+

@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<configuration>
+    <target_connections>
+        <target name="dev">
+            <connections driver="sybase:j">
+                <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="QUANT">pasyb005:9160|temp_works|sa_interest|interest_dev<!--d_dancr|dan2cr--></SERVER>
+                <SERVER NAME="VEGA">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="BILBO">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="BSIRIUSperch">bksyb019:9360|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
+                <SERVER NAME="EM_GUEST">pasyb016:9240|temp_works|sa_middle|middle_dev</SERVER>
+                <SERVER NAME="DELTAHC">pasyb043:9550|temp_works|sa_interest|interest_dev</SERVER>
+                <SERVER NAME="INFOCENTRE">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="STREETEVENT">ASE-SIRIUS:9250|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
+                <SERVER NAME="TICK_DEV">PREPA15:5010|temp_works|batch_tick|batick</SERVER>
+                <!--<SERVER NAME="CAL_EVENT">pasyb005:9160|temp_works|bret|bret90</SERVER>-->
+                <SERVER NAME="CAL_EVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+            </connections>
+            <connections driver="mysql">
+                <SERVER NAME="semlab_v2">thmlb006:3306|newsgateway|newsgateway|newsgateway</SERVER>
+				<SERVER NAME="semlab">pamlb00x:3306|semlabjboss|newsgateway|g4t3w4ypr0xy</SERVER>
+                <SERVER NAME="semlab2">pamlb00x:3306|semlabjboss2|newsgateway2|kf934kdj38d</SERVER>
+                <SERVER NAME="semlab_test">localhost:3306|newsgateway|newsgateway|newsgateway</SERVER>
+            </connections>
+            <connections driver="sqlserver"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
+                <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
+            </connections> 
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+                <!--<base key="calendar" name="market"/>-->
+                <base key="calendar" name="repository"/>
+            </bases>
+            <tables>
+                <table key="repository" name="repository.."/>
+            </tables>
+        </target>
+        <target name="standalone">
+            <connections driver="sqlite">
+                <SERVER NAME="BSIRIUS">repository|repository|test|test</SERVER>
+                <SERVER NAME="GANDALF">repository|repository|test|test</SERVER>
+                <SERVER NAME="GANDALF:tick_db">repository|repository|test|test</SERVER>
+                <SERVER NAME="QUANT">quant|quant|test|test</SERVER>
+                <SERVER NAME="VEGA">repository|repository|test|test</SERVER>
+                <SERVER NAME="BILBO">repository|repository|test|test</SERVER>
+                <SERVER NAME="LEIA">repository|repository|test|test</SERVER>
+                <SERVER NAME="BSIRIUSperch">repository|repository|test|test</SERVER>
+            </connections>
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+            </bases>
+            <tables>
+                <table key="repository" name=""/>
+            </tables>
+        </target>
+        <target name="homolo">
+            <connections driver="sybase:j">
+                <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="QUANT">pasyb002-bis:5010|temp_works|batch|dev_bat</SERVER>
+                <SERVER NAME="VEGA">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="BILBO">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="BSIRIUSperch">ASE-SIRIUS:9250|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
+                <SERVER NAME="INFOCENTRE">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="CAL_EVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+            </connections>
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+                <base key="calendar" name="repository"/>
+            </bases>
+            <tables>
+                <table key="repository" name="repository.."/>
+            </tables>
+            <!--<query_regexp>
+                <regexp key='QUANT' pattern='repository\.\.' replace='repository_sirius\.\.'/>
+            </query_regexp>-->
+        </target>
+        <target name="production_copy">
+            <connections driver="sybase:j">
+                <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="QUANT">bksyb019:9360|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="VEGA">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="BILBO">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="BSIRIUSperch">bksyb019:9360|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
+                <SERVER NAME="EM_GUEST">pasyb016:9240|temp_works|sa_middle|middle_dev</SERVER>
+                <SERVER NAME="DELTAHC">pasyb043:9550|temp_works|sa_interest|interest_dev</SERVER>
+                <SERVER NAME="INFOCENTRE">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="STREETEVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
+                <SERVER NAME="CAL_EVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+            </connections>
+            <connections driver="sqlserver"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
+                <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
+            </connections> 
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+                <base key="calendar" name="repository"/>
+            </bases>
+            <tables>
+                <table key="repository" name="repository.."/>
+            </tables>
+        </target>
+        <target name="hpp">
+            <connections driver="sybase:j">
+                <!-- ATTENTION :  seul VEGA et PREPA15:tick_db sont en VRAI version HPP!!!-->
+                <!-- ATTENTION :  QUANT est en version prod copy OK-->
+                <!-- ATTENTION :  BISRIUS c'est n'importe quoi...!!!-->
+                <SERVER NAME="VEGA">thsyb073:7700|temps_works|simap_perf|simap2perf</SERVER>
+                <SERVER NAME="BSIRIUS">bksyb019:9360|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="PREPA15:tick_db">pasyb002-bis:5010|tick_db|simap_perf|simap2perf</SERVER>
+                <SERVER NAME="QUANT">bksyb019:9360|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="STREETEVENT">BILBO:9240|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+            </connections>
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+            </bases>
+            <tables>
+                <table key="repository" name="repository.."/>
+            </tables>
+        </target>
+        <target name="production">
+            <connections driver="sybase:j">
+                <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="QUANT">ASE-SIRIUS:9250|temp_works|batch_quant|bt23ch</SERVER>
+                <SERVER NAME="VEGA">vega:9110|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="BILBO">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="BSIRIUSperch">bksyb019:9360|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
+                <SERVER NAME="INFOCENTRE">vega:9110|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="STREETEVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
+                <SERVER NAME="CAL_EVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+            </connections>
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+                <base key="calendar" name="repository"/>
+            </bases>
+            <tables>
+                <table key="repository" name="repository.."/>
+            </tables>
+        </target>
+    </target_connections>
+    <SQLINI>
+        <DSN connection="ASE-SIRIUS:9250">SIRIUS</DSN>
+        <DSN connection="pasyb005:9160">GANDALF</DSN>
+        <DSN connection="vega:9110">VEGA</DSN>
+        <DSN connection="pasyb016:9240">BILBO</DSN>
+        <DSN connection="bksyb019:9360">BSIRIUS</DSN>                
+        <DSN connection="pasyb043:9550">DELTAHC</DSN>                                      
+        <DSN connection="pasyb002-bis:5010">PREPA15</DSN>
+    </SQLINI>    
+</configuration>

@@ -1,0 +1,16 @@
+AmountValidation
+(CrossFlag)
+EffectiveTime
+ExpireTime
+(FavorId)
+LeavesQty
+(MIFIDBestExecutionReqd)
+OrderQty
+OrderType
+Price
+(Rule80A)
+Side
+(Status)
+(StatusCategory)
+TimeInForce
+VenueId

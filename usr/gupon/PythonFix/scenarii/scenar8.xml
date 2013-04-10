@@ -1,0 +1,44 @@
+<test>
+<description>
+"This test validate the behavior of the Market State Manager, a State MAchine aimed at giving a valid market state, using feeds and trading hours if needed"
+</description>
+
+<venue id="LONDON_PRIM">
+	<orderbook>
+		<MarketDataEntry>
+			<Size>5000</Size>
+			<Price>50.7</Price>
+			<Side>Sell</Side>
+		</MarketDataEntry>
+		<MarketDataEntry>
+			<Size>5000</Size>
+			<Price>50.8</Price>
+			<Side>Sell</Side>
+		</MarketDataEntry>
+		<MarketDataEntry>
+			<Size>3000</Size>
+			<Price>51.5</Price>
+			<Side>Sell</Side>
+		</MarketDataEntry>
+	</orderbook>
+</venue>
+
+<venue id="CHIX_L">
+	<orderbook>
+		<MarketDataEntry>
+			<Size>5000</Size>
+			<Price>50.8</Price>
+			<Side>Sell</Side>
+		</MarketDataEntry>
+		<MarketDataEntry>
+			<Size>2500</Size>
+			<Price>50.9</Price>
+			<Side>Sell</Side>
+		</MarketDataEntry>
+	</orderbook>
+</venue>
+
+</test>
+
+
+

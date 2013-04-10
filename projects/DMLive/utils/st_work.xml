@@ -1,0 +1,441 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<configuration>
+    <target_connections>
+        <target name="dev">
+            <connections driver="sybase:j">
+                <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="QUANT">pasyb005:9160|temp_works|d_dancr|dan2cr</SERVER>
+                <SERVER NAME="VEGA">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="BILBO">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="BSIRIUSperch">bksyb019:9360|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
+                <SERVER NAME="EM_GUEST">pasyb016:9240|temp_works|sa_middle|middle_dev</SERVER>
+                <SERVER NAME="DELTAHC">pasyb043:9550|temp_works|sa_interest|interest_dev</SERVER>
+                <SERVER NAME="INFOCENTRE">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="STREETEVENT">ASE-SIRIUS:9250|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
+                <SERVER NAME="TICK_DEV">PREPA15:5010|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="CAL_EVENT">pasyb005:9160|temp_works|bret|bret90</SERVER>
+            </connections>
+            <connections driver="mysql">
+                <SERVER NAME="semlab_v2">thmlb006:3306|newsgateway|newsgateway|newsgateway</SERVER>
+				<SERVER NAME="semlab">pamlb00x:3306|semlabjboss|newsgateway|g4t3w4ypr0xy</SERVER>
+                <SERVER NAME="semlab2">pamlb00x:3306|semlabjboss2|newsgateway2|kf934kdj38d</SERVER>
+                <SERVER NAME="semlab_test">localhost:3306|newsgateway|newsgateway|newsgateway</SERVER>
+            </connections>
+            <connections driver="sqlserver"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
+                <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
+            </connections> 
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+                <base key="calendar" name="market"/>
+            </bases>
+            <tables>
+                <table key="repository" name="repository.."/>
+            </tables>
+        </target>
+        <target name="standalone">
+            <connections driver="sqlite">
+                <SERVER NAME="BSIRIUS">repository|repository|test|test</SERVER>
+                <SERVER NAME="GANDALF">repository|repository|test|test</SERVER>
+                <SERVER NAME="GANDALF:tick_db">repository|repository|test|test</SERVER>
+                <SERVER NAME="QUANT">quant|quant|test|test</SERVER>
+                <SERVER NAME="VEGA">repository|repository|test|test</SERVER>
+                <SERVER NAME="BILBO">repository|repository|test|test</SERVER>
+                <SERVER NAME="LEIA">repository|repository|test|test</SERVER>
+                <SERVER NAME="BSIRIUSperch">repository|repository|test|test</SERVER>
+            </connections>
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+            </bases>
+            <tables>
+                <table key="repository" name=""/>
+            </tables>
+        </target>
+        <target name="homolo">
+            <connections driver="sybase:j">
+                <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="QUANT">pasyb002-bis:5010|temp_works|batch|dev_bat</SERVER>
+                <SERVER NAME="VEGA">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="BILBO">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="BSIRIUSperch">ASE-SIRIUS:9250|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
+                <SERVER NAME="INFOCENTRE">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="CAL_EVENT">pasyb005:9160|temp_works|bret|bret90</SERVER>
+            </connections>
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+                <base key="calendar" name="market"/>
+            </bases>
+            <tables>
+                <table key="repository" name="repository.."/>
+            </tables>
+            <!--<query_regexp>
+                <regexp key='QUANT' pattern='repository\.\.' replace='repository_sirius\.\.'/>
+            </query_regexp>-->
+        </target>
+        <target name="production_copy">
+            <connections driver="sybase:j">
+                <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="QUANT">bksyb019:9360|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="VEGA">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="BILBO">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="BSIRIUSperch">bksyb019:9360|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
+                <SERVER NAME="EM_GUEST">pasyb016:9240|temp_works|sa_middle|middle_dev</SERVER>
+                <SERVER NAME="DELTAHC">pasyb043:9550|temp_works|sa_interest|interest_dev</SERVER>
+                <SERVER NAME="INFOCENTRE">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="STREETEVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
+                <SERVER NAME="CAL_EVENT">pasyb005:9160|temp_works|bret|bret90</SERVER>
+            </connections>
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+                <base key="calendar" name="market"/>
+            </bases>
+            <tables>
+                <table key="repository" name="repository.."/>
+            </tables>
+        </target>
+        <target name="hpp">
+            <connections driver="sybase:j">
+                <!-- ATTENTION :  seul VEGA et PREPA15:tick_db sont en VRAI version HPP!!!-->
+                <!-- ATTENTION :  QUANT est en version prod copy OK-->
+                <!-- ATTENTION :  BISRIUS c'est n'importe quoi...!!!-->
+                <SERVER NAME="VEGA">thsyb073:7700|temps_works|simap_perf|simap2perf</SERVER>
+                <SERVER NAME="BSIRIUS">bksyb019:9360|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="PREPA15:tick_db">pasyb002-bis:5010|tick_db|simap_perf|simap2perf</SERVER>
+                <SERVER NAME="PREPA15">pasyb002-bis:5010|tick_db|simap_perf|simap2perf</SERVER>
+                <SERVER NAME="QUANT">bksyb019:9360|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="STREETEVENT">BILBO:9240|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+            </connections>
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+            </bases>
+            <tables>
+                <table key="repository" name="repository.."/>
+            </tables>
+        </target>
+        <target name="production">
+            <connections driver="sybase:j">
+                <SERVER NAME="PREPA15">pasyb002-bis:5010|tick_db|simap_perf|simap2perf</SERVER>
+                <SERVER NAME="BSIRIUS">ASE-SIRIUS:9250|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="SIRIUS">tcsyb019:9259|temp_works|batch_quant|bt23ch</SERVER>
+                <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="QUANT">ASE-SIRIUS:9250|temp_works|batch_quant|bt23ch</SERVER>
+                <SERVER NAME="VEGA">vega:9110|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="BILBO">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="BSIRIUSperch">bksyb019:9360|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
+                <SERVER NAME="INFOCENTRE">vega:9110|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="STREETEVENT">ASE-SIRIUS:9250|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
+                <SERVER NAME="CAL_EVENT">pasyb005:9160|temp_works|bret|bret90</SERVER>
+            </connections>
+            <bases>
+                <base key="quant" name="quant"/>
+                <base key="quant_data" name="quant_data"/>
+                <base key="repository" name="repository"/>
+                <base key="calendar" name="market"/>
+            </bases>
+            <tables>
+                <table key="repository" name="repository.."/>
+            </tables>
+        </target>
+    </target_connections>
+    <ENVS>
+        <!-- begin : definition of default environment variables for any OS-->
+        <ENV    hostname="default" 
+                
+                target_name="production_copy"
+                read_only_repository=""
+                retrieve_full_tick="1"
+                switch_basic_indicator_to_v2="0"
+                switch_full_tick2tbt2 = "0"
+                
+                sscm_branch = "$Branch: QuantitativeResearch$"
+                sscm_reader = "reader:reader"
+                
+                decay = "1"
+                jobmanager=""
+                killer_thld="1"
+                se_admin="dcroize@smtpnotes,sgalzin@smtpnotes,mlasnier@smtpnotes"
+                icheck_debug = "1"
+                
+                cluster_size_per_worker = "1"
+                
+                prefdir=""
+                verbosity_level="1"
+                my_dev_target_background_color="[1 1 1]"
+                my_prod_copy_target_background_color="[0.95 0.95 0.95]"
+                mail_from=""
+                />
+        <!-- end : definition of default environment variables for any OS-->
+        <!-- begin : definition of default environment variables for Windows-->
+        <ENV    hostname="default_windows" 
+                
+                st_work="C:\st_work"
+                s_mode="client"
+                
+                driver_jdbc="C:\Apps\sybase\jConnect-6_0\classes\jconn3.jar"
+                driver_mysql="C:\Apps\mysql\mysql-connector-java-5.1.12\mysql-connector-java-5.1.12-bin.jar"
+                driver_sqlserver="C:\Apps\sqlserver\sqljdbc4.jar"
+                driver_sqlite="C:\Apps\sqlite\sqlitejdbc-v056.jar"
+                st_repository="C:\st_repository"
+                read_only_repository="Y:\dev_repository"
+                tbt2_repository="Y:\tick_ged\"
+                
+                keyboard_shortcuts="st_work_standard_shortcuts.xml"
+                startup_cd="C:\st_work\usr\dev\"
+                
+                simap_html_path=""
+                simap_read_only_path="Y:\st_repository\simap"
+                root_html_path="Y:\www"
+                
+                itrs="C:\st_repository\iCheck\itrs"
+                
+                st_sim = "C:\st_sim"
+                python_home = "C:\python\release\python"
+                
+                ocamaweb_dest = "C:\st_repository\pdf"
+                />
+        <!-- end : definition of default environment variables for any Windows-->
+        <!-- begin : definition of default environment variables for unix--> 
+        <!-- WARNING keep in mind that any change in these default values will 
+            also be used by the Statistical Engine, except if some specific 
+            values have been set for the SE--> 
+        <ENV    hostname="default_unix" 
+                
+                s_mode="client"
+                
+                driver_jdbc="/files/global/OCS12.5.1/jConnect-6_0/classes/jconn3.jar"
+                driver_mysql=""
+                driver_sqlserver=""
+                driver_sqlite=""
+                st_repository="/quant/dev_repository" 
+                read_only_repository="/quant/st_repository"
+                tbt2_repository="/quant/tick_ged/"
+                
+                keyboard_shortcuts=""
+                startup_cd=""
+                
+                simap_html_path=""
+                simap_read_only_path=""
+                root_html_path="/quant/www"
+                
+                itrs="/quant/dev_repository/iCheck/itrs"
+                
+                st_sim = "?????????????????????????????"
+                python_home = "?????????????????????????????"
+                
+                ocamaweb_dest = "/quant/dev_repository/pdf"
+                />
+        <!-- end : definition of default environment variables for Unix-->
+        <!-- Environment Variables Documentation
+        
+        st_work : where did you put the mfiles of the whole framework?
+            used to make addpath according also to the next env (s_mode)
+            var and an internal logic (not all lvlvs of subdir will be 
+            added to path). ( TODO ? : It is possible to have several workspaces : 
+            you can specify that you want to be asked which one to use at 
+            startup by giving the list of root directories of your framework,
+            using ';' as a separator. )
+        s_mode : if true then you are in a kind of serious environnement, 
+            which means 1) no dbstop if error 2) only bin is added to the 
+            path
+            
+        Data Access :
+            target_name : Which dictionnary (among : standalone, dev, 
+                homolo, hpp, production_copy, production) should be used to 
+                associate a keyword (which should reflect the functional 
+                need and not be the name of a server) with connections 
+                paramters (server, port, base, login, psswrd)
+            st_repository : 
+                a directory in which all our data should be stored, read and 
+                write access are obviously need
+            read_only_repository :
+                a directory in which only "production logins" can write
+                and anyone can read in order to benefit from the bufferised 
+                data retrieved by our "production codes".
+                Set this variable to empty if you dont want this feature
+            switch_full_tick2tbt2 : 
+                instead of using get_tick for storing trade data, you'll read 
+                tbt2 files if set to 1
+            tbt2_repository :
+                the repository in which the aforementioned tbt2 files are stored
+            driver_jdbc, driver_mysql, driver_sqlserver, driver_sqlite : 
+                path to jdbc driver to be added to in matlab path
+            
+            TODO remove the following three after making appropriate corrections
+            tbt2_repository_linux : 
+                same but for linux, sounds heretic, as st_work.xml should be 
+                used for defining env. The value of tbt2_repository should just 
+                be different on linux
+            switch_basic_indicator_to_v2 : used to switch between st_basic_indicator
+                and get_basic_indicator_v2
+            retrieve_full_tick : used in basic_indicator to decide to use 
+                get_tick or get_fullcandles
+                
+        Statistical Engine :
+            
+            killer_thld : se_kill deamon use it to determine if it should 
+                destroy jobs that are running since more than killer_thld days
+            jobmanager : LookupURL of the jobmanager to use
+            se_admin : Who should be sent SE system Errors mails?
+        
+            Icheck (automatic generation of tests reports, mainly used for SE):
+        
+            icheck_debug : used to re-route mails to SE admin while testing 
+                a new icheck
+            itrs : specific ITRS directory (is this used currently) 
+                TODO should be same root_dir as the SE? a common ITRS dir
+                with potential subdirs
+        
+        Quant Web Site (http://padev827/repository/index.php):
+        
+            root_html_path : root directory where the index of our web site 
+                should, use subdirectories of this one to create, store html, 
+                images etc that should be on this site
+            simap_html_path : same but specific to simap shouldnt it use the
+                the above dir? TODO decide
+           
+        Codetools :
+        
+            keyboard_shortcuts : the name of an xml file defining some 
+                shortcuts to ease developpements in matlab (see directly 
+                the xml as well as EditorMacro.m to know the possibilities 
+                and syntax). If you dont like this feature set 
+                keyboard_shortcuts to empty
+            startup_cd : You current directory when opening matlab 
+                (useful to set it close to where you save most of you 
+                function e.g. st_work/usr/dev/my_login)
+                This is also the directory where you can put a 
+                function, named my_startup.m which will be executed 
+                at the end of the startup. This function will be given 
+                st_work_xml as input : the structure returned by 
+                xmltools('st_work.xml')
+            sscm_branch :
+                Used for 
+                    - surround shorcuts in Matlab 
+                    - some automatic documentation tools
+            sscm_reader : 
+                a login for codetools function to be able to make gets, 
+                ask reports etc, which cannot cahnge code on the server 
+                (but can on your computer)
+            
+
+         SIMEP :
+            
+            st_sim : where is SIMEP code?
+            cluster_size_per_worker : number of processors to distribute 
+                scenarii
+            python_home : I guees this is where python is instlled 
+                TODO check that
+                
+         Miscellaneous :
+            
+            ocamaweb_dest : probably the sirectory where ocama wil put its 
+                files
+        -->
+        
+        <!-- begin : GED -->
+        <ENV hostname="DMC1008953" target_name="standalone" matlab_home="C:\Apps\MATLAB" st_work="D:\MATLAB\st_work" st_repository="Y:\st_repository" driver_jdbc="C:\Win32App\Sybase\jConnect-6_0\classes\jconn3.jar"/>
+        <ENV hostname="DMC24036"   target_name="standalone" matlab_home="D:\Program Files\Apps\MATLAB" st_work="D:\MATLAB\st_work" st_repository="O:\st_repository" />
+        <ENV hostname="dmc25785"   target_name="standalone" matlab_home="D:\Program Files\Apps\MATLAB" st_work="D:\workarea\11 - Matlab Projects\st_work" st_repository="P:\st_repository"  jobmanager="dmc25785"/>
+        <ENV hostname="dmc21397"   target_name="standalone" matlab_home="D:\Program Files\Apps\MATLAB" st_work="D:\workarea\11 - Matlab Projects\st_work" st_repository="P:\st_repository"  jobmanager="dmc21397"/>
+        <ENV hostname="DMC25940"   target_name="standalone" matlab_home="D:\Program Files\Apps\MATLAB" st_work="D:\workarea\Matlab\st_work" st_repository="d:\st_repository" />
+        <ENV hostname="DMC24550"   target_name="standalone" matlab_home="D:\Program Files\Apps\MATLAB" st_work="D:\MATLAB\st_work" st_repository="O:\st_repository"  jobmanager="dmc24550"/>
+        <ENV hostname="dmc1004963" target_name="standalone" matlab_home="C:\Apps\MATLAB" st_work="D:\Matlab\st_work" st_repository="D:\Matlab\st_repository"  jobmanager="dmc1004963" /> 
+        <ENV hostname="DMC21988"   target_name="standalone" matlab_home="C:\Apps\MATLAB" st_work="D:\st_work" st_repository="R:\st_repository" />
+        <ENV hostname="DMC36774"   target_name="standalone" matlab_home="C:\Apps\MATLAB" st_work="D:\MATLAB\st_work" st_repository="W:\st_repository" />
+        <ENV hostname="dmc0026313" target_name="standalone" matlab_home="C:\Apps\MATLAB" st_work="D:\MATLAB\st_work" st_repository="W:\st_repository" />
+        <!-- end : GED -->
+        
+        <!-- begin : Windows -->
+        <ENV hostname="padvp926" mail_from="njoseph@cheuvreux.com" read_only_repository="Y:\st_repository" simap_read_only_path=""/>
+        <ENV hostname="padvp922" mail_from="hharti@cheuvreux.com" />
+        <ENV hostname="padvp928" />
+        <ENV hostname="padvp927" mail_from="spelin@cheuvreux.com" startup_cd="C:\st_work\usr\dev\stpel\projects"/>
+        <ENV hostname="padvp925" target_name="homolo" jobmanager="thmlb001" driver_sqlite="C:\Apps\sqlite\sqlitejdbc-v056.jar" decay="14" copy_data_from_homolo="0" switch_full_tick2tbt2 = "0"/>
+        <ENV hostname="padvp911" username='robur' startup_cd="C:\st_work\usr\dev\burgot\projects" mail_from="rburgot@cheuvreux.com" />
+        <ENV hostname="padev929" username="robur" target_name="dev" st_work = "C:\st_work" startup_cd="C:\st_work\usr\dev\burgot\funcs" mail_from="rburgot@cheuvreux.com" st_repository="Y:\context_l_repository" read_only_repository="Y:\dev_repository" switch_basic_indicator_to_v2="1" retrieve_full_tick="1" switch_full_tick2tbt2 = "0" verbosity_level="10"/>
+        <ENV hostname="padvp938" />
+        <ENV hostname="padvp929" startup_cd="C:\st_work\usr\dev\hahar\boxes" />
+        <ENV hostname="paope929" />
+        <ENV hostname="padev977" startup_cd="C:\st_work\usr\dev\midan" mail_from="mdang@cheuvreux.com"/>
+        <ENV hostname="padvp905" />
+        <ENV hostname="padev97B" />
+        <ENV hostname="padev982" st_repository="C:\QR\st_repository" />
+        <ENV hostname="padev916" mail_from="dcroize@cheuvreux.com" />
+        <ENV hostname="patrd951" target_name="homolo" />
+        <ENV hostname="padev99b" target_name="homolo" />
+        <ENV hostname="PADEV903" simap_html_path="C:/st_repository/simap/html_temp"/>
+        <ENV hostname="NYWXP933" jobmanager="NYWXP933"/>
+        <ENV hostname="NYWXP984" username="limas" startup_cd = "C:\st_work\usr\dev\limas\projects" mail_from = "lmassoulard-ext@cheuvreux.com" jobmanager="NYWXP984"/>
+        <ENV hostname="PADVP918" st_repository="Y:\dev_repository" mail_from="nmayo@cheuvreux.com" switch_basic_indicator_to_v2="1" verbosity_level="10" target_name="dev"/>
+        <!-- reserved to malas, next one should ask help desk why he cannot call hostname command dos -->
+        <ENV hostname="'hostname' is not recognized as an internal or external command,&#xA;operable program or batch file." mail_from="mlasnier-ext@cheuvreux.com" prefdir="c:\st_repository" se_admin="mlasnier@smtpnotes" target_name="dev"/>
+        <ENV hostname="PADVP937" mail_from="mlasnier-ext@cheuvreux.com" prefdir="c:\st_repository" se_admin="mlasnier@smtpnotes" target_name="dev"/>
+        <!-- end : Windows -->
+        
+        <!-- begin : unix -->
+        <!-- TCMLB005 : Remember this computer is not supposed to be used for matlab computation as it is used for algobox testing-->
+        <ENV hostname="tcmlb005" username="wehua" st_work="/home/team13/wehua/work/st_work" startup_cd ="/home/team13/wehua/work" switch_full_tick2tbt2 = "1"/>
+	    <ENV hostname="tcmlb005" username="chleh" st_work="/home/team13/chleh/st_work" startup_cd ="/home/team13/chleh/st_work/usr/dev/lehalle/projects" switch_full_tick2tbt2 = "1" emacslink="true"/>
+        <ENV hostname="tcmlb005" username="malas" target_name="dev" st_work="/home/team13/malas/st_work" startup_cd ="/home/team13/malas/st_work/usr/dev/malas/projects" switch_full_tick2tbt2 = "1" prefdir="/home/team13/malas"/>
+        <ENV hostname="tcmlb005" username="sivla" target_name="dev" st_work="/home/team13/sivla/st_work" startup_cd ="/home/team13/sivla/st_work/usr/dev/malas/projects"  prefdir="/home/team13/sivla"/>
+        <ENV hostname="tcmlb005" username="vilec"  st_work="/home/team13/vilec/Work/st_work" startup_cd ="/home/team13/vilec/Work" />
+		<!-- TCMLB008 : This computer is supposed to be used only by simap -->
+        <ENV hostname="tcmlb008" username="simap_perf" st_repository="/quant/st_repository" read_only_repository="" simap_html_path="/quant/www/simap" st_work="/home/team13/simap_perf/st_work" startup_cd ="/home/team13/simap_perf" switch_full_tick2tbt2 = "0" />
+        <ENV hostname="tcmlb008" username="vilec" st_work="/home/team13/vilec/Work/st_work" startup_cd ="/home/team13/vilec/Work" />
+        <ENV hostname="tcmlb008" username="nijos" simap_html_path="/home/team13/nijos/st_repository/html" st_work="/home/team13/nijos/st_work" startup_cd ="/home/team13/nijos" switch_full_tick2tbt2 = "1"/>
+		<!-- TCMLB009 -->
+        <ENV hostname="tcmlb009" username="stpel" st_work="/home/team13/stpel/st_work" startup_cd ="/home/team13/stpel/st_work/usr/dev/stpel/projects" switch_full_tick2tbt2 = "1"/>
+        <ENV hostname="tcmlb009" username="robur" target_name="dev" retrieve_full_tick="1" switch_full_tick2tbt2 = "0" switch_basic_indicator_to_v2="1" st_work="/home/team13/robur/work/st_work" st_repository="/quant/econoday" read_only_repository="/quant/dev_repository" mail_from="rburgot@cheuvreux.com" verbosity_level="10" />
+        <ENV hostname="tcmlb009" username="hahar" st_work="/home/team13/hahar/work/st_work" startup_cd ="/home/team13/hahar/work" />
+        <!-- thmlb012 -->
+        <ENV hostname="thmlb012" username="robur" target_name="dev" retrieve_full_tick="1" switch_full_tick2tbt2 = "0" switch_basic_indicator_to_v2="1" st_work="/home/team13/robur/work/st_work" st_repository="/quant/econoday" read_only_repository="/quant/dev_repository" mail_from="rburgot@cheuvreux.com" verbosity_level="10" />
+        <!-- thmlb011 -->
+        <ENV hostname="thmlb011" username="malas" target_name="dev" retrieve_full_tick="1" switch_full_tick2tbt2 = "0" switch_basic_indicator_to_v2="1" st_work="/home/team13/robur/work/st_work" st_repository="/quant/econoday" read_only_repository="/quant/dev_repository" mail_from="rburgot@cheuvreux.com" verbosity_level="10" />
+        <!-- end : unix -->
+        
+        <!-- begin : Statistical Engine -->
+        <ENV hostname="thmlb001" target_name="homolo" st_work="/disk01/matlab/st_work" st_repository="/disk01/matlab/st_repository" read_only_repository="" s_mode="server" jobmanager="thmlb001" decay="2" se_admin="mlasnier@smtpnotes"/>
+        <ENV hostname="thmlb002" target_name="homolo" st_work="/disk01/matlab/st_work" st_repository="/disk01/matlab/st_repository" read_only_repository="" s_mode="server" jobmanager="thmlb001" decay="2"  se_admin="mlasnier@smtpnotes"/>
+        <ENV hostname="tcmlb001" target_name="production" st_work="/disk01/matlab/st_work" st_repository="/disk01/matlab/st_repository" read_only_repository="" s_mode="server" jobmanager="tcmlb001"  icheck_debug="0"/>
+        <ENV hostname="tcmlb002" target_name="production" st_work="/disk01/matlab/st_work" st_repository="/disk01/matlab/st_repository" read_only_repository="" s_mode="server" jobmanager="tcmlb001"  icheck_debug="0"/>
+        <ENV hostname="tcmlb003" target_name="production" st_work="/disk01/matlab/st_work" st_repository="/disk01/matlab/st_repository" read_only_repository="" s_mode="server" jobmanager="tcmlb001"  icheck_debug="0"/>
+        <ENV hostname="tcmlb004" target_name="production" st_work="/disk01/matlab/st_work" st_repository="/disk01/matlab/st_repository" read_only_repository="" s_mode="server" jobmanager="tcmlb001"  icheck_debug="0"/>
+        <!-- end : Statistical Engine -->
+        
+    </ENVS> 
+    <SE active="1" keep_all_log="1"/>    
+    <SQLINI>
+        <DSN connection="tcsyb019:9259">SIRIUS</DSN>
+        <DSN connection="pasyb005:9160">GANDALF</DSN>
+        <DSN connection="vega:9110">VEGA</DSN>
+        <DSN connection="pasyb016:9240">BILBO</DSN>
+        <DSN connection="bksyb019:9360">BSIRIUS</DSN>                
+        <DSN connection="pasyb043:9550">DELTAHC</DSN>                                      
+        <DSN connection="pasyb002-bis:5010">PREPA15</DSN>
+    </SQLINI>    
+</configuration>

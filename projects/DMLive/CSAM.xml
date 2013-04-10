@@ -1,0 +1,1498 @@
+<?xml version="1.0"?>
+<fix major='4' minor='2'>
+
+   <fields>
+      <fieldDesc number='1' name='Account' type='STRING'/>
+      <fieldDesc number='6' name='AvgPx' type='PRICE'/>
+      <fieldDesc number='7' name='BeginSeqNo' type='INT'/>
+      <fieldDesc number='8' name='BeginString' type='STRING'/>
+      <fieldDesc number='9' name='BodyLength' type='INT'/>
+      <fieldDesc number='10' name='CheckSum' type='STRING'/>
+      <fieldDesc number='11' name='ClOrdID' type='STRING'/>
+      <fieldDesc number='12' name='Commission' type='AMT'/>
+      <fieldDesc number='13' name='CommType' type='STRING'>
+         <value enum='1' description='PER_SHARE'/>
+         <value enum='2' description='PERCENTAGE'/>
+         <value enum='3' description='ABSOLUTE'/>
+      </fieldDesc>
+      <fieldDesc number='14' name='CumQty' type='QTY'/>
+      <fieldDesc number='15' name='Currency' type='CURRENCY'/>
+      <fieldDesc number='16' name='EndSeqNo' type='INT'/>
+      <fieldDesc number='17' name='ExecID' type='STRING'/>
+      <fieldDesc number='18' name='ExecInst' type='MULTIPLEVALUESTRING'>
+         <value enum='1' description='Not held'/>
+         <value enum='2' description='Work'/>
+         <value enum='3' description='Go along'/>
+         <value enum='4' description='Over the day'/>
+         <value enum='5' description='Held'/>
+         <value enum='6' description='Participate dont initiate'/>
+         <value enum='7' description='Strict scale'/>
+         <value enum='8' description='Try to scale'/>
+         <value enum='9' description='Stay on bidside'/>
+         <value enum='0' description='Stay on offerside'/>
+         <value enum='A' description='No cross'/>
+         <value enum='B' description='Ok to cross'/>
+         <value enum='C' description='Call first'/>
+         <value enum='D' description='Percent of volume'/>
+         <value enum='E' description='Do not increase'/>
+         <value enum='F' description='Do not reduce'/>
+         <value enum='G' description='All or none'/>
+         <value enum='I' description='Institutions only'/>
+         <value enum='L' description='Last peg'/>
+         <value enum='M' description='Midprice peg'/>
+         <value enum='N' description='Non-negotiable'/>
+         <value enum='O' description='Opening peg'/>
+         <value enum='P' description='Market peg'/>
+         <value enum='R' description='Primary peg'/>
+         <value enum='S' description='Suspend'/>
+         <value enum='T' description='Fixed peg'/>
+         <value enum='U' description='Customer display instruction'/>
+         <value enum='V' description='Netting'/>
+         <value enum='W' description='Peg to VWAP'/>
+      </fieldDesc>
+      <fieldDesc number='19' name='ExecRefID' type='STRING'/>
+      <fieldDesc number='20' name='ExecTransType' type='STRING'>
+         <value enum='0' description='NEW'/>
+         <value enum='1' description='CANCEL'/>
+         <value enum='2' description='CORRECT'/>
+         <value enum='3' description='STATUS'/>
+      </fieldDesc>
+      <fieldDesc number='21' name='HandlInst' type='STRING'>
+         <value enum='1' description='AUTOMATED_EXECUTION_ORDER_PRIVATE_NO_BROKER_INTERVENTION'/>
+         <value enum='2' description='AUTOMATED_EXECUTION_ORDER_PUBLIC_BROKER_INTERVENTION_OK'/>
+         <value enum='3' description='MANUAL_ORDER_BEST_EXECUTION'/>
+      </fieldDesc>
+      <fieldDesc number='22' name='IDSource' type='STRING'>
+         <value enum='1' description='CUSIP'/>
+         <value enum='2' description='SEDOL'/>
+         <value enum='3' description='QUIK'/>
+         <value enum='4' description='ISIN_NUMBER'/>
+         <value enum='5' description='RIC_CODE'/>
+         <value enum='6' description='ISO_CURRENCY_CODE'/>
+         <value enum='7' description='ISO_COUNTRY_CODE'/>
+         <value enum='8' description='EXCHANGE_SYMBOL'/>
+         <value enum='9' description='CONSOLIDATED_TAPE_ASSOCIATION'/>
+         <value enum='101' description='CAC_INTERNAL_DATABASE_SECURITY_ID'/>
+      </fieldDesc>
+      <fieldDesc number='23' name='IOIid' type='STRING'/>
+      <fieldDesc number='29' name='LastCapacity' type='STRING'>
+         <value enum='1' description='AGENT'/>
+         <value enum='2' description='CROSS_AS_AGENT'/>
+         <value enum='3' description='CROSS_AS_PRINCIPAL'/>
+         <value enum='4' description='PRINCIPAL'/>
+      </fieldDesc>
+      <fieldDesc number='30' name='LastMkt' type='EXCHANGE'/>
+      <fieldDesc number='31' name='LastPx' type='PRICE'/>
+      <fieldDesc number='32' name='LastShares' type='QTY'/>
+      <fieldDesc number='34' name='MsgSeqNum' type='INT'/>
+      <fieldDesc number='35' name='MsgType' type='STRING'>
+         <value enum='0' description='HEARTBEAT'/>
+         <value enum='1' description='TEST_REQUEST'/>
+         <value enum='2' description='RESEND_REQUEST'/>
+         <value enum='3' description='REJECT'/>
+         <value enum='4' description='SEQUENCE_REJECT'/>
+         <value enum='5' description='LOGOUT'/>
+         <value enum='8' description='EXECUTION_REPORT'/>
+         <value enum='9' description='ORDER_CANCEL_REJECT'/>
+         <value enum='A' description='LOGON'/>
+         <value enum='D' description='ORDER_SINGLE'/>
+         <value enum='F' description='ORDER_CANCEL_REQUEST'/>
+         <value enum='G' description='ORDER_CANCEL_REPLACE_REQUEST'/>
+         <value enum='H' description='ORDER_STATUS_REQUEST'/>
+         <value enum='j' description='BUSINESS_MESSAGE_REJECT'/>
+         <value enum='UCSAM_RTES' description='RunTimeEventsSubscription'/>
+         <value enum='UCSAM_OBC' description='OrderBookConsultation'/>
+         <value enum='UCSAM_OBT' description='OrderBookTermination'/>
+         <value enum='UCSAM_EHC' description='EventsHistoricConsultation'/>
+         <value enum='UCSAM_EHT' description='EventsHistoricTermination'/>
+         <value enum='UCSAM_OHR' description='OrderHoldRequest'/>
+         <value enum='UCSAM_ORR' description='OrderResumeRequest'/>
+         <value enum='UCSAM_I' description='Indicator'/>
+      </fieldDesc>
+      <fieldDesc number='36' name='NewSeqNo' type='INT'/>
+      <fieldDesc number='37' name='OrderID' type='STRING'/>
+      <fieldDesc number='38' name='OrderQty' type='QTY'/>
+      <fieldDesc number='39' name='OrdStatus' type='STRING'>
+         <value enum='0' description='NEW'/>
+         <value enum='1' description='PARTIALLY_FILLED'/>
+         <value enum='2' description='FILLED'/>
+         <value enum='3' description='DONE_FOR_DAY'/>
+         <value enum='4' description='CANCELED'/>
+         <value enum='5' description='REPLACED'/>
+         <value enum='6' description='PENDING_CANCEL'/>
+         <value enum='7' description='STOPPED'/>
+         <value enum='8' description='REJECTED'/>
+         <value enum='9' description='SUSPENDED'/>
+         <value enum='A' description='PENDING_NEW'/>
+         <value enum='B' description='CALCULATED'/>
+         <value enum='C' description='EXPIRED'/>
+         <value enum='D' description='ACCEPTED_FOR_BIDDING'/>
+         <value enum='E' description='PENDING_REPLACE'/>
+         <value enum='h' description='PendingHold'/>
+         <value enum='r' description='PendingResume'/>
+      </fieldDesc>
+      <fieldDesc number='40' name='OrdType' type='STRING'>
+         <value enum='1' description='MARKET'/>
+         <value enum='2' description='LIMIT'/>
+         <value enum='3' description='STOP'/>
+         <value enum='4' description='STOP_LIMIT'/>
+         <value enum='5' description='MARKET_ON_CLOSE'/>
+         <value enum='6' description='WITH_OR_WITHOUT'/>
+         <value enum='7' description='LIMIT_OR_BETTER'/>
+         <value enum='8' description='LIMIT_WITH_OR_WITHOUT'/>
+         <value enum='9' description='ON_BASIS'/>
+         <value enum='A' description='ON_CLOSE'/>
+         <value enum='B' description='LIMIT_ON_CLOSE'/>
+         <value enum='C' description='FOREX_MARKET'/>
+         <value enum='D' description='PREVIOUSLY_QUOTED'/>
+         <value enum='E' description='PREVIOUSLY_INDICATED'/>
+         <value enum='F' description='FOREX_LIMIT'/>
+         <value enum='G' description='FOREX_SWAP'/>
+         <value enum='H' description='FOREX_PREVIOUSLY_QUOTED'/>
+         <value enum='I' description='FUNARI'/>
+         <value enum='K' description='MARKET_TO_LIMIT'/>
+         <value enum='P' description='PEGGED'/>
+      </fieldDesc>
+      <fieldDesc number='41' name='OrigClOrdID' type='STRING'/>
+      <fieldDesc number='43' name='PossDupFlag' type='STRING'>
+         <value enum='Y' description='POSSIBLE_DUPLICATE'/>
+         <value enum='N' description='ORIGINAL_TRANSMISSION'/>
+      </fieldDesc>
+      <fieldDesc number='44' name='Price' type='PRICE'/>
+      <fieldDesc number='45' name='RefSeqNum' type='INT'/>
+      <fieldDesc number='47' name='Rule80A' type='STRING'>
+         <value enum='A' description='AGENCY_SINGLE_ORDER'/>
+         <value enum='P' description='PRINCIPAL'/>
+         <!-- all other Fix's values have been removed -->
+      </fieldDesc>
+      <fieldDesc number='48' name='SecurityID' type='STRING'/>
+      <fieldDesc number='49' name='SenderCompID' type='STRING'/>
+      <fieldDesc number='50' name='SenderSubID' type='STRING'/>
+      <fieldDesc number='52' name='SendingTime' type='UTCTIMESTAMP'/>
+      <fieldDesc number='54' name='Side' type='STRING'>
+         <value enum='1' description='BUY'/>
+         <value enum='2' description='SELL'/>
+         <value enum='3' description='BUY_MINUS'/>
+         <value enum='4' description='SELL_PLUS'/>
+         <value enum='5' description='SELL_SHORT'/>
+         <value enum='6' description='SELL_SHORT_EXEMPT'/>
+         <value enum='7' description='D'/>
+         <value enum='8' description='CROSS'/>
+         <value enum='9' description='CROSS_SHORT'/>
+      </fieldDesc>
+      <fieldDesc number='55' name='Symbol' type='STRING'/>
+      <fieldDesc number='56' name='TargetCompID' type='STRING'/>
+      <fieldDesc number='57' name='TargetSubID' type='STRING'/>
+      <fieldDesc number='58' name='Text' type='STRING'/>
+      <fieldDesc number='59' name='TimeInForce' type='STRING'>
+         <value enum='0' description='DAY'/>
+         <value enum='1' description='GOOD_TILL_CANCEL'/>
+         <value enum='2' description='AT_THE_OPENING'/>
+         <value enum='3' description='IMMEDIATE_OR_CANCEL'/>
+         <value enum='4' description='FILL_OR_KILL'/>
+         <value enum='5' description='GOOD_TILL_CROSSING'/>
+         <value enum='6' description='GOOD_TILL_DATE'/>
+      </fieldDesc>
+      <fieldDesc number='60' name='TransactTime' type='UTCTIMESTAMP'/>
+      <fieldDesc number='63' name='SettlmntTyp' type='STRING'>
+         <value enum='0' description='REGULAR'/>
+         <value enum='1' description='CASH'/>
+         <value enum='2' description='NEXT_DAY'/>
+         <value enum='3' description='TPLUS2'/>
+         <value enum='4' description='TPLUS3'/>
+         <value enum='5' description='TPLUS4'/>
+         <value enum='6' description='FUTURE'/>
+         <value enum='7' description='WHEN_ISSUED'/>
+         <value enum='8' description='SELLERS_OPTION'/>
+         <value enum='9' description='TPLUS5'/>
+      </fieldDesc>
+      <fieldDesc number='64' name='FutSettDate' type='LOCALMKTDATE'/>
+      <fieldDesc number='65' name='SymbolSfx' type='STRING'/>
+      <fieldDesc number='66' name='ListID' type='STRING'/>
+      <fieldDesc number='75' name='TradeDate' type='LOCALMKTDATE'/>
+      <fieldDesc number='76' name='ExecBroker' type='STRING'/>
+      <fieldDesc number='77' name='OpenClose' type='STRING'>
+         <value enum='O' description='OPEN'/>
+         <value enum='C' description='CLOSE'/>
+      </fieldDesc>
+      <fieldDesc number='78' name='NoAllocs' type='INT'/>
+      <fieldDesc number='79' name='AllocAccount' type='STRING'/>
+      <fieldDesc number='80' name='AllocShares' type='QTY'/>
+      <fieldDesc number='81' name='ProcessCode' type='STRING'>
+         <value enum='0' description='REGULAR'/>
+         <value enum='1' description='SOFT_DOLLAR'/>
+         <value enum='2' description='STEPIN'/>
+         <value enum='3' description='STEPOUT'/>
+         <value enum='4' description='SOFTDOLLAR_STEPIN'/>
+         <value enum='5' description='SOFTDOLLAR_STEPOUT'/>
+         <value enum='6' description='PLAN_SPONSOR'/>
+      </fieldDesc>
+      <fieldDesc number='93' name='SignatureLength' type='INT'/>
+      <fieldDesc number='89' name='Signature' type='DATA' lenField='SignatureLength'/>
+      <fieldDesc number='90' name='SecureDataLen' type='INT'/>
+      <fieldDesc number='91' name='SecureData' type='DATA' lenField='SecureDataLen'/>
+      <fieldDesc number='95' name='RawDataLength' type='INT'/>
+      <fieldDesc number='96' name='RawData' type='DATA' lenField='RawDataLength'/>
+      <fieldDesc number='97' name='PossResend' type='BOOLEAN'/>
+      <fieldDesc number='98' name='EncryptMethod' type='STRING'>
+         <value enum='0' description='None'/>
+      </fieldDesc>
+      <fieldDesc number='99' name='StopPx' type='PRICE'/>
+      <fieldDesc number='100' name='ExDestination' type='EXCHANGE'/>
+      <fieldDesc number='102' name='CxlRejReason' type='STRING'>
+         <value enum='0' description='TOO_LATE_TO_CANCEL'/>
+         <value enum='1' description='UNKNOWN_ORDER'/>
+         <value enum='2' description='BROKER_OPTION'/>
+         <value enum='3' description='ALREADY_PENDING'/>
+      </fieldDesc>
+      <fieldDesc number='103' name='OrdRejReason' type='STRING'>
+         <value enum='0' description='BROKER_OPTION'/>
+         <value enum='1' description='UNKNOWN_SYMBOL'/>
+         <value enum='2' description='EXCHANGE_CLOSED'/>
+         <value enum='3' description='ORDER_EXCEEDS_LIMIT'/>
+         <value enum='4' description='TOO_LATE_TO_ENTER'/>
+         <value enum='5' description='UNKNOWN_ORDER'/>
+         <value enum='6' description='DUPLICATE_ORDER'/>
+         <value enum='7' description='DUPLICATE_VERBALYES'/>
+         <value enum='8' description='STALE_ORDER'/>
+      </fieldDesc>
+      <fieldDesc number='106' name='Issuer' type='STRING'/>
+      <fieldDesc number='107' name='SecurityDesc' type='STRING'/>
+      <fieldDesc number='108' name='HeartBtInt' type='INT'/>
+      <fieldDesc number='109' name='ClientID' type='STRING'/>
+      <fieldDesc number='110' name='MinQty' type='QTY'/>
+      <fieldDesc number='111' name='MaxFloor' type='QTY'/>
+      <fieldDesc number='112' name='TestReqID' type='STRING'/>
+      <fieldDesc number='113' name='ReportToExch' type='STRING'>
+         <value enum='Y' description='YES'/>
+         <value enum='N' description='NO'/>
+      </fieldDesc>
+      <fieldDesc number='114' name='LocateReqd' type='STRING'>
+         <value enum='Y' description='YES'/>
+         <value enum='N' description='NO'/>
+      </fieldDesc>
+      <fieldDesc number='115' name='OnBehalfOfCompID' type='STRING'/>
+      <fieldDesc number='116' name='OnBehalfOfSubID' type='STRING'/>
+      <fieldDesc number='117' name='QuoteID' type='STRING'/>
+      <fieldDesc number='119' name='SettlCurrAmt' type='AMT'/>
+      <fieldDesc number='120' name='SettlCurrency' type='CURRENCY'/>
+      <fieldDesc number='121' name='ForexReq' type='STRING'>
+         <value enum='Y' description='YES'/>
+         <value enum='N' description='NO'/>
+      </fieldDesc>
+      <fieldDesc number='122' name='OrigSendingTime' type='UTCTIMESTAMP'/>
+      <fieldDesc number='123' name='GapFillFlag' type='STRING'>
+         <value enum='Y' description='GAP_FILL_MESSAGE_MSGSEQNUM_fieldDesc_VALID'/>
+         <value enum='N' description='SEQUENCE_RESET_IGNORE_MSGSEQNUM'/>
+      </fieldDesc>
+      <fieldDesc number='126' name='ExpireTime' type='UTCTIMESTAMP'/>
+      <fieldDesc number='128' name='DeliverToCompID' type='STRING'/>
+      <fieldDesc number='129' name='DeliverToSubID' type='STRING'/>
+      <fieldDesc number='140' name='PrevClosePx' type='PRICE'/>
+      <fieldDesc number='141' name='ResetSeqNumFlag' type='STRING'>
+         <value enum='Y' description='YES_RESET_SEQUENCE_NUMBERS'/>
+         <value enum='N' description='NO'/>
+      </fieldDesc>
+      <fieldDesc number='142' name='SenderLocationID' type='STRING'/>
+      <fieldDesc number='143' name='TargetLocationID' type='STRING'/>
+      <fieldDesc number='144' name='OnBehalfOfLocationID' type='STRING'/>
+      <fieldDesc number='145' name='DeliverToLocationID' type='STRING'/>
+      <fieldDesc number='150' name='ExecType' type='STRING'>
+         <value enum='0' description='NEW'/>
+         <value enum='1' description='PARTIAL_FILL'/>
+         <value enum='2' description='FILL'/>
+         <value enum='3' description='DONE_FOR_DAY'/>
+         <value enum='4' description='CANCELED'/>
+         <value enum='5' description='REPLACE'/>
+         <value enum='6' description='PENDING_CANCEL'/>
+         <value enum='7' description='STOPPED'/>
+         <value enum='8' description='REJECTED'/>
+         <value enum='9' description='SUSPENDED'/>
+         <value enum='A' description='PENDING_NEW'/>
+         <value enum='B' description='CALCULATED'/>
+         <value enum='C' description='EXPIRED'/>
+         <value enum='D' description='RESTATED'/>
+         <value enum='E' description='PENDING_REPLACE'/>
+         <value enum='h' description='PendingHold'/>
+         <value enum='r' description='PendingResume'/>
+      </fieldDesc>
+      <fieldDesc number='151' name='LeavesQty' type='QTY'/>
+      <fieldDesc number='152' name='CashOrderQty' type='QTY'/>
+      <fieldDesc number='167' name='SecurityType' type='STRING'>
+         <value enum='BA' description='BANKERS_ACCEPTANCE'/>
+         <value enum='CB' description='CONVERTIBLE_BOND'/>
+         <value enum='CD' description='CERTIFICATE_OF_DEPOSIT'/>
+         <value enum='CMO' description='COLLATERALIZE_MORTGAGE_OBLIGATION'/>
+         <value enum='CORP' description='CORPORATE_BOND'/>
+         <value enum='CP' description='COMMERCIAL_PAPER'/>
+         <value enum='CPP' description='CORPORATE_PRIVATE_PLACEMENT'/>
+         <value enum='CS' description='COMMON_STOCK'/>
+         <value enum='FHA' description='FEDERAL_HOUSING_AUTHORITY'/>
+         <value enum='FHL' description='FEDERAL_HOME_LOAN'/>
+         <value enum='FN' description='FEDERAL_NATIONAL_MORTGAGE_ASSOCIATION'/>
+         <value enum='FOR' description='FOREIGN_EXCHANGE_CONTRACT'/>
+         <value enum='FUT' description='FUTURE'/>
+         <value enum='GN' description='GOVERNMENT_NATIONAL_MORTGAGE_ASSOCIATION'/>
+         <value enum='GOVT' description='TREASURIES_PLUS_AGENCY_DEBENTURE'/>
+         <value enum='MF' description='MUTUAL_FUND'/>
+         <value enum='MIO' description='MORTGAGE_INTEREST_ONLY'/>
+         <value enum='MPO' description='MORTGAGE_PRINCIPAL_ONLY'/>
+         <value enum='MPP' description='MORTGAGE_PRIVATE_PLACEMENT'/>
+         <value enum='MPT' description='MISCELLANEOUS_PASSTHRU'/>
+         <value enum='MUNI' description='MUNICIPAL_BOND'/>
+         <value enum='NONE' description='NO_ISITC_SECURITY_TYPE'/>
+         <value enum='OPT' description='OPTION'/>
+         <value enum='PS' description='PREFERRED_STOCK'/>
+         <value enum='RP' description='REPURCHASE_AGREEMENT'/>
+         <value enum='RVRP' description='REVERSE_REPURCHASE_AGREEMENT'/>
+         <value enum='SL' description='STUDENT_LOAN_MARKETING_ASSOCIATION'/>
+         <value enum='TD' description='TIME_DEPOSIT'/>
+         <value enum='USTB' description='US_TREASURY_BILL'/>
+         <value enum='WAR' description='WARRANT'/>
+         <value enum='ZOO' description='CATS_TIGERS'/>
+      </fieldDesc>
+      <fieldDesc number='168' name='EffectiveTime' type='UTCTIMESTAMP'/>
+      <fieldDesc number='192' name='OrderQty2' type='QTY'/>
+      <fieldDesc number='193' name='FutSettDate2' type='LOCALMKTDATE'/>
+      <fieldDesc number='194' name='LastSpotRate' type='PRICE'/>
+      <fieldDesc number='195' name='LastForwardPoints' type='PRICEOFFSET'/>
+      <fieldDesc number='198' name='SecondaryOrderID' type='STRING'/>
+      <fieldDesc number='200' name='MaturityMonthYear' type='MONTHYEAR'/>
+      <fieldDesc number='201' name='PutOrCall' type='STRING'>
+         <value enum='0' description='PUT'/>
+         <value enum='1' description='CALL'/>
+      </fieldDesc>
+      <fieldDesc number='202' name='StrikePrice' type='PRICE'/>
+      <fieldDesc number='203' name='CoveredOrUncovered' type='STRING'>
+         <value enum='0' description='COVERED'/>
+         <value enum='1' description='UNCOVERED'/>
+      </fieldDesc>
+      <fieldDesc number='204' name='CustomerOrFirm' type='STRING'>
+         <value enum='0' description='CUSTOMER'/>
+         <value enum='1' description='FIRM'/>
+      </fieldDesc>
+      <fieldDesc number='205' name='MaturityDay' type='DAYOFMONTH'/>
+      <fieldDesc number='206' name='OptAttribute' type='CHAR'/>
+      <fieldDesc number='207' name='SecurityExchange' type='EXCHANGE'/>
+      <fieldDesc number='210' name='MaxShow' type='QTY'/>
+      <fieldDesc number='211' name='PegDifference' type='PRICEOFFSET'/>
+      <fieldDesc number='212' name='XmlDataLen' type='INT'/>
+      <fieldDesc number='213' name='XmlData' type='DATA' lenField='XmlDataLen'/>
+      <fieldDesc number='223' name='CouponRate' type='FLOAT'/>
+      <fieldDesc number='231' name='ContractMultiplier' type='FLOAT'/>
+      <fieldDesc number='336' name='TradingSessionID' type='STRING'/>
+      <fieldDesc number='337' name='ContraTrader' type='STRING'/>
+      <fieldDesc number='347' name='MessageEncoding' type='STRING'/>
+      <fieldDesc number='348' name='EncodedIssuerLen' type='INT'/>
+      <fieldDesc number='349' name='EncodedIssuer' type='DATA' lenField='EncodedIssuerLen'/>
+      <fieldDesc number='350' name='EncodedSecurityDescLen' type='INT'/>
+      <fieldDesc number='351' name='EncodedSecurityDesc' type='DATA' lenField='EncodedSecurityDescLen'/>
+      <fieldDesc number='354' name='EncodedTextLen' type='INT'/>
+      <fieldDesc number='355' name='EncodedText' type='DATA' lenField='EncodedTextLen'/>
+      <fieldDesc number='369' name='LastMsgSeqNumProcessed' type='INT'/>
+      <fieldDesc number='370' name='OnBehalfOfSendingTime' type='UTCTIMESTAMP'/>
+      <fieldDesc number='371' name='RefTagID' type='INT'/>
+      <fieldDesc number='372' name='RefMsgType' type='STRING'/>
+      <fieldDesc number='373' name='SessionRejectReason' type='STRING'>
+         <value enum='0' description='INVALID_TAG_NUMBER'/>
+         <value enum='1' description='REQUIRED_TAG_MISSING'/>
+         <value enum='2' description='TAG_NOT_DEFINED_FOR_THIS_MESSAGE_TYPE'/>
+         <value enum='3' description='UNDEFINED_TAG'/>
+         <value enum='4' description='TAG_SPECIFIED_WITHOUT_A_VALUE'/>
+         <value enum='5' description='VALUE_IS_INCORRECT'/>
+         <value enum='6' description='INCORRECT_DATA_FORMAT_FOR_VALUE'/>
+         <value enum='7' description='DECRYPTION_PROBLEM'/>
+         <value enum='8' description='SIGNATURE_PROBLEM'/>
+         <value enum='9' description='COMPID_PROBLEM'/>
+         <value enum='10' description='SENDINGTIME_ACCURACY_PROBLEM'/>
+         <value enum='11' description='E'/>
+      </fieldDesc>
+      <fieldDesc number='375' name='ContraBroker' type='STRING'/>
+      <fieldDesc number='376' name='ComplianceID' type='STRING'/>
+      <fieldDesc number='377' name='SolicitedFlag' type='STRING'>
+         <value enum='Y' description='WAS_SOLCITIED'/>
+         <value enum='N' description='WAS_NOT_SOLICITED'/>
+      </fieldDesc>
+      <fieldDesc number='378' name='ExecRestatementReason' type='STRING'>
+         <value enum='0' description='GT_CORPORATE_ACTION'/>
+         <value enum='1' description='GT_RENEWAL_RESTATEMENT'/>
+         <value enum='2' description='VERBAL_CHANGE'/>
+         <value enum='3' description='REPRICING_OF_ORDER'/>
+         <value enum='4' description='BROKER_OPTION'/>
+         <value enum='5' description='PARTIAL_DECLINE_OF_ORDERQTY'/>
+      </fieldDesc>
+      <fieldDesc number='379' name='BusinessRejectRefID' type='STRING'/>
+      <fieldDesc number='380' name='BusinessRejectReason' type='STRING'>
+         <value enum='0' description='OTHER'/>
+         <value enum='1' description='UNKOWN_ID'/>
+         <value enum='2' description='UNKNOWN_SECURITY'/>
+         <value enum='3' description='UNSUPPORTED_MESSAGE_TYPE'/>
+         <value enum='4' description='APPLICATION_NOT_AVAILABLE'/>
+         <value enum='5' description='CONDITIONALLY_REQUIRED_fieldDesc_MISSING'/>
+      </fieldDesc>
+      <fieldDesc number='381' name='GrossTradeAmt' type='AMT'/>
+      <fieldDesc number='382' name='NoContraBrokers' type='INT'/>
+      <fieldDesc number='383' name='MaxMessageSize' type='INT'/>
+      <fieldDesc number='384' name='NoMsgTypes' type='INT'/>
+      <fieldDesc number='385' name='MsgDirection' type='STRING'>
+         <value enum='S' description='SEND'/>
+         <value enum='R' description='RECEIVE'/>
+      </fieldDesc>
+      <fieldDesc number='386' name='NoTradingSessions' type='INT'/>
+      <fieldDesc number='388' name='DiscretionInst' type='STRING'>
+         <value enum='1' description='market'/>
+         <value enum='2' description='last'/>
+         <value enum='3' description='close'/>
+         <value enum='4' description='mid'/>
+         <value enum='5' description='best 1'/>
+         <value enum='6' description='best 2'/>
+         <value enum='7' description='best 3'/>
+         <value enum='8' description='best 4'/>
+         <value enum='9' description='best 5'/>
+         <value enum='10' description='best opposite 1'/>
+         <value enum='11' description='best opposite 2'/>
+         <value enum='12' description='best opposite 3'/>
+         <value enum='13' description='best opposite 4'/>
+         <value enum='14' description='best opposite 5'/>
+         <value enum='15' description='market open' comment='OrderType: at-open-price'/>
+         <value enum='16' description='open' comment='OrderType: limit, Price: opening price'/>
+      </fieldDesc>
+      <fieldDesc number='389' name='DiscretionOffsetValue' type='PRICEOFFSET'/>
+      <fieldDesc number='424' name='DayOrderQty' type='QTY'/>
+      <fieldDesc number='425' name='DayCumQty' type='QTY'/>
+      <fieldDesc number='426' name='DayAvgPx' type='PRICE'/>
+      <fieldDesc number='427' name='GTBookingInst' type='STRING'>
+         <value enum='0' description='BOOK_OUT_ALL_TRADES_ON_DAY_OF_EXECUTION'/>
+         <value enum='1' description='ACCUMULATE_EXECUTIONS_UNTIL_ORDER_IS_FILLED_OR_EXPIRES'/>
+         <value enum='2' description='ACCUMULATE_UNTIL_VERBALLY_NOTIFIED_OTHERWISE'/>
+      </fieldDesc>
+      <fieldDesc number='432' name='ExpireDate' type='LOCALMKTDATE'/>
+      <fieldDesc number='434' name='CxlRejResponseTo' type='CHAR'/>
+      <fieldDesc number='437' name='ContraTradeQty' type='QTY'/>
+      <fieldDesc number='438' name='ContraTradeTime' type='UTCTIMESTAMP'/>
+      <fieldDesc number='439' name='ClearingFirm' type='STRING'/>
+      <fieldDesc number='440' name='ClearingAccount' type='STRING'/>
+      <fieldDesc number='442' name='MultiLegReportingType' type='CHAR'/>
+
+      <!-- Fix43 fields  -->
+      <fieldDesc number='526' name='SecondaryClOrdID' type='STRING'/>
+      <fieldDesc number='527' name='SecondaryExecID' type='STRING'/>
+      <fieldDesc number='554' name='Password' type='STRING'/>
+
+      <!-- Fix44 fields  -->
+      <fieldDesc number='842' name='DiscretionOffsetType' type='STRING'>
+        <!--value enum='0' description='Price (default)' comment='not suppored in CATS'-->
+        <value enum='1' description='Basis Points'/>
+        <value enum='2' description='Ticks'/>
+        <value enum='3' description='Percentage' comment='added in CATS'/>
+      </fieldDesc>
+      <fieldDesc number='847' name='TargetStrategy' type='STRING'/>
+      <fieldDesc number='849' name='ParticipationRate' alias='MaxPctVolume' type='INT' comment='normalement, ce champ est de type Percentage en fix4.4'/>
+
+      <!-- non Fix42 fields (but in "user-defined fields" on fixprotocol.org) -->
+      <!--fieldDesc number='7803' name='Strategy' type='STRING' - use #847 TargetStrategy instead-->
+      <!--fieldDesc number='7400' name='StratStartTime' type='UTCTIMESTAMP' - use EffectiveTime instead-->
+      <!--fieldDesc number='7401' name='StratEndTime' type='UTCTIMESTAMP' removed/replaced by ExpireTime-->
+      <fieldDesc number='5002' name='CodeAux' type='STRING'/>
+      <fieldDesc number='5031' name='FavorID' type='STRING'/>
+      <fieldDesc number="5036" name="ClientOrderSource" type="STRING">
+        <value enum="O" description="ORS/TCC"/>
+        <value enum="I" description="Internal/TCC"/>
+        <value enum="E" description="EBS"/>
+        <value enum="D" description="DMA"/>
+        <value enum="F" description="Folder"/>
+      </fieldDesc>
+      <fieldDesc number="5037" name="InternalClientOrderID" type="STRING"/>
+
+      <!-- je les range ici (les #5047-5049) pour qu'ils soient tries, mais ils different
+           des tags #5047-5049 declares sur fixprotocol.org... -->
+      <fieldDesc number='5047' name='PriceDeviationInst' type='STRING'>
+         <value enum='1' description='market'/>
+         <value enum='2' description='last'/>
+         <value enum='3' description='close'/>
+         <value enum='4' description='mid'/>
+         <value enum='5' description='best 1'/>
+         <value enum='6' description='best 2'/>
+         <value enum='7' description='best 3'/>
+         <value enum='8' description='best 4'/>
+         <value enum='9' description='best 5'/>
+         <value enum='10' description='best opposite 1'/>
+         <value enum='11' description='best opposite 2'/>
+         <value enum='12' description='best opposite 3'/>
+         <value enum='13' description='best opposite 4'/>
+         <value enum='14' description='best opposite 5'/>
+         <value enum='15' description='market open' comment='OrderType: at-open-price'/>
+         <value enum='16' description='open' comment='OrderType: limit, Price: opening price'/>
+      </fieldDesc>
+      <fieldDesc number='5048' name='PriceDeviationOffsetType' type='STRING'>
+        <!--value enum='0' description='Price (default)' comment='not suppored in CATS'-->
+        <value enum='1' description='Basis Points'/>
+        <value enum='2' description='Ticks'/>
+        <value enum='3' description='Percentage' comment='added in CATS'/>
+      </fieldDesc>
+      <fieldDesc number='5049' name='PriceDeviationOffsetValue' type='PRICEOFFSET'/>
+      <fieldDesc number="5059" name="BenchSecurityType" type="STRING" >
+        <value enum="7" description="Index" />
+        <value enum="12" description="Other" />
+      </fieldDesc>
+      <fieldDesc number='5063' name='EnableHeatMap' type='BOOLEAN'/>
+      <fieldDesc number='5170' name='TriggerDelay' type='INT'/>
+      <fieldDesc number='5204' name='TradeThruPrice' alias='SecondaryLimit' type='PRICE'/>
+      <fieldDesc number='5205' name='AdjustedPriceInd' alias='WouldLevel' type='PRICE'/>
+      <fieldDesc number='6065' name='ExecutionStyle' type='STRING'>
+        <value enum='0' description='Patient'/>
+        <value enum='5' description='Normal'/>
+        <value enum='10' description='Aggressive'/>
+        <value enum='15' description='Highly Aggressive'/>
+        <value enum='20' description='Get Me Done'/>
+      </fieldDesc>
+      <fieldDesc number='6066' name='PrimaryVolume' type='BOOLEAN'/>
+      <fieldDesc number='6067' name='MinPctVolume' type='INT'/>
+      <fieldDesc number='6087' name='ReferencePrice' type='PRICE'/>
+      <fieldDesc number='6109' name='RefIndexPrice' type='PRICE'/>
+      <fieldDesc number='6270' name='WouldDark' type='STRING'>
+        <value enum='N' description='None'/>
+        <value enum='C' description='Child'/>
+        <value enum='P' description='Parent'/>
+      </fieldDesc>
+      <fieldDesc number="6313" name="UnderlyingAlgo" type="STRING" >
+        <value enum="1" description="Vwap" />
+        <value enum="2" description="% Volume" />
+        <value enum="3" description="Iceberg" />
+        <value enum="4" description="Hunt" />
+        <value enum="6" description="Twap" />
+        <value enum="17" description="CrossFire" />
+      </fieldDesc>
+      <fieldDesc number='6356' name='LowerPricePct' type='FLOAT'/>
+      <fieldDesc number='6415' name='OpenAuctionRate' type='INT' comment="same comment as #6416"/>
+      <fieldDesc number='6416' name='CloseAuctionRate' type='INT' comment="aussi etonnant que cela puisse paraitre, c'est bien un int within [0..100] et non un float... Etonnant, non ?"/>
+      <fieldDesc number='6417' name='ExcludePrimary' type='BOOLEAN'/>
+      <fieldDesc number='6418' name='DarkOnly' type='BOOLEAN'/>
+      <fieldDesc number='6419' name='ExecutionMode' type='STRING'>
+        <value enum='CROSSFIRE' description='CrossFire'/>
+        <value enum='HUNT' description='Hunt'/>
+        <value enum='ICEBERG' description='Iceberg'/>
+      </fieldDesc>
+      <fieldDesc number='6433' name='ExcludeDest' type='STRING'/>
+      <fieldDesc number='6434' name='ExcludeType' type='STRING'/>
+      <fieldDesc number='6435' name='ExcludePassiveDest' type='STRING'/>
+      <fieldDesc number='6436' name='ExcludePassiveType' type='STRING'/>
+      <fieldDesc number='6437' name='CurveType' type='STRING'>
+        <value enum='STATIC' description='courbe de volume statique'/>
+        <value enum='PARAMETRIC' description='courbe de volume parametrique'/>
+        <value enum='DYNAMIC' description='courbe de volume dynamique'/>
+      </fieldDesc>
+      <fieldDesc number='6438' name='ExcludeAggressiveDest' type='STRING'/>
+      <fieldDesc number='6439' name='ExcludeAggressiveType' type='STRING'/>
+      <fieldDesc number='6440' name='SIAuthorized' type='BOOLEAN' />
+      <fieldDesc number='6441' name='StartingPhase' type='STRING'>
+        <value enum="A" description="Aggressive Phase First"/>
+        <value enum="P" description="Passive Phase First"/>
+      </fieldDesc>
+      <fieldDesc number='6819' name='TriggerQtyADVPct' type='FLOAT'/>
+      <fieldDesc number='7439' name='TradingVenueType' type='STRING'>
+        <value enum="L" description="Lit"/>
+        <value enum="D" description="Dark"/>
+        <value enum="M" description="MidPoint"/>
+      </fieldDesc>
+      <fieldDesc number='7486' name='VolumeProfile' type='STRING'>
+        <value enum='A' description='All'/>
+        <value enum='P' description='Passive'/>
+      </fieldDesc>
+      <fieldDesc number='7740' name='CrossFlag' type='BOOLEAN'/>
+      <fieldDesc number='9730' name='TradeLiquidityIndicator' type='STRING'>
+        <value enum='A' description='Order added liquidity'/>
+        <value enum='R' description='Order removed liquidity'/>
+        <value enum='X' description='auction'/>
+        <value enum="D" description="Dark trade"/>
+        <value enum="AD" description="Order added liquidity - Dark trade"/>
+        <value enum="RD" description="Order removed liquidity - Dark trade"/>
+        <value enum="L" description="Turquoise Lens"/>
+        <value enum="P" description="BATS Primary"/>
+      </fieldDesc>
+      <fieldDesc number="9528" name="BenchIDSource" type="STRING" >
+        <value enum="5" description="RIC" />
+        <value enum="A" description="Bloomberg" />
+      </fieldDesc>
+      <fieldDesc number="9530" name="BenchSecurityID" type="STRING" />
+      <fieldDesc number='9625' name='ExcludeAuctions' type='STRING' comment='en vrai, ca devrait etre un enum'/>
+      <fieldDesc number='9739' name='MIFIDBestExecutionReqd' type='BOOLEAN'/>
+      <fieldDesc number="10000" name="SliceQty" type="QTY" />
+      <fieldDesc number="10001" name="SliceDuration" type="INT" />
+      <fieldDesc number="10102" name="RelativeLimitPct" type="FLOAT" />
+      <fieldDesc number="10003" name="MinimumAmount" type="FLOAT" />
+
+      <!-- The tag numbers 5000 to 9999 have beem reserved for use with user
+           defined fields, which are used as part of inter-firm communication.
+           The tag number greater than or equal to 10000 have been reserved for
+           internal use (within a single firm) and do not need to be registered -->
+      <fieldDesc number='9262' name='MsgID' type='STRING'/>
+
+      <!-- from SLEEP: -->
+      <fieldDesc number='20107' name='ClientData' type='STRING'/>
+
+      <fieldDesc number='29995' name='ParentAvgPx' type='PRICE'/>
+      <fieldDesc number='29996' name='ParentCumQty' type='QTY'/>
+      <fieldDesc number='29997' name='ParentLeavesQty' type='QTY'/>
+      <fieldDesc number='29998' name='OptimalQty' type='QTY'/>
+      <fieldDesc number='29999' name='MidPlacement' type='STRING'> 
+        <value enum='1' description="WithLimit"/>
+        <value enum='2' description="WithoutLimit"/>
+      </fieldDesc>
+
+      <!-- internal CSAM: id within [30,000; 30,200] -->
+      <fieldDesc number='30000' name='Requests' type='BOOLEAN'/>
+      <fieldDesc number='30001' name='Responses' type='BOOLEAN'/>
+      <fieldDesc number='30002' name='Trades' type='BOOLEAN'/>
+      <fieldDesc number='30003' name='Indicators' type='BOOLEAN'/>
+
+      <fieldDesc number='30009' name='ResumeAck' type='BOOLEAN'/>
+      <fieldDesc number='30010' name='ForcedCancel' type='BOOLEAN'/>
+      <fieldDesc number='30011' name='ClientRef' type='STRING'/>
+      <fieldDesc number='30012' name='AmountValidation' type='BOOLEAN'/>
+      <fieldDesc number='30013' name='OnBehalfOfClientID' type='STRING'/>
+      <fieldDesc number='30015' name='RedirectedStrategy' type='STRING'/>
+      <fieldDesc number='30016' name='BaseStrategy' type='STRING'/>
+      <fieldDesc number='30017' name='TacticPublicName' type='STRING'/>
+
+      <fieldDesc number='30020' name='NoIndicators' type='INT'/>
+      <fieldDesc number='30021' name='IndicatorValue' type='STRING'/>
+      <fieldDesc number='30022' name='IndicatorCategory' type='STRING'>
+        <value enum='i' description='indicator' comment='default if value if not filled'/>
+        <value enum='I' description='information'/>
+        <value enum='W' description='warning'/>
+      </fieldDesc>
+      <fieldDesc number='30023' name='IndicatorStatus' type='STRING'>
+        <value enum='O' description='ok' comment="default value if not filled"/>
+        <value enum='S' description='Stale'/>
+      </fieldDesc>
+      <fieldDesc number='30024' name='NoDestinations' type='INT'/>
+      <fieldDesc number='30030' name='FloorLeavesQty' type='QTY'/>
+
+      <!-- les champs suivants sont destines aux indicateurs
+           ils n'apparaissent pas dans la definition du message Indicator
+           car leur place sera le groupe repetitif -->	  
+      <fieldDesc number='30040' name='MinInterQty' type='QTY' comment="quantite minimum d'intervention"/>
+      <fieldDesc number='30041' name='MaxInterQty' type='QTY' comment="quantite maximum d'intervention"/>
+      <fieldDesc number='30042' name='ZoneInter' type='INT' comment="Zone d'intervention"/>
+      <fieldDesc number='30043' name='VolSlippage' type='INT' comment="decalage entre la qte execute et la qte theorique"/>
+      <fieldDesc number='30044' name='CurVolPct' type='INT' comment="[0..100] taux de participation de l'interval courant"/>
+      <fieldDesc number='30045' name='ExecPct' type='INT' comment="[0..100] taux d'execution de l'ordre"/>
+      <fieldDesc number='30046' name='ExecSpread' type='FLOAT' comment="[0..10000] ecart entre AvgPrc et vwapPrc"/>
+      <fieldDesc number='30047' name='VwapPrice' type='PRICE' comment="prix vwap sur la periode de traitement de l'ordre"/>
+      <fieldDesc number='30048' name='PLR' longname='Period Liquidity Ratio' type='FLOAT' comment="[0..100] taux de participation au marche"/>
+      <fieldDesc number='30049' name='StdPLR' longname='Standard Period Liquidity Ratio' type='FLOAT' comment="[0..100] taux de participation au marche dans la zone standard"/>
+      <fieldDesc number='30050' name='WouldPLR' longname='Would Period Liquidity Ratio' type='FLOAT' comment="[0..100] taux de participation au marche dans la zone would"/>
+      <fieldDesc number='30051' name='PnL' longname='Profit n Loss' type='FLOAT' comment="ecart entre le capital Vwap et le capital Execute"/>
+      <fieldDesc number='30052' name='PnLBp' type='FLOAT' comment="[0..10000] participation global aux executions"/>
+      <fieldDesc number='30053' name='Dt' type='INT' comment="duree de mise a jour optimale"/>
+      <fieldDesc number='30054' name='PIHigh' type='FLOAT' comment="borne haute de l'avancement theorique"/>
+      <fieldDesc number='30055' name='PI' type='FLOAT' comment="pourcentage median de l'avancement theorique"/>
+      <fieldDesc number='30056' name='PILow' type='FLOAT' comment="borne basse de l'avancement theorique"/>
+      <fieldDesc number='30057' name='MinExecQty' type='INT' comment="quantite minimum a executer"/>
+      <fieldDesc number='30058' name='MaxExecQty' type='INT' comment="quantite maximum a executer"/>
+      <fieldDesc number='30059' name='VolGK' type='FLOAT' comment="volatilite Garmann-Klass 15 minutes"/>
+      <fieldDesc number='30060' name='Distance' type='FLOAT' comment="distance par rapport a Best1"/>
+      <fieldDesc number='30061' name='OverVolumeCoeff' type='FLOAT' comment="coefficient de sur-volume"/>
+      <fieldDesc number='30062' name='MaxPrice' type='PRICE' comment="price maximum d'intervention"/>
+      <fieldDesc number='30063' name='SlippageAvgPx' type='PRICE' comment="price moyen du retard"/>
+      <fieldDesc number='30064' name='TrackingQty' type='INT' comment="quantite de l'occurrence de poursuite"/>
+      <fieldDesc number='30066' name='TrackingPrice' type='PRICE' comment="prix de l'occurrence de poursuite"/>
+      <fieldDesc number='30067' name='OpportunityQty' type='INT' comment="quantite de l'occurrence d'opportunite"/>
+      <fieldDesc number='30068' name='OpportunityPrice' type='PRICE' comment="prix de l'occurrence d'opportunite"/>
+      <fieldDesc number='30069' name='SlippageQty' type='INT' comment="quantite de l'occurrence de retard"/>
+      <fieldDesc number='30070' name='SlippagePrice' type='PRICE' comment="prix de l'occurrence de retard"/>
+      <fieldDesc number='30071' name='WouldQty' type='INT' comment="quantite de l'occurrence de wouldlevel"/>
+      <fieldDesc number='30072' name='WouldPrice' type='PRICE' comment="prix de l'occurrence de wouldlevel"/>
+      <fieldDesc number='30073' name='Vol_a' type='FLOAT' comment="coefficient a de la volatilite"/>
+      <fieldDesc number='30074' name='Vol_b' type='FLOAT' comment="coefficient b de la volatilite"/>
+      <fieldDesc number='30075' name='Vol_c' type='FLOAT' comment="coefficient c de la volatilite"/>
+      <fieldDesc number='30076' name='Vol_d' type='FLOAT' comment="coefficient d de la volatilite"/>
+      <fieldDesc number='30077' name='Vol_DTm' type='FLOAT' comment="horizon temporel"/>
+      <fieldDesc number='30078' name='Vol_P' type='FLOAT' comment="niveau de probabilite"/>
+      <fieldDesc number='30079' name='Cycle_d' type='FLOAT' comment="distance par rapport a Best"/>
+      <fieldDesc number='30080' name='Cycle_c' type='FLOAT' comment="coefficient de survolume"/>
+      <fieldDesc number='30081' name='OpeningReservedQty' type='INT' comment="quantite reservee pour le fixing d'ouverture"/>
+      <fieldDesc number='30082' name='ClosingReservedQty' type='INT' comment="quantite reservee pour le fixing de fermeture"/>
+      <fieldDesc number='30083' name='ContinuousReservedQty' type='INT' comment="quantite reservee pour la cotation continue "/>
+      <fieldDesc number='30084' name='MedExecQty' type='INT' comment="quantite mediane a executer"/>
+      <fieldDesc number='30085' name='TrackingExecPercentage' type='FLOAT' comment="quantite executee pour l'occurrence de poursuite"/>
+      <fieldDesc number='30086' name='OpportunityExecPercentage' type='FLOAT' comment="quantite executee pour l'occurrence d'opportunite"/>
+      <fieldDesc number='30087' name='SlippageExecPercentage' type='FLOAT' comment="quantite executee pour l'occurrence de retard"/>
+      <fieldDesc number='30088' name='WouldExecPercentage' type='FLOAT' comment="quantite executee pour l'occurrence de would"/>
+      <fieldDesc number='30089' name='ClosingExecPercentage' type='FLOAT' comment="quantite executee pour l'occurrence du fixing de fermeture"/>
+      <fieldDesc number='30090' name='OpeningExecPercentage' type='FLOAT' comment="quantite executee pour l'occurrence du fixing d'ouverture"/>
+      <fieldDesc number='30091' name='OpeningQty' type='INT' comment="quantite de l'occurrence pour le fixing d'ouverture"/>
+      <fieldDesc number='30092' name='OpeningOccurrencePosition' type='STRING' comment="position de l'occurrence pour le fixing d'ouverture"/>
+      <fieldDesc number='30093' name='ClosingQty' type='INT' comment="quantite de l'occurrence pour le fixing de fermeture"/>
+      <fieldDesc number='30094' name='ClosingOccurrencePosition' type='STRING' comment="position de l'occurrence pour le fixing de fermeture"/>
+      <fieldDesc number='30095' name='EffectiveAskedQty' type='INT' comment="quantite traitee pendant la cotation continue"/>
+      <fieldDesc number='30096' name='EffectiveExecQty' type='INT' comment="quantite executee pendant la cotation continue"/>
+      <fieldDesc number='30097' name='EffectiveStartTime' type='UTCTIMESTAMP' comment="Heure de debut reel du traitement de l'automate"/>
+      <fieldDesc number='30098' name='CurveId' type='STRING' comment="identifiant du profile d'execution"/>
+      <fieldDesc number='30099' name='ATS' type='QTY' comment="average traded size"/>
+      <fieldDesc number='30100' name='FillRate' type='FLOAT' comment="real-time fill rate"/>
+      <fieldDesc number='30101' name='VenueAvgPx' type='PRICE' comment="average price of a trading venue"/>
+      <fieldDesc number='30102' name='VenueCumQty' type='QTY' comment="cumulated quantity of a trading venue"/>
+      <fieldDesc number='30103' name='VenueFees' type='FLOAT' comment="fees of a trading venue in bp"/>
+      <fieldDesc number='30104' name='VenueRanking' type='INT' comment="ranking of a trading venue"/>
+      <fieldDesc number='30105' name='VenueStatus' type='STRING' comment="status of a trading venue"/>
+      <fieldDesc number='30106' name='BusinessTimeDealCount' type='INT' comment="nombre d'execution a atteindre pour la mise a jour des occurrences"/>
+      <fieldDesc number='30107' name='MWRefSpread' type='FLOAT' comment="Median spread based on the 60 last trades"/>
+      <fieldDesc number='30108' name='MWAvgSpread' type='FLOAT' comment="Average spread based on the 4 last trades"/>
+      <fieldDesc number='30109' name='ReassessDealCount' type='INT' comment="minimun number of trades between 2 reassessments of the dark orders"/>
+      <fieldDesc number='30110' name='ETA' type='STRING' comment="Estimed Time of Arrival aka completion time"/>
+      <fieldDesc number='30111' name='PriceThreshold' type='PRICE' comment="prix de declenchement pour l'envoi d'occurrence de tracking"/>
+      <fieldDesc number='30112' name='ArrivalPrice' type='PRICE' comment="prix d'arrive de l'algo IS"/>
+      <fieldDesc number='30113' name='VolatilityCurveId' type='STRING' comment="identifiant du profile de la courbe de volatilite"/>
+      <fieldDesc number='30114' name='MarketImpactId' type='STRING' comment="identifiant du Market Impact"/>
+      <fieldDesc number='30115' name='IntradayOccurrencePosition' type='STRING' comment="position de l'occurrence pour le fixing intraday"/>
+      <fieldDesc number='30116' name='IntradayReservedQty' type='INT' comment="quantite reservee pour le fixing intraday"/>
+      <fieldDesc number='30117' name='IntradayQty' type='INT' comment="quantite de l'occurrence pour le fixing intraday"/>
+      <fieldDesc number='30118' name='EventType' type='STRING' comment="type de l'evenement recu pour les ordres places"/>
+      <fieldDesc number='30119' name='PlacementName' type='STRING' comment="nom de l'occurence"/>
+      <fieldDesc number='30120' name='PlacementQty' type='INT' comment="la quantite de l'ordre"/>
+      <fieldDesc number='30121' name='PlacementPrice' type='PRICE' comment="le prix de l'ordre"/>
+      <fieldDesc number='30122' name='PlacementType' type='STRING' comment="le type de l'ordre"/>
+      <fieldDesc number='30123' name='BestBidSize' type='INT' comment="taille du best bid pour les ordres"/>
+      <fieldDesc number='30124' name='BestAskSize' type='INT' comment="taille du best ask pour les ordres"/>
+      <fieldDesc number='30125' name='BestAskPrice' type='PRICE' comment="best ask price"/>
+      <fieldDesc number='30126' name='BestBidPrice' type='PRICE' comment="best bid price"/>
+      <fieldDesc number='30127' name='PlacementExecQty' type='INT' comment="la taille de l'ordre execute"/>
+      <fieldDesc number='30128' name='PlacementExecPrice' type='PRICE' comment="le prix de l'ordre execute"/>
+      <fieldDesc number='30129' name='PlacementExecKind' type='INT' comment="le kind de l'ordre execute"/>
+      <fieldDesc number='30130' name='PlacementTimeInForce' type='STRING' comment="time in force"/>
+      <fieldDesc number='30131' name='DynamicVolumeCurveId' type='STRING' comment="identifiant de la courbe de volume dynamique"/>
+      <fieldDesc number='30132' name='CyclePlacementId' type='STRING' comment="identifiant du placement en cycle"/>
+      <fieldDesc number='30133' name='AggressivityLevelId' type='STRING' comment="identifiant du l'aggressivity level"/>
+      <fieldDesc number='30134' name='VolatilityFPMId' type='STRING' comment="identifiant du Volatility to FPM"/>
+      <fieldDesc number='30135' name='Benchmark' type='STRING' comment="benchmark de l'algo"/>
+      <fieldDesc number='30136' name='EventTime' type='STRING' comment="heure de l'evenement recu pour les ordres places"/>
+      <fieldDesc number='30137' name='AggressiveProbability' type='FLOAT' comment="probabilite d'aggression"/>
+      <fieldDesc number='30138' name='OpeningExecQuantity' type='INT' comment="quantite executee pour l'occurrence du fixing d'ouverture"/>
+      <fieldDesc number='30139' name='IntradayExecQuantity' type='INT' comment="quantite executee pour l'occurrence du fixing d'intraday"/>
+      <fieldDesc number='30140' name='ClosingExecQuantity' type='INT' comment="quantite executee pour l'occurrence du fixing de fermeture"/>
+      <fieldDesc number='30141' name='TheoricOpeningVolume' type='QTY' comment="volume execute estime pour le fixing"/>
+      <fieldDesc number='30142' name='MedAdjustedPercentage' type='FLOAT' comment="med adjusted percentage after opening fixing"/>
+      <fieldDesc number='30143' name='IntradayExecPercentage' type='FLOAT' comment="quantite executee pour l'occurrence du fixing d'intraday"/>
+
+      <!--
+        use TradingSession #30336 rather than TradingSessionID#336
+        to prevent misusage of repeatiting groups
+      -->
+      <fieldDesc number='30336' name='TradingSession' type='STRING'>
+        <value enum='K' description='continuous'/>
+        <value enum='A' description='opening'/>
+        <value enum='B' description='closing'/>
+        <value enum='C' description='auction'/>
+        <value enum='D' description='surplus'/>
+      </fieldDesc>
+
+   </fields>
+
+   <header>
+      <field number='8' name='BeginString' required='Y'/>
+      <field number='9' name='BodyLength' required='Y'/>
+      <field number='34' name='MsgSeqNum' required='Y'/>
+      <field number='35' name='MsgType' required='Y'/>
+      <field number='43' name='PossDupFlag' required='N'/>
+      <field number='49' name='SenderCompID' required='Y'/>
+      <field number='50' name='SenderSubID' required='N'/>
+      <field number='52' name='SendingTime' required='Y'/>
+      <field number='56' name='TargetCompID' required='Y'/>
+      <field number='57' name='TargetSubID' required='N'/>
+      <field number='90' name='SecureDataLen' required='N'/>
+      <field number='91' name='SecureData' required='N'/>
+      <field number='97' name='PossResend' required='N'/>
+      <field number='115' name='OnBehalfOfCompID' required='N'/>
+      <field number='116' name='OnBehalfOfSubID' required='N'/>
+      <field number='122' name='OrigSendingTime' required='N'/>
+      <field number='128' name='DeliverToCompID' required='N'/>
+      <field number='129' name='DeliverToSubID' required='N'/>
+      <field number='142' name='SenderLocationID' required='N'/>
+      <field number='143' name='TargetLocationID' required='N'/>
+      <field number='144' name='OnBehalfOfLocationID' required='N'/>
+      <field number='145' name='DeliverToLocationID' required='N'/>
+      <field number='212' name='XmlDataLen' required='N'/>
+      <field number='213' name='XmlData' required='N'/>
+      <field number='347' name='MessageEncoding' required='N'/>
+      <field number='369' name='LastMsgSeqNumProcessed' required='N'/>
+      <field number='370' name='OnBehalfOfSendingTime' required='N'/>
+
+      <field number='30013' name='OnBehalfOfClientID' required='N'/>
+   </header>
+
+   <trailer>
+      <field number='10' name='CheckSum' required='Y'/>
+      <field number='89' name='Signature' required='N'/>
+      <field number='93' name='SignatureLength' required='N'/>
+   </trailer>
+
+   <messages>
+
+      <message name='HeartBeat' msgtype='0' msgcat='admin'>
+         <field number='112' name='TestReqID' required='N'/>
+      </message>
+
+      <message name='Logon' msgtype='A' msgcat='admin'>
+         <field number='95' name='RawDataLength' required='N'/>
+         <field number='96' name='RawData' required='N'/>
+         <field number='98' name='EncryptMethod' required='Y'/>
+         <field number='108' name='HeartBtInt' required='Y'/>
+         <field number='141' name='ResetSeqNumFlag' required='N'/>
+         <field number='383' name='MaxMessageSize' required='N'/>
+         <field number='384' name='NoMsgTypes' required='N'/>
+         <group number='384' name='MsgTypes'>
+            <field number='372' name='RefMsgType' required='N'/>
+            <field number='385' name='MsgDirection' required='N'/>
+         </group>
+         <field number='554' name='Password' required='N'/>
+      </message>
+
+      <message name='TestRequest' msgtype='1' msgcat='admin'>
+         <field number='112' name='TestReqID' required='Y'/>
+      </message>
+
+      <message name='ResendRequest' msgtype='2' msgcat='admin'>
+         <field number='7' name='BeginSeqNo' required='Y'/>
+         <field number='16' name='EndSeqNo' required='Y'/>
+      </message>
+
+      <message name='Reject' msgtype='3' msgcat='admin'>
+         <field number='45' name='RefSeqNum' required='Y'/>
+         <field number='58' name='Text' required='N'/>
+         <field number='354' name='EncodedTextLen' required='N'/>
+         <field number='355' name='EncodedText' required='N'/>
+         <field number='371' name='RefTagID' required='N'/>
+         <field number='372' name='RefMsgType' required='N'/>
+         <field number='373' name='SessionRejectReason' required='N'/>
+      </message>
+
+      <message name='SequenceReset' msgtype='4' msgcat='admin'>
+         <field number='36' name='NewSeqNo' required='Y'/>
+         <field number='123' name='GapFillFlag' required='N'/>
+      </message>
+
+      <message name='Logout' msgtype='5' msgcat='admin'>
+         <field number='58' name='Text' required='N'/>
+         <field number='354' name='EncodedTextLen' required='N'/>
+         <field number='355' name='EncodedText' required='N'/>
+      </message>
+
+      <message name='NewOrderSingle' msgtype='D' msgcat='app'>
+         <field number='1' name='Account' required='N'/>
+         <field number='11' name='ClOrdID' required='Y'/>
+         <field number='12' name='Commission' required='N'/>
+         <field number='13' name='CommType' required='N'/>
+         <field number='15' name='Currency' required='N'/>
+         <field number='18' name='ExecInst' required='N'/>
+         <field number='21' name='HandlInst' required='Y'/>
+         <field number='22' name='IDSource' required='N'/>
+         <field number='23' name='IOIid' required='N'/>
+         <field number='38' name='OrderQty' required='N'/>
+         <field number='40' name='OrdType' required='Y'/>
+         <field number='44' name='Price' required='N'/>
+         <field number='47' name='Rule80A' required='N'/>
+         <field number='48' name='SecurityID' required='N'/>
+         <field number='54' name='Side' required='Y'/>
+         <field number='55' name='Symbol' required='Y'/>
+         <field number='59' name='TimeInForce' required='N'/>
+         <field number='58' name='Text' required='N'/>
+         <field number='60' name='TransactTime' required='Y'/>
+         <field number='63' name='SettlmntTyp' required='N'/>
+         <field number='64' name='FutSettDate' required='N'/>
+         <field number='65' name='SymbolSfx' required='N'/>
+         <field number='76' name='ExecBroker' required='N'/>
+         <field number='77' name='OpenClose' required='N'/>
+         <field number='78' name='NoAllocs' required='N'/>
+         <group number='78' name='Allocs'>
+            <field number='79' name='AllocAccount' required='N'/>
+            <field number='80' name='AllocShares' required='N'/>
+         </group>
+         <field number='81' name='ProcessCode' required='N'/>
+         <field number='99' name='StopPx' required='N'/>
+         <field number='100' name='ExDestination' required='N'/>
+         <field number='106' name='Issuer' required='N'/>
+         <field number='107' name='SecurityDesc' required='N'/>
+         <field number='109' name='ClientID' required='N'/>
+         <field number='110' name='MinQty' required='N'/>
+         <field number='111' name='MaxFloor' required='N'/>
+         <field number='114' name='LocateReqd' required='N'/>
+         <field number='117' name='QuoteID' required='N'/>
+         <field number='120' name='SettlCurrency' required='N'/>
+         <field number='121' name='ForexReq' required='N'/>
+         <field number='126' name='ExpireTime' required='N'/>
+         <field number='140' name='PrevClosePx' required='N'/>
+         <field number='152' name='CashOrderQty' required='N'/>
+         <field number='167' name='SecurityType' required='N'/>
+         <field number='168' name='EffectiveTime' required='N'/>
+         <field number='192' name='OrderQty2' required='N'/>
+         <field number='193' name='FutSettDate2' required='N'/>
+         <field number='200' name='MaturityMonthYear' required='N'/>
+         <field number='201' name='PutOrCall' required='N'/>
+         <field number='202' name='StrikePrice' required='N'/>
+         <field number='203' name='CoveredOrUncovered' required='N'/>
+         <field number='204' name='CustomerOrFirm' required='N'/>
+         <field number='205' name='MaturityDay' required='N'/>
+         <field number='206' name='OptAttribute' required='N'/>
+         <field number='207' name='SecurityExchange' required='N'/>
+         <field number='210' name='MaxShow' required='N'/>
+         <field number='211' name='PegDifference' required='N'/>
+         <field number='223' name='CouponRate' required='N'/>
+         <field number='231' name='ContractMultiplier' required='N'/>
+         <field number='348' name='EncodedIssuerLen' required='N'/>
+         <field number='349' name='EncodedIssuer' required='N'/>
+         <field number='350' name='EncodedSecurityDescLen' required='N'/>
+         <field number='351' name='EncodedSecurityDesc' required='N'/>
+         <field number='354' name='EncodedTextLen' required='N'/>
+         <field number='355' name='EncodedText' required='N'/>
+         <field number='376' name='ComplianceID' required='N'/>
+         <field number='377' name='SolicitedFlag' required='N'/>
+         <group number='386' name='TradingSessions'>
+            <!-- use TradingSession#30336 instead of TradingSessionID -->
+            <field number='336' name='TradingSessionID' required='N'/>
+         </group>
+         <field number='388' name='DiscretionInst' required='N'/>
+         <field number='389' name='DiscretionOffsetValue' required='N'/>
+         <field number='427' name='GTBookingInst' required='N'/>
+         <field number='432' name='ExpireDate' required='N'/>
+         <field number='439' name='ClearingFirm' required='N'/>
+         <field number='440' name='ClearingAccount' required='N'/>
+         <field number='842' name='DiscretionOffsetType' required='N'/>
+         <field number='847' name='TargetStrategy' required='Y'/>
+         <field number='849' name='ParticipationRate' aka='MaxPctVolume' required='N'/>
+         <field number='5002' name='CodeAux' required='N'/>
+         <field number='5031' name='FavorID' required='N'/>
+         <field number="5036" name="ClientOrderSource" required="N"/>
+         <field number="5037" name="InternalClientOrderID" required="N"/>
+         <field number='5047' name='PriceDeviationInst' required='N'/>
+         <field number='5048' name='PriceDeviationOffsetType' required='N'/>
+         <field number='5049' name='PriceDeviationOffsetValue' required='N'/>
+         <field number="5059" name="BenchSecurityType" required="N" />
+         <field number='5063' name='EnableHeatMap' required='N'/>
+         <field number='5170' name='TriggerDelay' required='N'/>
+         <field number='5204' name='TradeThruPrice' required='N'/>
+         <field number='5205' name='AdjustedPriceInd' aka='WouldLevel' required='N'/>
+         <field number='6065' name='ExecutionStyle' required='N'/>
+         <field number='6066' name='PrimaryVolume' required='N'/>
+         <field number='6067' name='MinPctVolume' required='N'/>
+         <field number='6087' name='ReferencePrice' required='N'/>
+         <field number='6109' name='RefIndexPrice' required='N'/>
+         <field number='6270' name='WouldDark' required='N'/>
+         <field number="6313" name="UnderlyingAlgo" required="N" />
+         <field number='6356' name='LowerPricePct' required='N'/>
+         <field number='6415' name='OpenAuctionRate' required='N'/>
+         <field number='6416' name='CloseAuctionRate' required='N'/>
+         <field number='6417' name='ExcludePrimary' required='N'/>
+         <field number='6418' name='DarkOnly' required='N'/>
+         <field number='6419' name='ExecutionMode' required='N'/>
+         <field number='6433' name='ExcludeDest' required='N'/>
+         <field number='6434' name='ExcludeType' required='N'/>
+         <field number='6435' name='ExcludePassiveDest' required='N'/>
+         <field number='6436' name='ExcludePassiveType' required='N'/>
+         <field number='6437' name='CurveType' required='N'/>
+         <field number='6438' name='ExcludeAggressiveDest' required='N'/>
+         <field number='6439' name='ExcludeAggressiveType' required='N'/>
+         <field number='6440' name='SIAuthorized' required='N' />
+         <field number='6441' name='StartingPhase' required='N' />
+         <field number='6819' name='TriggerQtyADVPct' required='N' />
+         <field number='7486' name='VolumeProfile' required='N'/>
+         <field number='7740' name='CrossFlag' required='N'/>
+         <field number='9625' name='ExcludeAuctions' required='N'/>
+         <field number="9528" name="BenchIDSource" required="N" />
+         <field number="9530" name="BenchSecurityID" required="N" />
+         <field number='9739' name='MIFIDBestExecutionReqd' required='N'/>
+         <field number="10000" name="SliceQty" required="N" />
+         <field number="10001" name="SliceDuration" required="N" />
+         <field number="10102" name="RelativeLimitPct" required="N" />
+         <field number="10003" name="MinimumAmount" required="N" />
+         <field number='20107' name='ClientData' required='N'/>
+         <field number='29995' name='ParentAvgPx' required='N'/>
+         <field number='29996' name='ParentCumQty' required='N'/>
+         <field number='29997' name='ParentLeavesQty' required='N'/>
+         <field number='29998' name='OptimalQty' required='N'/> 
+         <field number='29999' name='MidPlacement' required='N' />
+         <field number='30011' name='ClientRef' required='N'/>
+         <field number='30012' name='AmountValidation' required='N'/>
+         <field number='30336' name='TradingSession' required='N'/>
+      </message>
+
+      <message name='ExecutionReport' msgtype='8' msgcat='app'>
+         <field number='1' name='Account' required='N'/>
+         <field number='6' name='AvgPx' required='Y'/>
+         <field number='11' name='ClOrdID' required='N'/>
+         <field number='12' name='Commission' required='N'/>
+         <field number='13' name='CommType' required='N'/>
+         <field number='14' name='CumQty' required='Y'/>
+         <field number='15' name='Currency' required='N'/>
+         <field number='17' name='ExecID' required='Y'/>
+         <field number='18' name='ExecInst' required='N'/>
+         <field number='19' name='ExecRefID' required='N'/>
+         <field number='20' name='ExecTransType' required='N'/>
+         <field number='21' name='HandlInst' required='N'/>
+         <field number='22' name='IDSource' required='N'/>
+         <field number='29' name='LastCapacity' required='N'/>
+         <field number='30' name='LastMkt' required='N'/>
+         <field number='31' name='LastPx' required='N'/>
+         <field number='32' name='LastShares' required='N'/>
+         <field number='37' name='OrderID' required='Y'/>
+         <field number='38' name='OrderQty' required='N'/>
+         <field number='39' name='OrdStatus' required='Y'/>
+         <field number='40' name='OrdType' required='N'/>
+         <field number='41' name='OrigClOrdID' required='N'/>
+         <field number='44' name='Price' required='N'/>
+         <field number='47' name='Rule80A' required='N'/>
+         <field number='48' name='SecurityID' required='N'/>
+         <field number='54' name='Side' required='Y'/>
+         <field number='55' name='Symbol' required='N'/>
+         <field number='58' name='Text' required='N'/>
+         <field number='59' name='TimeInForce' required='N'/>
+         <field number='60' name='TransactTime' required='N'/>
+         <field number='63' name='SettlmntTyp' required='N'/>
+         <field number='64' name='FutSettDate' required='N'/>
+         <field number='65' name='SymbolSfx' required='N'/>
+         <field number='66' name='ListID' required='N'/>
+         <field number='75' name='TradeDate' required='N'/>
+         <field number='76' name='ExecBroker' required='N'/>
+         <field number='77' name='OpenClose' required='N'/>
+         <field number='99' name='StopPx' required='N'/>
+         <field number='100' name='ExDestination' required='N' comment='added for re-new/os requirements'/>
+         <field number='103' name='OrdRejReason' required='N'/>
+         <field number='106' name='Issuer' required='N'/>
+         <field number='107' name='SecurityDesc' required='N'/>
+         <field number='109' name='ClientID' required='N'/>
+         <field number='110' name='MinQty' required='N'/>
+         <field number='111' name='MaxFloor' required='N'/>
+         <field number='113' name='ReportToExch' required='N'/>
+         <field number='119' name='SettlCurrAmt' required='N'/>
+         <field number='120' name='SettlCurrency' required='N'/>
+         <field number='126' name='ExpireTime' required='N'/>
+         <field number='150' name='ExecType' required='Y'/>
+         <field number='151' name='LeavesQty' required='Y'/>
+         <field number='152' name='CashOrderQty' required='N'/>
+         <field number='167' name='SecurityType' required='N'/>
+         <field number='168' name='EffectiveTime' required='N'/>
+         <field number='192' name='OrderQty2' required='N'/>
+         <field number='193' name='FutSettDate2' required='N'/>
+         <field number='194' name='LastSpotRate' required='N'/>
+         <field number='195' name='LastForwardPoints' required='N'/>
+         <field number='198' name='SecondaryOrderID' required='N'/>
+         <field number='200' name='MaturityMonthYear' required='N'/>
+         <field number='201' name='PutOrCall' required='N'/>
+         <field number='202' name='StrikePrice' required='N'/>
+         <field number='205' name='MaturityDay' required='N'/>
+         <field number='206' name='OptAttribute' required='N'/>
+         <field number='207' name='SecurityExchange' required='N'/>
+         <field number='210' name='MaxShow' required='N'/>
+         <field number='211' name='PegDifference' required='N'/>
+         <field number='223' name='CouponRate' required='N'/>
+         <field number='231' name='ContractMultiplier' required='N'/>
+         <field number='336' name='TradingSessionID' required='N'/>
+         <field number='348' name='EncodedIssuerLen' required='N'/>
+         <field number='349' name='EncodedIssuer' required='N'/>
+         <field number='350' name='EncodedSecurityDescLen' required='N'/>
+         <field number='351' name='EncodedSecurityDesc' required='N'/>
+         <field number='354' name='EncodedTextLen' required='N'/>
+         <field number='355' name='EncodedText' required='N'/>
+         <field number='372' name='RefMsgType' required='N'/>
+         <field number='376' name='ComplianceID' required='N'/>
+         <field number='377' name='SolicitedFlag' required='N'/>
+         <field number='378' name='ExecRestatementReason' required='N'/>
+         <field number='381' name='GrossTradeAmt' required='N'/>
+         <field number='382' name='NoContraBrokers' required='N'/>
+         <group number='382' name='ContraBrokers'>
+            <field number='375' name='ContraBroker' required='N'/>
+            <field number='337' name='ContraTrader' required='N'/>
+            <field number='437' name='ContraTradeQty' required='N'/>
+            <field number='438' name='ContraTradeTime' required='N'/>
+         </group>
+         <field number='388' name='DiscretionInst' required='N'/>
+         <field number='389' name='DiscretionOffsetValue' required='N'/>
+         <field number='424' name='DayOrderQty' required='N'/>
+         <field number='425' name='DayCumQty' required='N'/>
+         <field number='426' name='DayAvgPx' required='N'/>
+         <field number='427' name='GTBookingInst' required='N'/>
+         <field number='432' name='ExpireDate' required='N'/>
+         <field number='439' name='ClearingFirm' required='N'/>
+         <field number='440' name='ClearingAccount' required='N'/>
+         <field number='442' name='MultiLegReportingType' required='N'/>
+         <field number='526' name='SecondaryClOrdID' required='N'/>
+         <field number='527' name='SecondaryExecID' required='N'/>
+         <field number='842' name='DiscretionOffsetType' required='N'/>
+         <field number='847' name='TargetStrategy' required='Y'/>
+         <field number='849' name='ParticipationRate' aka='MaxPctVolume' required='N'/>
+         <field number='5002' name='CodeAux' required='N'/>
+         <field number='5031' name='FavorID' required='N'/>
+         <field number="5036" name="ClientOrderSource" required="N"/>
+         <field number="5037" name="InternalClientOrderID" required="N"/>
+         <field number='5047' name='PriceDeviationInst' required='N'/>
+         <field number='5048' name='PriceDeviationOffsetType' required='N'/>
+         <field number='5049' name='PriceDeviationOffsetValue' required='N'/>
+         <field number="5059" name="BenchSecurityType" required="N" />
+         <field number='5063' name='EnableHeatMap' required='N'/>
+         <field number='5170' name='TriggerDelay' required='N'/>
+         <field number='5204' name='TradeThruPrice' required='N'/>
+         <field number='5205' name='AdjustedPriceInd' aka='WouldLevel' required='N'/>
+         <field number='6065' name='ExecutionStyle' required='N'/>
+         <field number='6066' name='PrimaryVolume' required='N'/>
+         <field number='6067' name='MinPctVolume' required='N'/>
+         <field number='6087' name='ReferencePrice' required='N'/>
+         <field number='6109' name='RefIndexPrice' required='N'/>
+         <field number='6270' name='WouldDark' required='N'/>
+         <field number="6313" name="UnderlyingAlgo" required="N" />
+         <field number='6356' name='LowerPricePct' required='N'/>
+         <field number='6415' name='OpenAuctionRate' required='N'/>
+         <field number='6416' name='CloseAuctionRate' required='N'/>
+         <field number='6417' name='ExcludePrimary' required='N'/>
+         <field number='6418' name='DarkOnly' required='N'/>
+         <field number='6419' name='ExecutionMode' required='N'/>
+         <field number='6433' name='ExcludeDest' required='N'/>
+         <field number='6434' name='ExcludeType' required='N'/>
+         <field number='6435' name='ExcludePassiveDest' required='N'/>
+         <field number='6436' name='ExcludePassiveType' required='N'/>
+         <field number='6437' name='CurveType' required='N'/>
+         <field number='6438' name='ExcludeAggressiveDest' required='N'/>
+         <field number='6439' name='ExcludeAggressiveType' required='N'/>
+         <field number='6440' name='SIAuthorized' required='N' />
+         <field number='6441' name='StartingPhase' required='N' />
+         <field number='6819' name='TriggerQtyADVPct' required='N' />
+         <field number='7439' name='TradingVenueType' required='N'/>
+         <field number='7486' name='VolumeProfile' required='N' />
+         <field number='7740' name='CrossFlag' required='N'/>
+         <field number='9262' name='MsgID' required='Y'/>
+         <field number="9528" name="BenchIDSource" required="N" />
+         <field number="9530" name="BenchSecurityID" required="N" />
+         <field number='9625' name='ExcludeAuctions' required='N'/>
+         <field number='9730' name='TradeLiquidityIndicator' required='N'/>
+         <field number='9739' name='MIFIDBestExecutionReqd' required='N'>
+           je fais figurer ce champ ici car nous avons besoin de
+           le conserver dans nos snapshots, mais je suis pas sur
+           qu'il convienne reellement de le remonter au client.
+         </field>
+         <field number="10000" name="SliceQty" required="N" />
+         <field number="10001" name="SliceDuration" required="N" />
+         <field number="10102" name="RelativeLimitPct" required="N" />
+         <field number="10003" name="MinimumAmount" required="N" />
+         <field number='20107' name='ClientData' required='N'/>
+         <field number='29995' name='ParentAvgPx' required='N'/>
+         <field number='29996' name='ParentCumQty' required='N'/>
+         <field number='29997' name='ParentLeavesQty' required='N'/>
+         <field number='29998' name='OptimalQty' required='N'/> 
+         <field number='29999' name='MidPlacement' required='N'/>
+         <field number='30009' name='ResumeAck' required='N'/>
+         <field number='30011' name='ClientRef' required='N'/>
+         <field number='30012' name='AmountValidation' required='N'/>
+         <field number='30015' name='RedirectedStrategy' required='N'/>
+         <field number='30016' name='BaseStrategy' required='N'/>
+         <field number='30336' name='TradingSession' required='N'/>
+      </message>
+
+      <message name='OrderCancelReplaceRequest' msgtype='G' msgcat='app'>
+         <field number='1' name='Account' required='N'/>
+         <field number='11' name='ClOrdID' required='Y'/>
+         <field number='12' name='Commission' required='N'/>
+         <field number='13' name='CommType' required='N'/>
+         <field number='15' name='Currency' required='N'/>
+         <field number='18' name='ExecInst' required='N'/>
+         <field number='21' name='HandlInst' required='Y'/>
+         <field number='22' name='IDSource' required='N'/>
+         <field number='37' name='OrderID' required='N'/>
+         <field number='38' name='OrderQty' required='N'/>
+         <field number='40' name='OrdType' required='Y'/>
+         <field number='41' name='OrigClOrdID' required='N' comment='not mandatory in CSAM'/>
+         <field number='44' name='Price' required='N'/>
+         <field number='47' name='Rule80A' required='N'/>
+         <field number='48' name='SecurityID' required='N'/>
+         <field number='54' name='Side' required='Y'/>
+         <field number='55' name='Symbol' required='Y'/>
+         <field number='58' name='Text' required='N'/>
+         <field number='59' name='TimeInForce' required='N'/>
+         <field number='60' name='TransactTime' required='Y'/>
+         <field number='63' name='SettlmntTyp' required='N'/>
+         <field number='64' name='FutSettDate' required='N'/>
+         <field number='65' name='SymbolSfx' required='N'/>
+         <field number='66' name='ListID' required='N'/>
+         <field number='76' name='ExecBroker' required='N'/>
+         <field number='77' name='OpenClose' required='N'/>
+         <field number='78' name='NoAllocs' required='N'/>
+         <group number='78' name='Allocs'>
+            <field number='79' name='AllocAccount' required='N'/>
+            <field number='80' name='AllocShares' required='N'/>
+         </group>
+         <field number='99' name='StopPx' required='N'/>
+         <field number='100' name='ExDestination' required='N'/>
+         <field number='106' name='Issuer' required='N'/>
+         <field number='107' name='SecurityDesc' required='N'/>
+         <field number='109' name='ClientID' required='N'/>
+         <field number='110' name='MinQty' required='N'/>
+         <field number='111' name='MaxFloor' required='N'/>
+         <field number='114' name='LocateReqd' required='N'/>
+         <field number='120' name='SettlCurrency' required='N'/>
+         <field number='121' name='ForexReq' required='N'/>
+         <field number='126' name='ExpireTime' required='N'/>
+         <field number='152' name='CashOrderQty' required='N'/>
+         <field number='167' name='SecurityType' required='N'/>
+         <field number='168' name='EffectiveTime' required='N'/>
+         <field number='192' name='OrderQty2' required='N'/>
+         <field number='193' name='FutSettDate2' required='N'/>
+         <field number='200' name='MaturityMonthYear' required='N'/>
+         <field number='201' name='PutOrCall' required='N'/>
+         <field number='202' name='StrikePrice' required='N'/>
+         <field number='203' name='CoveredOrUncovered' required='N'/>
+         <field number='204' name='CustomerOrFirm' required='N'/>
+         <field number='205' name='MaturityDay' required='N'/>
+         <field number='206' name='OptAttribute' required='N'/>
+         <field number='207' name='SecurityExchange' required='N'/>
+         <field number='210' name='MaxShow' required='N'/>
+         <field number='211' name='PegDifference' required='N'/>
+         <field number='223' name='CouponRate' required='N'/>
+         <field number='231' name='ContractMultiplier' required='N'/>
+         <field number='348' name='EncodedIssuerLen' required='N'/>
+         <field number='349' name='EncodedIssuer' required='N'/>
+         <field number='350' name='EncodedSecurityDescLen' required='N'/>
+         <field number='351' name='EncodedSecurityDesc' required='N'/>
+         <field number='354' name='EncodedTextLen' required='N'/>
+         <field number='355' name='EncodedText' required='N'/>
+         <field number='376' name='ComplianceID' required='N'/>
+         <field number='377' name='SolicitedFlag' required='N'/>
+         <group number='386' name='TradingSessions'>
+            <!-- use TradingSession#30336 instead of TradingSessionID -->
+            <field number='336' name='TradingSessionID' required='N'/>
+         </group>
+         <field number='388' name='DiscretionInst' required='N'/>
+         <field number='389' name='DiscretionOffsetValue' required='N'/>
+         <field number='427' name='GTBookingInst' required='N'/>
+         <field number='432' name='ExpireDate' required='N'/>
+         <field number='439' name='ClearingFirm' required='N'/>
+         <field number='440' name='ClearingAccount' required='N'/>
+         <field number='842' name='DiscretionOffsetType' required='N'/>
+         <field number='847' name='TargetStrategy' required='Y'/>
+         <field number='849' name='ParticipationRate' aka='MaxPctVolume' required='N'/>
+         <field number='5002' name='CodeAux' required='N'/>
+         <field number='5031' name='FavorID' required='N'/>
+         <field number='5047' name='PriceDeviationInst' required='N'/>
+         <field number='5048' name='PriceDeviationOffsetType' required='N'/>
+         <field number='5049' name='PriceDeviationOffsetValue' required='N'/>
+         <field number="5059" name="BenchSecurityType" required="N" />
+         <field number='5063' name='EnableHeatMap' required='N'/>
+         <field number='5170' name='TriggerDelay' required='N'/>
+         <field number='5204' name='TradeThruPrice' required='N'/>
+         <field number='5205' name='AdjustedPriceInd' aka='WouldLevel' required='N'/>
+         <field number='6065' name='ExecutionStyle' required='N'/>
+         <field number='6066' name='PrimaryVolume' required='N'/>
+         <field number='6067' name='MinPctVolume' required='N'/>
+         <field number='6087' name='ReferencePrice' required='N'/>
+         <field number='6109' name='RefIndexPrice' required='N'/>
+         <field number='6270' name='WouldDark' required='N'/>
+         <field number="6313" name="UnderlyingAlgo" required="N" />
+         <field number='6356' name='LowerPricePct' required='N'/>
+         <field number='6415' name='OpenAuctionRate' required='N'/>
+         <field number='6416' name='CloseAuctionRate' required='N'/>
+         <field number='6417' name='ExcludePrimary' required='N'/>
+         <field number='6418' name='DarkOnly' required='N'/>
+         <field number='6419' name='ExecutionMode' required='N'/>
+         <field number='6433' name='ExcludeDest' required='N'/>
+         <field number='6434' name='ExcludeType' required='N'/>
+         <field number='6435' name='ExcludePassiveDest' required='N'/>
+         <field number='6436' name='ExcludePassiveType' required='N'/>
+         <field number='6437' name='CurveType' required='N'/>
+         <field number='6438' name='ExcludeAggressiveDest' required='N'/>
+         <field number='6439' name='ExcludeAggressiveType' required='N'/>
+         <field number='6441' name='StartingPhase' required='N' />
+         <field number='6819' name='TriggerQtyADVPct' required='N' />
+         <field number='7486' name='VolumeProfile' required='N' />
+         <field number="9528" name="BenchIDSource" required="N" />
+         <field number="9530" name="BenchSecurityID" required="N" />
+         <field number='9625' name='ExcludeAuctions' required='N'/>
+         <field number="10000" name="SliceQty" required="N" />
+         <field number="10001" name="SliceDuration" required="N" />
+         <field number="10102" name="RelativeLimitPct" required="N" />
+         <field number="10003" name="MinimumAmount" required="N" />
+         <field number='20107' name='ClientData' required='N'/>
+         <field number='29995' name='ParentAvgPx' required='N'/>
+         <field number='29996' name='ParentCumQty' required='N'/>
+         <field number='29997' name='ParentLeavesQty' required='N'/>
+         <field number='29998' name='OptimalQty' required='N'/> 
+         <field number='29999' name='MidPlacement' required='N' />
+         <field number='30012' name='AmountValidation' required='N'/>
+         <field number='30336' name='TradingSession' required='N'/>
+      </message>
+
+      <message name='OrderCancelRequest' msgtype='F' msgcat='app'>
+         <field number='1' name='Account' required='N'/>
+         <field number='11' name='ClOrdID' required='Y'/>
+         <field number='22' name='IDSource' required='N'/>
+         <field number='37' name='OrderID' required='N'/>
+         <field number='38' name='OrderQty' required='N'/>
+         <field number='41' name='OrigClOrdID' required='N' comment='not required in CSAM'/>
+         <field number='48' name='SecurityID' required='N'/>
+         <field number='54' name='Side' required='Y'/>
+         <field number='55' name='Symbol' required='Y'/>
+         <field number='58' name='Text' required='N'/>
+         <field number='60' name='TransactTime' required='Y'/>
+         <field number='65' name='SymbolSfx' required='N'/>
+         <field number='66' name='ListID' required='N'/>
+         <field number='76' name='ExecBroker' required='N'/>
+         <field number='106' name='Issuer' required='N'/>
+         <field number='107' name='SecurityDesc' required='N'/>
+         <field number='109' name='ClientID' required='N'/>
+         <field number='152' name='CashOrderQty' required='N'/>
+         <field number='167' name='SecurityType' required='N'/>
+         <field number='200' name='MaturityMonthYear' required='N'/>
+         <field number='201' name='PutOrCall' required='N'/>
+         <field number='202' name='StrikePrice' required='N'/>
+         <field number='205' name='MaturityDay' required='N'/>
+         <field number='206' name='OptAttribute' required='N'/>
+         <field number='207' name='SecurityExchange' required='N'/>
+         <field number='223' name='CouponRate' required='N'/>
+         <field number='231' name='ContractMultiplier' required='N'/>
+         <field number='348' name='EncodedIssuerLen' required='N'/>
+         <field number='349' name='EncodedIssuer' required='N'/>
+         <field number='350' name='EncodedSecurityDescLen' required='N'/>
+         <field number='351' name='EncodedSecurityDesc' required='N'/>
+         <field number='354' name='EncodedTextLen' required='N'/>
+         <field number='355' name='EncodedText' required='N'/>
+         <field number='376' name='ComplianceID' required='N'/>
+         <field number='377' name='SolicitedFlag' required='N'/>
+
+         <field number='847' name='TargetStrategy' required='Y'/>
+         <field number='5002' name='CodeAux' required='N'/>
+         <field number='20107' name='ClientData' required='N'/>
+         <field number='30010' name='ForcedCancel' required='N'/>
+      </message>
+
+      <!-- je crois que le message ci-dessous n'a rien a faire ici -->
+      <message name='BusinessMessageReject' msgtype='j' msgcat='app'>
+         <field number='45' name='RefSeqNum' required='N'/>
+         <field number='372' name='RefMsgType' required='Y'/>
+         <field number='379' name='BusinessRejectRefID' required='N'/>
+         <field number='380' name='BusinessRejectReason' required='Y'/>
+         <field number='58' name='Text' required='N'/>
+         <field number='354' name='EncodedTextLen' required='N'/>
+         <field number='355' name='EncodedText' required='N'/>
+
+         <field number='11' name='ClOrdID' required='N'/>
+      </message>
+
+      <!-- 
+      Nous avons rajouter ce message FIX42 dans le dico CSAM pour nous debarrasser
+      du dico FIX42.xml
+       -->
+      <message name='OrderCancelReject' msgtype='9' msgcat='app'>
+         <field number='37' name='OrderID' required='Y'/>
+         <field number='198' name='SecondaryOrderID' required='N'/>
+         <field number='11' name='ClOrdID' required='Y'/>
+         <field number='41' name='OrigClOrdID' required='Y'/>
+         <field number='39' name='OrdStatus' required='Y'/>
+         <field number='109' name='ClientID' required='N'/>
+         <field number='76' name='ExecBroker' required='N'/>
+         <field number='66' name='ListID' required='N'/>
+         <field number='1' name='Account' required='N'/>
+         <field number='60' name='TransactTime' required='N'/>
+         <field number='434' name='CxlRejResponseTo' required='Y'/>
+         <field number='102' name='CxlRejReason' required='N'/>
+         <field number='58' name='Text' required='N'/>
+         <field number='354' name='EncodedTextLen' required='N'/>
+         <field number='355' name='EncodedText' required='N'/>
+         <field number='526' name='SecondaryClOrdID' required='N'/>
+
+         <field number='847' name='TargetStrategy' required='N'/>
+      </message>
+
+      <message name='OrderStatusRequest' msgtype='H' msgcat='app'>
+         <field number='37' name='OrderID' required='N'/>
+         <field number='11' name='ClOrdID' required='Y'/>
+         <field number='109' name='ClientID' required='N'/>
+         <field number='1' name='Account' required='N'/>
+         <field number='76' name='ExecBroker' required='N'/>
+         <field number='55' name='Symbol' required='Y'/>
+         <field number='65' name='SymbolSfx' required='N'/>
+         <field number='48' name='SecurityID' required='N'/>
+         <field number='22' name='IDSource' required='N'/>
+         <field number='167' name='SecurityType' required='N'/>
+         <field number='200' name='MaturityMonthYear' required='N'/>
+         <field number='205' name='MaturityDay' required='N'/>
+         <field number='201' name='PutOrCall' required='N'/>
+         <field number='202' name='StrikePrice' required='N'/>
+         <field number='206' name='OptAttribute' required='N'/>
+         <field number='231' name='ContractMultiplier' required='N'/>
+         <field number='223' name='CouponRate' required='N'/>
+         <field number='207' name='SecurityExchange' required='N'/>
+         <field number='106' name='Issuer' required='N'/>
+         <field number='348' name='EncodedIssuerLen' required='N'/>
+         <field number='349' name='EncodedIssuer' required='N'/>
+         <field number='107' name='SecurityDesc' required='N'/>
+         <field number='350' name='EncodedSecurityDescLen' required='N'/>
+         <field number='351' name='EncodedSecurityDesc' required='N'/>
+         <field number='54' name='Side' required='Y'/>
+      </message>
+
+      <message name='OrderBookConsultation' msgtype='UCSAM_OBC' msgcat='app'>
+        <!-- add filters on security ? proprietary (for supervisor) ? etc. -->
+      </message>
+
+      <message name='OrderBookTermination' msgtype='UCSAM_OBT' msgcat='app'>
+        <!-- message de fin de la requete OrderBookConsultation -->
+        <!-- (add num orders recovered? or "failure" indicator?) -->
+      </message>
+
+      <message name='RunTimeEventsSubscription' msgtype='UCSAM_RTES' msgcat='app'>
+        <!-- if a flag is
+               - not filled : the status for this kind of events is unchanged
+               - filled : change the subscription status for this kind of event -->
+        <field number='30000' name='Requests' required='N'/>
+        <field number='30001' name='Responses' required='N'/>
+        <field number='30002' name='Trades' required='N'/>
+        <field number='30003' name='Indicators' required='N'/>
+      </message>
+
+      <message name='EventsHistoricConsultation' msgtype='UCSAM_EHC' msgcat='app'>
+        <field number='9262' name='MsgID' required='N'/>
+        <field number='30000' name='Requests' required='N'/>
+        <field number='30001' name='Responses' required='N'/>
+        <field number='30002' name='Trades' required='N'/>
+      </message>
+
+      <message name='EventsHistoricTermination' msgtype='UCSAM_EHT' msgcat='app'>
+        <!-- message de fin de la requete EventsHistoricConsultation -->
+        <!-- (add num messages recovered?) -->
+      </message>
+
+      <message name='OrderHoldRequest' msgtype='UCSAM_OHR' msgcat='app'>
+         <!-- requete pour passer un ordre en etat "hold" -->
+         <field number='37' name='OrderID' required='Y'/>
+      </message>
+
+      <message name='OrderResumeRequest' msgtype='UCSAM_ORR' msgcat='app'>
+         <!-- requete pour repasser un ordre en actif -->
+         <field number='37' name='OrderID' required='Y'/>
+      </message>
+
+      <message name='Indicator' msgtype='UCSAM_I' msgcat='app'>
+         <field number='11' name='ClOrdID' required='Y'/>
+         <field number='37' name='OrderID' required='Y'/>
+         <field number='60' name='TransactTime' required='Y'/>
+         <field number='198' name='SecondaryOrderID' required='N'/>
+         <field number='526' name='SecondaryClOrdID' required='N'/>
+         <field number='847' name='TargetStrategy' required='Y'/>
+         <field number='30015' name='RedirectedStrategy' required='N'/>
+         <field number='30016' name='BaseStrategy' required='N'/>
+         <field number='30017' name='TacticPublicName' required='N'/>
+         <field number='30022' name='IndicatorCategory' required='N'/>
+         <field number='30023' name='IndicatorStatus' required='N'/>
+         <field number='30030' name='FloorLeavesQty' required='N'/>
+
+         <field number='30024' name='NoDestinations' required='N'/>
+         <group number='30024' name='Destinations'>
+           <field number='100' name='ExDestination' required='Y'/>
+           <field number='30020' name='NoIndicators' required='Y'/>
+           <group number='30020' name='Indicators'>
+              <field number='371' name='RefTagID' required='Y'/>
+              <field number='30021' name='IndicatorValue' required='Y'/>
+           </group>
+         </group>
+
+      </message>
+
+   </messages>
+</fix>

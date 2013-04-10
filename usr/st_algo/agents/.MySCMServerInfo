@@ -1,0 +1,9 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/st_algo/agents
+__init__.py;4294967295;1;1340872935;
+Cruiser.py;2481368888;1;1340872935;
+CruiserCompanion.py;4194518252;1;1340872935;
+VOPTracking.py;3295200534;1;1340872935;
+BinaryAccelerator.py;2467219543;1;1340881729;
+refactored_ScriptedPVOL.py;712279039;1;1340881729;
+ScriptedPVOL.py;1083444469;3;1349876936;

@@ -1,0 +1,6 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/robur3/agents
+__init__.py;346195372;1;1340872933;
+basealgo.py;3883857820;1;1340872933;
+depth.py;503220642;1;1340872933;
+main_depth.py;2475413232;1;1340872933;

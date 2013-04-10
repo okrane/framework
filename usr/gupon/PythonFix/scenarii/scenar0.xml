@@ -1,0 +1,26 @@
+<test>
+<description>
+"This test validate the behavior of the Market State Manager, a State MAchine aimed at giving a valid market state, using feeds and trading hours if needed"
+</description>
+
+<venue id="LONDON_PRIM">
+	
+</venue>
+
+<venue id="TURQ_L">
+</venue>
+
+<venue id="BATS_EUR"> 
+	
+</venue>
+
+<venue id="CHIX_L"> 
+	
+</venue>
+
+
+
+</test>
+
+
+

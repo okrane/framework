@@ -1,0 +1,10 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/vilec/agents
+__init__.py;4294967295;1;1340872941;
+__init__.pyc;3955427346;1;1340872941;
+BinaryAccelerator.py;1037114755;1;1340872944;
+BinaryAccelerator.pyc;2084994586;1;1340872944;
+ScriptedPVOL.py;4044677381;8;1340872944;
+test.py;687686961;1;1340872944;
+dark_mid_tester.py;2896976836;1;1340881740;
+orderbook_observer.py;1365917747;1;1340881740;

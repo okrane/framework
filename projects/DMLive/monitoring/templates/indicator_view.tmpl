@@ -1,0 +1,47 @@
+<html>
+<head>
+	<title>Algo Search Results</title>
+    	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />        
+        <link href="{{STATIC_URL}}css/styles.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<h1> Algorithm Monitoring </h1>
+
+<p><h2> Detailed Graphic </h2>  <p>
+<img src="/img/plot_view_{{id}}_{{s}}" width="800px">
+<p><h2> Sequence View </h2> 
+<P>
+<table>
+<tr>
+<!--class="spec" ???? -->	
+{% for elem in h %}	
+	<th scope="col" abbr="{{elem}}" > {{elem}} </th>	
+{% endfor %}
+</tr>
+{% for elem in t %}	
+	<tr>	
+	{% for j in elem %}		
+		<td> {{ j }} </td>		
+	{% endfor %}				
+	</tr>
+{% endfor %}
+</table>
+<p><h2> Deals and Placements View </h2><p>
+
+<p><h2> Trading Curves </h2><p>
+<table>
+<tr>
+{% for elem in curves_h %}	
+	<th scope="col" abbr="{{elem}}" > {{elem}} </th>	
+{% endfor %}
+</tr>
+{% for elem in curves_e %}	
+	<tr>	
+	{% for j in elem %}		
+		<td> {{ j }} </td>		
+	{% endfor %}				
+	</tr>
+{% endfor %}
+</table>
+</body>
+</html>

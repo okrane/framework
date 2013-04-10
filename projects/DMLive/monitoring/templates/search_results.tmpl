@@ -1,0 +1,31 @@
+<html>
+<head>
+	<title>Algo Search Results</title>
+    	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />        
+        <link href="{{STATIC_URL}}css/styles.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+This is an example of the things recovered from the database: 
+<P>
+<table>
+<tr>
+<!--class="spec" ???? -->	
+{% for elem in h %}	
+	<th scope="col" abbr="{{elem}}" > {{elem}} </th>	
+{% endfor %}
+</tr>
+{% for elem in t %}	
+	<tr>	
+	{% for j in elem %}
+		{% if forloop.first %}
+			{% url views.real_time_view j as the_url%}
+			<td> <a href="../real_time_view_{{j}}_{{s}}"><b>{{ j }}</b></a> </td>			
+		{% else %}
+			<td> {{ j }} </td>
+		{% endif%}
+	{% endfor %}				
+	</tr>
+{% endfor %}
+</table>
+</body>
+</html>

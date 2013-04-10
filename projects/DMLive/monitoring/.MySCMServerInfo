@@ -1,0 +1,13 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/sivla/funcs/DMLive/monitoring
+__init__.py;4294967295;1;1343722608;
+__init__.pyc;303844971;1;1343722608;
+algo_view.pyc;3331035523;1;1343722608;
+forms.pyc;3914633773;1;1343722608;
+models.py;1945844947;1;1343722608;
+models.pyc;2010954965;1;1343722608;
+tests.py;3392277917;1;1343722608;
+views.pyc;1762103984;1;1343722608;
+views.py;3744731324;6;1343740268;
+forms.py;581098469;3;1343740082;
+algo_view.py;3517204890;4;1343741115;

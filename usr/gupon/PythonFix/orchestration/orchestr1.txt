@@ -1,0 +1,6 @@
+1:R/ACK
+2:O/Full
+3:R/ACK
+4:O/Partial/2000
+5:O/OCR
+6:R/ACK

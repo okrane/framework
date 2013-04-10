@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+
+<configuration version='1'>
+<!-- DEFINITIONS -->
+  <delegates>
+    <delegate name='LUA' plugin='DelegateLua.so'/>
+    <delegate name='PYTHON' plugin='DelegatePython.so'/>
+    <delegate name='CPP' plugin='DelegateCpp.so'/>
+  </delegates>
+
+  <frameworks>
+    <framework name='lua' delegate='LUA'>
+      <component file='${ALGHOSTER_LIB_PATH}/lua/framework.lua' />
+    </framework>
+   <framework name='simep' delegate='PYTHON'>
+      <component file='${ALGHOSTER_LIB_PATH}/pydelegate' />
+    </framework>
+    <framework name='cpp' delegate='CPP'>
+      <component file='none'/>
+    </framework>
+  </frameworks>
+
+  <scripts>
+    <script name='IfThenElse' framework='lua'>
+      <component file='${ALGHOSTER_SCRIPT_PATH}/lua/ifthenelse.lua' />
+    </script>
+    <script name='cycle' framework='simep'>
+      <component file='${ALGHOSTER_SCRIPT_PATH}/python/SimpleTrader.py' />
+    </script>
+    <script name='binaryaccelerator' framework='simep'>
+      <component file='${ALGHOSTER_SCRIPT_PATH}/python/BinaryAccelerator.py' />
+    </script>
+    <script name='slippage' framework='simep'>
+      <component file='${ALGHOSTER_SCRIPT_PATH}/python/Slippage.py' />
+    </script>
+    <script name='trackingplacement' framework='simep'>
+      <component file='${ALGHOSTER_SCRIPT_PATH}/python/TrackingPlacement.py' />
+    </script>
+    <script name='DFAFloat' framework='cpp'>
+      <component file='${ALGHOSTER_LIB_PATH}/dfafloat.so'/>
+    </script>
+    <script name='tracking' framework='cpp'>
+      <component file='${ALGHOSTER_LIB_PATH}/tracking.so' />
+    </script>
+    <script name='twap' framework='cpp'>
+      <component file='${ALGHOSTER_LIB_PATH}/twapcantor.so' />
+    </script>
+  </scripts>
+
+  <tactics>
+    <tactic name='InLine' type='Inline' plugin='inline.so' />
+    <tactic name='marketorder' type='MarketOrder' plugin='' />
+    <tactic name='iceberg' type='Iceberg' plugin='icebergmono.so' />
+    <tactic name='IcebergMD' type='IcebergMD' plugin='iceberg.so' />
+    <tactic name='HuntMD' type='Hunter' plugin='hunt.so' />
+    <tactic name='Avp' type='AVP' plugin='avp.so' />
+    <tactic name='Evp' type='EVP' plugin='evp.so' />
+    <tactic name='EvpXFire' type='EVPCrossFire' plugin='evpxfire.so' />
+    <tactic name='EvpMW' type='EVPMarshallWace' plugin='evpmw.so' />
+    <tactic name='Svt' type='SVT' plugin='svt.so' />
+    <tactic name='Svp' type='SVP' plugin='svp.so' />
+    <tactic name='Float' type='FLOAT' plugin='float.so' />
+    <tactic name='AtTheClose' type='AtTheClose' plugin='attheclose.so' />
+    <tactic name='TimeTrigger' type='TimeTrigger' plugin='timetrigger.so' />
+    <tactic name='Vwap'  type='Vwap' plugin='vwap.so' />
+    <tactic name='VwapXFire' type='VwapCrossFire' plugin='vwapcrossfire.so' />
+    <tactic name='Twap' type='Twap' plugin='twap.so' />
+    <tactic name='TargetClose' type='TargetClose' plugin='targetclose.so' />
+    <tactic name='ImplementationShortFall' type='ImplementationShortFall' plugin='vwapimplementationshortfall.so' />
+    <tactic name='Blink' type='Blink' plugin='blink.so' />
+    <tactic name='CrossFire' type='TAP' plugin='tap.so' />
+    <tactic name='tvfo' type='TVFO' plugin='tvfo.so' />
+  </tactics>
+
+  <!-- DECLARATIONS -->
+  <!-- algo = tactic + script -->
+  <algos>
+    <algo name='MarketOrder' tactic='marketorder' />
+    <algo name='IcebergMono' tactic='iceberg' />
+    <algo name='Iceberg' tactic='IcebergMD' />
+    <algo name='Hunt' tactic='HuntMD' />
+    <algo name='AVP' tactic='Avp' />
+    <algo name='EVP' tactic='Evp' />
+    <algo name='EVPCrossFire' tactic='EvpXFire' />
+    <algo name='EVPMarshallWace' tactic='EvpMW' />
+    <algo name='SVP' tactic='Svp' />
+    <algo name='SVT' tactic='Svt' />
+    <algo name='Vwap' tactic='Vwap' />
+    <algo name='ImplementationShortFall' tactic='ImplementationShortFall' />
+    <algo name='ISS' tactic='ImplementationShortFall' />
+    <algo name='VwapCrossFire' tactic='VwapXFire' />
+    <algo name='Twap' tactic='Twap' />
+    <algo name='TargetClose' tactic='TargetClose' />
+    <algo name='TimeTrigger' tactic='TimeTrigger' />
+    <algo name='AtTheClose' tactic='AtTheClose' />
+    <algo name='FLOAT' tactic='Float' />
+    <algo name='Blink' tactic='Blink' />
+    <algo name='TAP' tactic='CrossFire' />
+    <algo name='IfThenElse' tactic='tvfo' script='IfThenElse' />
+    <algo name='Cycle' tactic='tvfo' script='cycle' />
+    <algo name='DFAFloat' tactic='tvfo' script='DFAFloat' />
+    <algo name='BinaryAccelerator' tactic='tvfo' script='binaryaccelerator' />
+    <algo name='Tracking' tactic='tvfo' script='tracking' />
+    <algo name='TwapCantor' tactic='tvfo' script='twap' />
+    <algo name='Slippage' tactic='tvfo' script='slippage' />
+    <algo name='TrackingPlacement' tactic='tvfo' script='trackingplacement' />
+    <algo name='VWAPS' tactic='Vwap' />
+  </algos>
+
+  <!-- templates algo -->
+  <!-- template = name + algo + n params -->
+  <!--
+  <templates>
+    <template name="CustomIfThenElse" algo="IfThenElse">
+      <param name="ExcludeDest" value="Lit" priority="merge" />
+      <param name="BenchSecurityID" value="A" priority="ignore" />
+      <param name="Price" value="17.01" />
+    </template>
+
+    <template name="Twap" algo="TwapCantor"/>
+  </templates>
+  -->
+</configuration>

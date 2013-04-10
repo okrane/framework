@@ -1,0 +1,72 @@
+<test>
+<description>
+"This test validate the behavior of the Market State Manager, a State MAchine aimed at giving a valid market state, using feeds and trading hours if needed"
+</description>
+
+<venue id="LONDON_PRIM">
+	<orderbook>
+		<MarketDataEntry> 
+			<Size>1000</Size>
+			<Price>51.199</Price>
+			<Side>Buy</Side>
+		</MarketDataEntry>
+		<MarketDataEntry> 
+			<Size> 1000</Size>
+			<Price>52.1</Price>
+			<Side>Buy</Side>
+		</MarketDataEntry>
+		<MarketDataEntry> 
+			<Size>1000</Size>
+			<Price>52.25</Price>
+			<Side>Buy</Side>
+		</MarketDataEntry>
+	</orderbook>
+</venue>
+
+<venue id="BATS_EUR"> 
+	<orderbook>
+		<MarketDataEntry> 
+			<Size>1500</Size>
+			<Price>51.5</Price>
+			<Side>Buy</Side>
+		</MarketDataEntry>
+		<MarketDataEntry> 
+			<Size> 1500</Size>
+			<Price>52</Price>
+			<Side>Buy</Side>
+		</MarketDataEntry>
+		<MarketDataEntry> 
+			<Size>1500</Size>
+			<Price>52.5</Price>
+			<Side>Buy</Side>
+		</MarketDataEntry>
+	</orderbook>
+</venue>
+
+<venue id="CHIX_L"> 
+	<orderbook>
+		<MarketDataEntry> 
+			<Size>900</Size>
+			<Price>51.2</Price>
+			<Side>Buy</Side>
+		</MarketDataEntry>
+		<MarketDataEntry> 
+			<Size> 900</Size>
+			<Price>51.201</Price>
+			<Side>Buy</Side>
+		</MarketDataEntry>
+		<MarketDataEntry> 
+			<Size>900</Size>
+			<Price>51.202</Price>
+			<Side>Buy</Side>
+		</MarketDataEntry>
+	</orderbook>
+</venue>
+
+<venue id="TURQ_L">
+</venue>
+
+</test>
+
+
+

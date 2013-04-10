@@ -1,0 +1,5 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/midan/scenarii
+__init__.py;747955063;1;1340872932;
+SimepRunner_mono_stock.py;1185905881;1;1340872932;
+SimepRunner_multple_stocks.py;803690205;1;1340872933;

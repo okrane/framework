@@ -1,0 +1,42 @@
+<html>
+<head>
+	<title>Search for an Algo</title>
+    	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />        
+        <link href="{{STATIC_URL}}css/styles.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<center>
+<form action="" method="post">{% csrf_token %}
+	<table>
+	<tr>
+		<th scope="col" abbr="TraderView" > Trader View </th>
+		<th scope="col" abbr="StrategyView" > Strategy View </th>
+		<th scope="col" abbr="InternalView" > Internal View </th>
+	</tr>
+	<tr>
+		<td> <p><label for="id_client_order_id">Client Order Id:</label> <br> <input id="id_client_order_id" type="text" name="client_order_id" maxlength="30" /></p></td>
+		<td>		
+		<p><label for="id_strategy">Strategy:</label><br> <select name="strategy" id="id_strategy">
+		<option value="*">*</option>
+		<option value="TAP">Crossfire</option>
+		<option value="Vwap">VWAP</option>
+		<option value="Twap">TWAP</option>
+		<option value="TwapCantor">Cantor TWAP</option>
+		<option value="EVPMarshallWace">EVP-MW</option>
+		<option value="ISS">ISS</option>
+		</select></p>
+		<p><label for="id_server">Server:</label> <br> <select name="server" id="id_server">
+		<option value="1228">Production</option>
+		<option value="1228">Pre-Production</option>
+		<option value="1228">HPP</option>		
+		</select></p>
+			
+		</td>
+		<td><p><label for="id_client_order_id">Order Id:</label> <br> <input id="order_id" type="text" name="order_id" maxlength="30" /></p>	</td>	
+		
+	</tr>
+	</table>
+	<input type="submit" value="Submit" />	
+</form>
+</center>
+</body>

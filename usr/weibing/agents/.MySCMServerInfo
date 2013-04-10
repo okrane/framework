@@ -1,0 +1,7 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/dev/weibing/agents
+__init__.py;4294967295;1;1340872944;
+Inter_S.py;397566386;1;1340872944;
+Observer.py;1276968699;1;1340872944;
+SlippageStrategy.py;221348141;3;1340872944;
+SmartSlippage.py;1194605281;9;1340872944;

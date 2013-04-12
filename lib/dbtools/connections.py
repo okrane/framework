@@ -3,7 +3,7 @@
 """
 import xml.sax.handler
 from sybase import Sybase
-#from Sybase import Sybase
+
 import re, os, sys
 
 db_connection_file = "%s\\connections.xml" % os.path.dirname(__file__)

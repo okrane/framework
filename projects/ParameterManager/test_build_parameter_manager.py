@@ -13,10 +13,12 @@ documents.append({'strategy': "CROSS", 'key' : {'trader_id': 1, 'place_id': "rom
 documents.append({'strategy': "CROSS", 'key' : {'place_id': "paris", 'parent_algo_id': "VWAP"}, "static_parameters": {'blabla': 46 }})
 documents.append({'strategy': "VWAP", 'key' : {'place_id': "paris", 'parent_algo_id': "VWAP"}, "static_parameters": {'blabla': 1111 }})
 documents.append({'strategy': "VWAP", 'key' : {}, "static_parameters": {'blabla': 0 }})
+###########################################################
 
 for doc in documents:
     collection.insert(doc)
     
-for i in collection.find({"strategy": "VWAP"}):
-    print i
+print "--------------------------------------------"
+for doc in collection.find({"key.place_id" : {"$exists": True}}):
+    print doc
     print " "

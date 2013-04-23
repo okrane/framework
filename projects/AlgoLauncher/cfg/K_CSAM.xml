@@ -2,6 +2,7 @@
 	<messages>
 		<message name='NewOrderSingle' msgtype='D' msgcat='app'>
 			<field number='1' name='Account' required='N'/>
+			<field number='8' name='BeginString ' required='Y'/>
 			<field number='11' name='ClOrdID' required='Y'/>
 			<field number='12' name='Commission' required='N'/>
 			<field number='13' name='CommType' required='N'/>

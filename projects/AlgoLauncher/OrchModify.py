@@ -234,7 +234,6 @@ class Orchestrator(Application):
         message.setField(40, '2')
 #         message.setField(50, 'pws08fctuser006')
         message.setField(115, 'PWARE')
-        #message.setField(fix.TransactTime((datetime.datetime.now ().strftime ("%Y%m%d-%H:%M:%S.%f"))[:-3]))
         message.setField(fix.TransactTime(calendar.timegm(time.gmtime())))
         message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
         message.setField(9049, 'TU4')

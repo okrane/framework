@@ -1,0 +1,152 @@
+<fix major='4' minor='2'>
+	<messages>
+		<message name='NewOrderSingle' msgtype='D' msgcat='app'>
+			<field number='1' name='Account' required='N'/>
+			<field number='11' name='ClOrdID' required='Y'/>
+			<field number='12' name='Commission' required='N'/>
+			<field number='13' name='CommType' required='N'/>
+			<field number='15' name='Currency' required='N'/>
+			<field number='18' name='ExecInst' required='N'/>
+			<field number='21' name='HandlInst' required='Y'/>
+			<field number='22' name='IDSource' required='N'/>
+			<field number='23' name='IOIid' required='N'/>
+			<field number='38' name='OrderQty' required='N'/>
+			<field number='40' name='OrdType' required='Y'/>
+			<field number='44' name='Price' required='N'/>
+			<field number='47' name='Rule80A' required='N'/>
+			<field number='48' name='SecurityID' required='N'/>
+			<field number='54' name='Side' required='Y'/>
+			<field number='55' name='Symbol' required='Y'/>
+			<field number='59' name='TimeInForce' required='N'/>
+			<field number='58' name='Text' required='N'/>
+			<field number='60' name='TransactTime' required='Y'/>
+			<field number='63' name='SettlmntTyp' required='N'/>
+			<field number='64' name='FutSettDate' required='N'/>
+			<field number='65' name='SymbolSfx' required='N'/>
+			<field number='76' name='ExecBroker' required='N'/>
+			<field number='77' name='OpenClose' required='N'/>
+			<field number='78' name='NoAllocs' required='N'/>
+			<group number='78' name='Allocs'>
+				<field number='79' name='AllocAccount' required='N'/>
+				<field number='80' name='AllocShares' required='N'/>
+			</group>
+			<field number='81' name='ProcessCode' required='N'/>
+			<field number='99' name='StopPx' required='N'/>
+			<field number='100' name='ExDestination' required='N'/>
+			<field number='106' name='Issuer' required='N'/>
+			<field number='107' name='SecurityDesc' required='N'/>
+			<field number='109' name='ClientID' required='N'/>
+			<field number='110' name='MinQty' required='N'/>
+			<field number='111' name='MaxFloor' required='N'/>
+			<field number='114' name='LocateReqd' required='N'/>
+			<field number='117' name='QuoteID' required='N'/>
+			<field number='120' name='SettlCurrency' required='N'/>
+			<field number='121' name='ForexReq' required='N'/>
+			<field number='126' name='ExpireTime' required='N'/>
+			<field number='140' name='PrevClosePx' required='N'/>
+			<field number='152' name='CashOrderQty' required='N'/>
+			<field number='167' name='SecurityType' required='N'/>
+			<field number='168' name='EffectiveTime' required='N'/>
+			<field number='192' name='OrderQty2' required='N'/>
+			<field number='193' name='FutSettDate2' required='N'/>
+			<field number='200' name='MaturityMonthYear' required='N'/>
+			<field number='201' name='PutOrCall' required='N'/>
+			<field number='202' name='StrikePrice' required='N'/>
+			<field number='203' name='CoveredOrUncovered' required='N'/>
+			<field number='204' name='CustomerOrFirm' required='N'/>
+			<field number='205' name='MaturityDay' required='N'/>
+			<field number='206' name='OptAttribute' required='N'/>
+			<field number='207' name='SecurityExchange' required='N'/>
+			<field number='210' name='MaxShow' required='N'/>
+			<field number='211' name='PegDifference' required='N'/>
+			<field number='223' name='CouponRate' required='N'/>
+			<field number='231' name='ContractMultiplier' required='N'/>
+			<field number='348' name='EncodedIssuerLen' required='N'/>
+			<field number='349' name='EncodedIssuer' required='N'/>
+			<field number='350' name='EncodedSecurityDescLen' required='N'/>
+			<field number='351' name='EncodedSecurityDesc' required='N'/>
+			<field number='354' name='EncodedTextLen' required='N'/>
+			<field number='355' name='EncodedText' required='N'/>
+			<field number='376' name='ComplianceID' required='N'/>
+			<field number='377' name='SolicitedFlag' required='N'/>
+			<group number='386' name='TradingSessions'>
+				<!-- use TradingSession#30336 instead of TradingSessionID -->
+				<field number='336' name='TradingSessionID' required='N'/>
+			</group>
+			<field number='388' name='DiscretionInst' required='N'/>
+			<field number='389' name='DiscretionOffsetValue' required='N'/>
+			<field number='427' name='GTBookingInst' required='N'/>
+			<field number='432' name='ExpireDate' required='N'/>
+			<field number='439' name='ClearingFirm' required='N'/>
+			<field number='440' name='ClearingAccount' required='N'/>
+			<field number='842' name='DiscretionOffsetType' required='N'/>
+			<field number='847' name='TargetStrategy' required='Y'/>
+			<field number='849' name='ParticipationRate' aka='MaxPctVolume' required='N'/>
+			<field number='5002' name='CodeAux' required='N'/>
+			<field number='5031' name='FavorID' required='N'/>
+			<field number="5036" name="ClientOrderSource" required="N"/>
+			<field number="5037" name="InternalClientOrderID" required="N"/>
+			<field number='5047' name='PriceDeviationInst' required='N'/>
+			<field number='5048' name='PriceDeviationOffsetType' required='N'/>
+			<field number='5049' name='PriceDeviationOffsetValue' required='N'/>
+			<field number="5059" name="BenchSecurityType" required="N" />
+			<field number='5063' name='EnableHeatMap' required='N'/>
+			<field number='5170' name='TriggerDelay' required='N'/>
+			<field number='5204' name='TradeThruPrice' required='N'/>
+			<field number='5205' name='AdjustedPriceInd' aka='WouldLevel' required='N'/>
+			<field number='6065' name='ExecutionStyle' required='N'/>
+			<field number='6066' name='PrimaryVolume' required='N'/>
+			<field number='6067' name='MinPctVolume' required='N'/>
+			<field number='6087' name='ReferencePrice' required='N'/>
+			<field number='6109' name='RefIndexPrice' required='N'/>
+			<field number='6270' name='WouldDark' required='N'/>
+			<field number="6313" name="UnderlyingAlgo" required="N" />
+			<field number='6356' name='LowerPricePct' required='N'/>
+			<field number='6414' name='SweepLit' required='N'/>
+			<field number='6415' name='OpenAuctionRate' required='N'/>
+			<field number='6416' name='CloseAuctionRate' required='N'/>
+			<field number='6417' name='ExcludePrimary' required='N'/>
+			<field number='6418' name='DarkOnly' required='N'/>
+			<field number='6419' name='ExecutionMode' required='N'/>
+			<field number='6433' name='ExcludeDest' required='N'/>
+			<field number='6434' name='ExcludeType' required='N'/>
+			<field number='6435' name='ExcludePassiveDest' required='N'/>
+			<field number='6436' name='ExcludePassiveType' required='N'/>
+			<field number='6437' name='CurveType' required='N'/>
+			<field number='6438' name='ExcludeAggressiveDest' required='N'/>
+			<field number='6439' name='ExcludeAggressiveType' required='N'/>
+			<field number='6440' name='SIAuthorized' required='N' />
+			<field number='6441' name='StartingPhase' required='N' />
+			<field number='6442' name='AggressiveDestSet' required='N'/>
+			<field number='6444' name='PassiveVenueType' required='N'/>
+			<field number='6445' name='AggressiveVenueType' required='N'/>
+			<field number='6446' name='ProfileComputationMode' required='N'/>
+			<field number='6819' name='TriggerQtyADVPct' required='N' />
+			<field number='7486' name='VolumeProfile' required='N'/>
+			<field number='7740' name='CrossFlag' required='N'/>
+			<field number='9625' name='ExcludeAuctions' required='N'/>
+			<field number="9528" name="BenchIDSource" required="N" />
+			<field number="9530" name="BenchSecurityID" required="N" />
+			<field number='9739' name='MIFIDBestExecutionReqd' required='N'/>
+			<field number="10000" name="SliceQty" required="N" />
+			<field number="10001" name="SliceDuration" required="N" />
+			<field number="10102" name="RelativeLimitPct" required="N" />
+			<field number="10003" name="MinimumAmount" required="N" />
+			<field number="10004" name="Classification" required="N" />
+			<field number="10005" name="MustFinish" required="N" />
+			<field number="10006" name="TrackingOccurrenceName" required="N" />
+			<field number="10007" name="SlippageOccurrenceName" required="N" />
+			<field number="10008" name="VolumeCurveContext" required="N" />
+			<field number="10009" name="StdDevCoefficient" required="N" />
+			<field number='20107' name='ClientData' required='N'/>
+			<field number='29995' name='ParentAvgPx' required='N'/>
+			<field number='29996' name='ParentCumQty' required='N'/>
+			<field number='29997' name='ParentLeavesQty' required='N'/>
+			<field number='29998' name='OptimalQty' required='N'/>
+			<field number='29999' name='MidPlacement' required='N' />
+			<field number='30011' name='ClientRef' required='N'/>
+			<field number='30012' name='AmountValidation' required='N'/>
+			<field number='30336' name='TradingSession' required='N'/>
+		</message>
+	</messages>
+</fix>

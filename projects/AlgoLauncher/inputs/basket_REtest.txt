@@ -1,0 +1,2 @@
+StrategyName|ExDestination|Symbol|SecurityID|Side|Currency|OrderQty|Price|StartTime|EndTime|MinPctVolume|MaxPctVolume|ExecutionStyle|WouldLevel|WouldDark|AuctionPct|AggregatedStyle|ExcludeAuction|
+1|XPAR|FTE|FR0000133308|1|EUR|100000|100|08:00|16:30|10|20|3|7|yes|30|yes|1|

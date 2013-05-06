@@ -20,7 +20,7 @@ documents.append({"trading_venue_id": 14, "exchange_id": 1, 'name' : 'NYSE EURON
 documents.append({"trading_venue_id": 16, "exchange_id": 3, 'name' : 'XETRA', 'trading_venue_type': "L", 'is_primary': 1, 'code': "DE", 'destination':"TEST", 'feed': "DE", 'ranking': 5, "internal" : 0})
 
 documents.append({"trading_venue_id": 2, "exchange_id": 6, 'name' : 'CHIX', 'trading_venue_type': "L", 'is_primary':0, 'code': "Chi", 'destination':"TEST", 'feed': "CHIX", 'ranking': 1, "internal" : 0})
-documents.append({"trading_venue_id": 3, "exchange_id": 7, 'name' : 'BATS', 'trading_venue_type': "L", 'is_primary':0, 'code': "Bats", 'destination':"TEST" , 'feed': "BATS", 'ranking': 2, "internal" : 0})
+documents.append({"trading_venue_id": 3, "exchange_id": 7, 'name' : 'BATS', 'trading_venue_type': "L", 'is_primary':0, 'code': "Bats", 'destination':"TEST" , 'feed': "BATE", 'ranking': 2, "internal" : 0})
 documents.append({"trading_venue_id": 4, "exchange_id": 8, 'name' : 'TURQOISE', 'trading_venue_type': "L", 'is_primary':0, 'code': "Tqse", 'destination':"TEST", 'feed': "TRQ", 'ranking': 3, "internal" : 0})
 
 documents.append({"trading_venue_id": 5, "exchange_id": 6, 'name' : 'CHIX DARK', 'trading_venue_type': "D", 'is_primary':0, 'code': "ChiD", 'destination':"TEST",'feed': "", 'ranking': 6, "internal" : 0})

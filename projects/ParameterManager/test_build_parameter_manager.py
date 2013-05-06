@@ -17,6 +17,8 @@ documents.append({'strategy': "VWAP", 'key' : {}, "static_parameters": {'blabla'
 
 for doc in documents:
     collection.insert(doc)
+
+
     
 print "--------------------------------------------"
 for doc in collection.find({"key.place_id" : {"$exists": True}}):

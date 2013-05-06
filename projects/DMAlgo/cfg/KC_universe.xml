@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<universe name='KC_v1'>
+	<env name='dev' >
+		<server name='PARFLTLAB' ip_addr='172.29.0.30' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+	</env >
+	<env name='preprod' >
+		<server name='WATFLT01' ip_addr='172.25.152.73' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+	</env >
+	<env name='prod'>
+	</env>
+</universe>

@@ -1,0 +1,18 @@
+[09:15:29.401244] -   INFO   	:PopScrlMsg(): warn-box: 09:15 FTEp.AG [BLCL1TU4_1]: FIX_ORDER - Row Claimed
+[09:15:35.352658] -   INFO   	:PopScrlMsg(): warn-box: 09:15 FTEp.AG [BLCL1TU4_1]: CXL_RPL - Replacing the order
+[09:15:35.354499] -   INFO   	:PopScrlMsg(): warn-box: 09:15 FTEp.AG [BLCL1TU4_1]: CXL_RPL - REPLACE: | TARGET_SHARES
+[09:15:41.375332] -   INFO   	:PopScrlMsg(): warn-box: 09:15 FTEp.AG [BLCL1TU4_1]: CXL_RPL - Replacing the order
+[09:15:41.375822] -   INFO   	:PopScrlMsg(): warn-box: 09:15 FTEp.AG [BLCL1TU4_1]: CXL_RPL - REPLACE: | TARGET_SHARES
+[09:15:47.403295] -   INFO   	:PopScrlMsg(): warn-box: 09:15 FTEp.AG [BLCL1TU4_1]: CXL_RPL - Cancelling the order
+[09:16:38.474858] -   INFO   	:PopScrlMsg(): warn-box: 09:16 FTEp.AG [BLCL1TU4_2]: FIX_ORDER - Row Claimed
+[09:16:44.501615] -   INFO   	:PopScrlMsg(): warn-box: 09:16 FTEp.AG [BLCL1TU4_2]: CXL_RPL - Replacing the order
+[09:16:44.502033] -   INFO   	:PopScrlMsg(): warn-box: 09:16 FTEp.AG [BLCL1TU4_2]: CXL_RPL - REPLACE: | TARGET_SHARES
+[09:16:50.530738] -   INFO   	:PopScrlMsg(): warn-box: 09:16 FTEp.AG [BLCL1TU4_2]: CXL_RPL - Replacing the order
+[09:16:50.531141] -   INFO   	:PopScrlMsg(): warn-box: 09:16 FTEp.AG [BLCL1TU4_2]: CXL_RPL - REPLACE: | TARGET_SHARES
+[09:16:56.565066] -   INFO   	:PopScrlMsg(): warn-box: 09:16 FTEp.AG [BLCL1TU4_2]: CXL_RPL - Cancelling the order
+[09:19:00.784274] -   INFO   	:PopScrlMsg(): warn-box: 09:19 FTEp.AG [BLCL1TU4_3]: FIX_ORDER - Row Claimed
+[09:19:06.817167] -   INFO   	:PopScrlMsg(): warn-box: 09:19 FTEp.AG [BLCL1TU4_3]: CXL_RPL - Replacing the order
+[09:19:06.817561] -   INFO   	:PopScrlMsg(): warn-box: 09:19 FTEp.AG [BLCL1TU4_3]: CXL_RPL - REPLACE: | TARGET_SHARES
+[09:19:12.842383] -   INFO   	:PopScrlMsg(): warn-box: 09:19 FTEp.AG [BLCL1TU4_3]: CXL_RPL - Replacing the order
+[09:19:12.842750] -   INFO   	:PopScrlMsg(): warn-box: 09:19 FTEp.AG [BLCL1TU4_3]: CXL_RPL - REPLACE: | TARGET_SHARES
+[09:19:18.875075] -   INFO   	:PopScrlMsg(): warn-box: 09:19 FTEp.AG [BLCL1TU4_3]: CXL_RPL - Cancelling the order

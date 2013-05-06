@@ -1,0 +1,2 @@
+StrategyName|ExDestination|Symbol|SecurityID|Side|Currency|OrderQty|Price|StartTime|EndTime|MinSize|SweepLit|OBType|
+7|XPAR|FTE|FR0000133308|1|EUR|100000.0|100.0|17:00|18:00|1.0|yes|M|

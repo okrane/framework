@@ -1,0 +1,15 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/cheuvreux/bluebox
+__init__.py;4294967295;1;1340872893;
+execution.py;2050972052;1;1340872893;
+log_algo.py;29238149;25;1340872893;
+ScanforChatPSV.py;752633768;3;1340872893;
+ClientActivityReport.py;2356413574;3;1349876883;
+cost.py;1419531579;2;1349876883;
+CptyLimits.cmd;1583244407;2;1349876883;
+CptyLimits_15c3.py;1688442834;8;1349876883;
+CptyLimitsManager_15c3.py;2509390556;3;1349876883;
+global_analysis.py;49995354;1;1349876883;
+h2.cmd;709518286;1;1349876883;
+VolumeCurve.py;2338556292;14;1349876883;
+VolumeCurveNews.py;3005351203;4;1349876883;

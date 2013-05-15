@@ -1,0 +1,1 @@
+python pta_main.py -x -e lmassoulard-ext,bspillane,dhegarty,mwalczuk,jimperato,jbouquot > xfire.log 2>&1

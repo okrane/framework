@@ -1,0 +1,7 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/cheuvreux/stdio
+__init__.py;4294967295;1;1340872896;
+formatter.py;2750614086;1;1340872896;
+html.py;479282072;10;1340872896;
+mail.py;3924238467;9;1340872896;
+ssh.py;961730582;3;1340872896;

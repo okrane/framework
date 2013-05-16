@@ -1,0 +1,13 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/cheuvreux/utils
+__init__.py;4294967295;1;1340872896;
+collections.py;1859161564;1;1340872896;
+date.py;2292654434;1;1340872896;
+decorator.py;4235622361;1;1340872896;
+image.py;51339353;1;1340872896;
+latex.py;3447436975;1;1340872896;
+matrix.py;3656902761;1;1340872897;
+numbers.py;870461581;3;1340872897;
+timeseries.py;2284691387;1;1340872897;
+dataset.py;1905831301;7;1349876891;
+statistics.py;444313220;4;1349876891;

@@ -1,0 +1,9 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/cheuvreux/reports
+__init__.py;4294967295;1;1340872896;
+auditstream.py;2270255227;29;1340872896;
+auditstream_test.py;581524511;2;1340872896;
+ClientActivityReport.py;1316633624;1;1340872896;
+correlation.py;3432730132;2;1340872896;
+CptyProfitability.py;2138473201;5;1340872896;
+monthly_cost.py;1084605495;2;1340872896;

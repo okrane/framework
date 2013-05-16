@@ -15,9 +15,16 @@ cur.callproc('SP_WHO', ())
 print cur.fetchall()
 #conn.close()
 """
-
+"""
 import pyodbc
 cnxn = pyodbc.connect('DRIVER={SQL Server};SERVER=172.29.100.64;DATABASE=KGR;UID=python_ro;PWD=python4ever!!')
 cursor = cnxn.cursor()
 cursor.execute('select * from KGR..security_market where security_id = 276')
 print cursor.fetchall()
+"""
+
+from lib.dbtools.connections import Connections
+Connections.change_connections('dev')
+a = Connections.exec_sql('KGR', 'select top 10 * from SECURITY', as_dataframe = True)
+print a
+

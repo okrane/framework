@@ -2,8 +2,8 @@
 <configuration>
     <target_connections>
         <target name="dev">
-            <connections driver="sybase:j">
-                <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+            <connections driver="Sybase">
+                <SERVER NAME="BSIRIUS">10.157.70.134:9360|temp_works|batch_tick|batick</SERVER>
                 <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
                 <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
                 <SERVER NAME="QUANT">pasyb005:9160|temp_works|sa_interest|interest_dev<!--d_dancr|dan2cr--></SERVER>
@@ -26,8 +26,9 @@
                 <SERVER NAME="semlab2">pamlb00x:3306|semlabjboss2|newsgateway2|kf934kdj38d</SERVER>
                 <SERVER NAME="semlab_test">localhost:3306|newsgateway|newsgateway|newsgateway</SERVER>
             </connections>
-            <connections driver="sqlserver"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
+            <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
                 <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
+				<SERVER NAME="KGR">172.29.0.24:1433|LUIDBC01_KGR|python_ro|python4ever!!</SERVER>				
             </connections> 
             <bases>
                 <base key="quant" name="quant"/>
@@ -61,7 +62,7 @@
             </tables>
         </target>
         <target name="homolo">
-            <connections driver="sybase:j">
+            <connections driver="Sybase">
                 <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
                 <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
                 <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
@@ -73,6 +74,10 @@
                 <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
                 <SERVER NAME="INFOCENTRE">bksyb003:9580|temp_works|batch|delphi</SERVER>
                 <SERVER NAME="CAL_EVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+            </connections>
+			<connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
+                <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
+				<SERVER NAME="KGR">172.29.0.24:1433|LUIDBC01_KGR|python_ro|python4ever!!</SERVER>				
             </connections>
             <bases>
                 <base key="quant" name="quant"/>
@@ -88,7 +93,7 @@
             </query_regexp>-->
         </target>
         <target name="production_copy">
-            <connections driver="sybase:j">
+            <connections driver="Sybase">
                 <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
                 <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
                 <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
@@ -104,8 +109,9 @@
                 <SERVER NAME="STREETEVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
                 <SERVER NAME="CAL_EVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
             </connections>
-            <connections driver="sqlserver"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
+            <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
                 <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
+				<SERVER NAME="KGR">172.29.0.24:1433|LUIDBC01_KGR|python_ro|python4ever!!</SERVER>				
             </connections> 
             <bases>
                 <base key="quant" name="quant"/>
@@ -118,7 +124,7 @@
             </tables>
         </target>
         <target name="hpp">
-            <connections driver="sybase:j">
+            <connections driver="Sybase">
                 <!-- ATTENTION :  seul VEGA et PREPA15:tick_db sont en VRAI version HPP!!!-->
                 <!-- ATTENTION :  QUANT est en version prod copy OK-->
                 <!-- ATTENTION :  BISRIUS c'est n'importe quoi...!!!-->
@@ -129,7 +135,11 @@
                 <SERVER NAME="STREETEVENT">BILBO:9240|temp_works|batch|delphi</SERVER>
                 <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
             </connections>
-            <bases>
+            <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
+                <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
+				<SERVER NAME="KGR">172.29.0.24:1433|LUIDBC01_KGR|python_ro|python4ever!!</SERVER>				
+            </connections>
+			<bases>
                 <base key="quant" name="quant"/>
                 <base key="quant_data" name="quant_data"/>
                 <base key="repository" name="repository"/>
@@ -139,7 +149,7 @@
             </tables>
         </target>
         <target name="production">
-            <connections driver="sybase:j">
+            <connections driver="Sybase">
                 <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
                 <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
                 <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
@@ -153,7 +163,11 @@
                 <SERVER NAME="STREETEVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
                 <SERVER NAME="CAL_EVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
             </connections>
-            <bases>
+            <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
+                <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
+				<SERVER NAME="KGR">172.29.100.64:1433|KGR|python_ro|python4ever!!</SERVER>				
+            </connections>
+			<bases>
                 <base key="quant" name="quant"/>
                 <base key="quant_data" name="quant_data"/>
                 <base key="repository" name="repository"/>

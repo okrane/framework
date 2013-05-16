@@ -1,6 +1,6 @@
-strategy=CROSS|key=*,*,*,*|MinATS=2|dt=100|blabla=5|MaxATS=5|
-strategy=CROSS|key=11,*,*,*|blabla=11|dt=100|MinATS=0|MaxATS=5|
-strategy=CROSS|key=*,1,rome,*|MinATS=1|MaxATS=1|blabla=1|dt=1|
-strategy=CROSS|key=*,*,paris,VWAP|MinATS=2|dt=100|blabla=46|MaxATS=5|
-strategy=VWAP|key=*,*,paris,VWAP|blabla=1111|
-strategy=VWAP|key=*,*,*,*|blabla=0|
+strategy=CROSS|key=*,*,*,*|MinATS=2|IndicatorRefreshTimerPeriod=60000|MinDarkATS=3|MaxATS=5|MaxDarkATS=6|
+strategy=CROSS|key=11,*,*,*|IndicatorRefreshTimerPeriod=60000|MaxDarkATS=6|MinDarkATS=3|MinATS=0|MaxATS=5|
+strategy=CROSS|key=*,1,rome,*|IndicatorRefreshTimerPeriod=60000|MaxDarkATS=6|MinDarkATS=3|MinATS=1|MaxATS=1|
+strategy=CROSS|key=*,*,paris,VWAP|MinATS=2|IndicatorRefreshTimerPeriod=60000|MinDarkATS=3|MaxATS=5|MaxDarkATS=6|
+strategy=VWAP|key=*,*,paris,VWAP|
+strategy=VWAP|key=*,*,*,*|

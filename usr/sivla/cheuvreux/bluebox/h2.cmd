@@ -1,0 +1,1 @@
+java -cp C:\\Apps\java\lib\h2-1.3.167.jar org.h2.tools.Server -pg -web -tcp -baseDir C:\\eclipse\\bluebox\\db

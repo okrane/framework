@@ -1,0 +1,1 @@
+python pta_main.py -o -e all.trading.newyork

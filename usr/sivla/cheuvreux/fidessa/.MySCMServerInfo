@@ -1,0 +1,12 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/cheuvreux/fidessa
+audit_trail.py;292094643;12;1340872896;
+fidessa.py;1220641131;4;1340872896;
+fidessa_util.db;733006228;7;1340872896;
+fidessa_util.py;1029707805;3;1340872896;
+fidessadb.py;1856721229;7;1340872896;
+fidessadb_odbc.py;3659308735;1;1340872896;
+orderdb.py;3635426103;11;1340872896;
+rebate.py;3479759186;5;1340872896;
+SecurityIdCache.py;3682281635;6;1340872896;
+__init__.py;1174141843;8;1349876883;

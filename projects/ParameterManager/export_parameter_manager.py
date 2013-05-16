@@ -44,7 +44,7 @@ def export_parameter_manager(server, port, target_file):
 
 
 print "Starting Run"
-export_parameter_manager('PARFLTLAB02', 27017, 'test_db_param_manager.kcdb')
+export_parameter_manager('PARFLTLAB02', 27017, 'parameter_manager.kcdb')
 print "Ended Run"
                 
             

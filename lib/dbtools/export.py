@@ -1,14 +1,10 @@
 # -*- coding: utf-8 -*-
-import pymssql
-
-def export_to_csv(host, user, password, database, filename, query, delimiter = ';'):
-    conn = pymssql.connect(host=host, user=user, password=password, database=database, as_dict = True)
-    cur = conn.cursor()
-    cur.execute(query)
-    
+from lib.dbtools.connections import Connections
+def export_to_csv(server, query, filename, delimiter = ';'):
+    result = Connections.exec_sql(server, query, as_dict = True)
     f = open(filename, "w")
-    row = cur.fetchone()    
+    row = result[0]
     f.write( delimiter.join(row.keys()) + '\n')
-    while row :        
+    for row in result:     
         f.writelines( delimiter.join([str(x) if x else '' for x in row.values()])  + '\n')
-        row = cur.fetchone()
+    f.close()

@@ -227,7 +227,6 @@ class Orchestrator(Application):
         header.setField(fix.MsgType("D"))
         
         #permanent config
-        message.setField(1, 'A1')
         message.setField(fix.ClOrdID("AAA%03d"%long(ClOrderID)))
         message.setField(21, '2')
         message.setField(22, '4')
@@ -432,12 +431,12 @@ class Orchestrator(Application):
                     self.ModifyAlgo(v, day)
                     
             count = 0
-            while STATUS == 'WAIT' and count < 10:
+            while STATUS == 'WAIT' and count < 1:
                 print "Waiting for ack ..."
                 time.sleep(1)
                 count += 1
                 
-            if count == 10:
+            if count > 0 :
                 print "No ACK received => continue test process anyway"
                 
             
@@ -463,8 +462,8 @@ if __name__ == '__main__':
     logfile_name = './logs/basket_test_%s.log' %day
     LOG_FILE = logfile_name
     
-#     mode = 'submit'
-    mode = 'switch'
+    mode = 'submit'
+#     mode = 'switch'
     
     duration = 1000
     

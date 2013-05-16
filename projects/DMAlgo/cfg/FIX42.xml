@@ -2633,7 +2633,7 @@
     <field number="9260" name="WouldLevel" type="FLOAT"/>
     <field number="9261" name="WouldDark" type="BOOLEAN"/>
     <field number="9262" name="AuctionPct" type="FLOAT"/>
-    <field number="9263" name="UnknownTag" type="STRING"/>
+    <field number="9263" name="ProgramName" type="STRING"/>
     <field number="9265" name="AggreggatedStyle" type="BOOLEAN"/>
     <field number="9258" name="SweepLit" type="BOOLEAN"/>
     <field number="9259" name="OBType" type="CHAR"/>

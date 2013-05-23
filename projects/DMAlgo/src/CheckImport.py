@@ -42,7 +42,7 @@ def check_lines(job_id, collection, conf_DB, conf_FT):
     Client = mongo.MongoClient(conf_DB['ip_addr'], 27017)
     
     day = job_id[2:]
-    if collection == 'ClientOrders':
+    if collection == 'AlgoOrders':
         IN_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
     
     
@@ -67,9 +67,12 @@ def check_lines(job_id, collection, conf_DB, conf_FT):
         file_nb_lines += 1
     
     if db_nb_lines == file_nb_lines:
-        print 'test ok for job_id : %s' %job_id
+        print 'Check ok for job_id : %s' %job_id
     else:
         collection.remove({'job_id':job_id})
+    
+    Client.close()
+    ssh.close()
     
     return 0
 
@@ -77,7 +80,7 @@ if __name__ == '__main__':
     
     ref = 'preprod'
     universe_file = '../cfg/KC_universe.xml'
-    collection = 'ClientOrders'
+    collection = 'AlgoOrders'
     conf_FT = get_conf('preprod', universe_file)
     job_id = 'AO20130514'
     conf_db = get_conf('HPP', universe_file)

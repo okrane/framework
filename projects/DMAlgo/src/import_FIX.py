@@ -9,6 +9,15 @@ import paramiko
 import pymongo as mongo
 import time
 from datetime import datetime
+from lib.dbtools import connections
+from pandas import *
+
+def match_trader(trader_name, dico_trader):
+    r_trader_name = ""
+    if trader_name in dico_trader.keys():
+        r_trader_name = dico_trader[trader_name]
+        return r_trader_name
+    return trader_name
 
 def get_FIX(dico_fix, fix_number):
     struct = ET.parse(dico_fix)
@@ -19,6 +28,28 @@ def get_FIX(dico_fix, fix_number):
             return (elt.get('name'), elt.get('type'))
     
     return
+
+def update_colmap(l_field, client, collection):
+    
+    database = client['DB_test']
+    map_coll = database['field_map']
+    
+    old_line = map_coll.find({"collection_name":collection})
+    
+    if old_line.count() == 1:
+        old_line = old_line[0]
+        old_list = old_line['list_columns']
+        new_list = list(set(old_list) | set(l_field))
+        old_line['list_columns'] = new_list
+        map_coll.save(old_line, safe=True, manipulate=False)
+        
+    elif old_line.count() == 0:
+        map_coll.insert({'collection_name':collection, 'list_columns':l_field})
+        
+    else:
+        print '##### Conflict while updating map collection : 2 rows for same collection !! #####'
+        
+    return 0
     
 def get_conf(referential, dico_universe):
     
@@ -153,13 +184,15 @@ def storeDB(l_orders, Collection, client, jobID):
     database = client['DB_test']
     collection = database[Collection]
     
-    print "insert ClientOrders into database"
+    print "insert %s Orders into database" %str(len(l_orders))
     
     for order in l_orders:
         order.update({'job_id': jobID})
         collection.insert(order, manipulate=False)
+        list_columns = order.keys()
+        update_colmap(list_columns, client, Collection)
 
-def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server):
+def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader):
     
     # - Open SSH connection 
     ssh = paramiko.SSHClient()
@@ -178,6 +211,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server):
     global_duration = 0
     p_reason = 'unknown'
     p_eff_starttime = "none"
+    g_eff_endtime = "none"
     prev_exec = 0
     num_exec_vwap = 0
     prev_num_exec_vwap = 0
@@ -201,7 +235,6 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server):
         
         WouldLevel = 0
         Side = 2 * (float(order['Side']) - 1.5)
-        order['Side'] = Side
         
         if "WouldLevel" in order.keys():
             WouldLevel = order['WouldLevel']
@@ -222,7 +255,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server):
                 if p_eff_starttime == "none":
                     p_eff_starttime = p_msg['TransactTime']
                 
-                if order['Side'] * float(p_msg['LastPx']) < WouldLevel and WouldLevel != 0:
+                if Side * float(p_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
                     p_volume_at_would += int(p_msg['LastShares'])
                 
             elif str(p_msg['ExecType']) == '2':
@@ -230,7 +263,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server):
                 p_exec_qty += int(p_msg['LastShares'])
                 num_exec_vwap += float(p_msg['LastShares']) * float(p_msg['LastPx'])
                 
-                if Side * float(p_msg['LastPx']) < WouldLevel and WouldLevel != 0:
+                if Side * float(p_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
                     p_volume_at_would += int(p_msg['LastShares'])
                 
                 p_reason = 'filled'
@@ -261,12 +294,13 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server):
                 
             elif str(p_msg['ExecType']) == 'E':
                 p_reason = 'pending replace'
-        
+            
+            p_eff_endtime = p_msg['SendingTime']
+            g_eff_endtime = p_eff_endtime
+            
         if not done and not replaced :
             p_reason = 'Front End handling'
         
-        p_eff_endtime = p_msg['SendingTime']
-        g_eff_endtime = p_eff_endtime
         prev_exec += p_exec_qty
         prev_num_exec_vwap +=  num_exec_vwap
         p_num_exec_vwap = num_exec_vwap
@@ -325,7 +359,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server):
                         num_exec_vwap += float(cc_msg['LastShares']) * float(cc_msg['LastPx'])
                         nb_exec += 1
                         
-                        if order['Side'] * float(cc_msg['LastPx']) < WouldLevel and WouldLevel != 0:
+                        if Side * float(cc_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
                             volume_at_would += int(cc_msg['LastShares'])
                         
                         if eff_starttime == "none":
@@ -336,7 +370,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server):
                         exec_qty += int(cc_msg['LastShares'])
                         num_exec_vwap += float(cc_msg['LastShares']) * float(cc_msg['LastPx'])
                         
-                        if order['Side'] * float(cc_msg['LastPx']) < WouldLevel and WouldLevel != 0:
+                        if Side * float(cc_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
                             volume_at_would += int(cc_msg['LastShares'])
                             
                         reason = 'filled'
@@ -387,8 +421,23 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server):
                 
                 if prev_exec != 0:
                     prev_vwap = prev_num_exec_vwap / float(prev_exec)
-                    
-                c_msg.update({'reason': reason, 'nb_exec' : nb_exec, 'exec_qty': exec_qty, 'duration': real_duration, 'occ_ID': p_ClOrdID, 'eff_starttime': eff_starttime, 'eff_endtime': eff_endtime, 'occ_prev_exec_qty': prev_exec, 'exec_vwap': vwap, 'occ_prev_exec_vwap': prev_vwap, 'turnover': num_exec_vwap, 'occ_prev_turnover': prev_num_exec_vwap, 'volume_at_would': volume_at_would, 'nb_replace': loop_count})
+                
+                if 'TraderName' in c_msg.keys():
+                    c_msg['TraderName'] = match_trader(c_msg['TraderName'], dico_trader)
+                
+                
+                enrichment = {'reason': reason, 'nb_exec' : nb_exec, 'exec_qty': exec_qty, 'duration': real_duration, 'occ_ID': p_ClOrdID, 'occ_prev_exec_qty': prev_exec, 'exec_vwap': vwap, 'occ_prev_exec_vwap': prev_vwap, 'turnover': num_exec_vwap, 'occ_prev_turnover': prev_num_exec_vwap, 'nb_replace': loop_count}
+                
+                if eff_starttime != 'none':
+                    enrichment.update({'eff_starttime': eff_starttime})
+                
+                if eff_starttime != 'none':
+                    enrichment.update({'eff_endtime': eff_endtime})
+                
+                if volume_at_would != 0:
+                    enrichment.update({'volume_at_would': volume_at_would})
+                
+                c_msg.update(enrichment)
                 order_life.append(c_msg)
                 
                 prev_exec += exec_qty
@@ -400,17 +449,32 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server):
         p_vwap = 0
         if p_exec_qty != 0:
             p_vwap = p_num_exec_vwap / float(p_exec_qty)
+        
+        enrichment = {'reason': p_reason, 'nb_exec' : p_nb_exec, 'occ_nb_replace' : nb_replace, 'exec_qty': p_exec_qty, 'duration': p_real_duration, 'occ_duration': global_duration, 'occ_ID': p_ClOrdID, 'occ_prev_exec_qty': 0, 'exec_vwap': p_vwap, 'occ_prev_exec_vwap': 0, 'turnover': p_num_exec_vwap, 'occ_prev_turnover': 0}
+        
+        if p_eff_starttime != 'none':
+            enrichment.update({'eff_starttime': p_eff_starttime})
+        
+        if p_eff_starttime != 'none':
+            enrichment.update({'eff_endtime': p_eff_endtime})
+        
+        if p_volume_at_would != 0:
+            enrichment.update({'volume_at_would': p_volume_at_would})
             
-        order.update({'reason': p_reason, 'nb_exec' : p_nb_exec, 'occ_nb_replace' : nb_replace, 'exec_qty': p_exec_qty, 'duration': p_real_duration, 'occ_duration': global_duration, 'occ_ID': p_ClOrdID, 'eff_starttime': p_eff_starttime, 'eff_endtime': p_eff_endtime, 'occ_prev_exec_qty': 0, 'exec_vwap': p_vwap, 'occ_prev_exec_vwap': 0, 'turnover': p_num_exec_vwap, 'occ_prev_turnover': 0, 'volume_at_would': p_volume_at_would})
+        order.update(enrichment)
         
         # - append parent order to order_life list
+        if 'TraderName' in order.keys():
+            order['TraderName'] = match_trader(order['TraderName'], dico_trader)
+        
         order_life.append(order)
         
     else:
         print 'invalid order type : only NewOrderSingle (D) are allowed !'
     
+    ssh.close()
+    
     return [order_life, dico_tags]
-
 
 if __name__ == '__main__':
     
@@ -420,76 +484,141 @@ if __name__ == '__main__':
     
     conf = get_conf('preprod', universe_file)
     
-    ignore_tags = [8, 21, 22, 9, 34, 49, 56, 10, 47, 369]
+    ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
     
-    day = '20130514'
-    type = 'D'
     trader = ''
-    IO = 'I'
+    IO = 'O'
     dico_tags = {}
     
+    # - Trader dico generation for matching alias
+    if IO == 'I':
+        print 'Genrating dico for Trader matching'
+        temp_dico_trader = Client['DB_test']['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':conf['WATFLT01']['ip_addr']})
+        dico_trader = {}
+        for trd in temp_dico_trader:
+            dico_trader[trd['tag_value']] = trd['trader_name']
+            
+    mkt_data_fields = ['EXEC_SHARES' ,'ORDER_PERC','INMKT_VOLUME','INMKT_TURNOVER','PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','IN_VWAS','ARRIVAL_PRICE','FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
+    
     # - Open MONGODB connection
-    Client = mongo.MongoClient('172.29.0.32', 27017)
+    Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test")
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(conf['WATFLT01']['ip_addr'], username=conf['WATFLT01']['list_users']['flexapp']['username'], password=conf['WATFLT01']['list_users']['flexapp']['passwd'])
     
-#     # - Empty Collection : ClientOrders
-#     database = Client['DB_test']
-#     collection = database['ClientOrders']
-#     collection.remove()
-     
-    # - Store Client Orders for all days
-#     ssh = paramiko.SSHClient()
-#     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-#     ssh.connect(conf['WATFLT01']['ip_addr'], username=conf['WATFLT01']['list_users']['flexsys']['username'], password=conf['WATFLT01']['list_users']['flexsys']['passwd'])
-#       
-#     cmd = 'ls ./logs/trades'
-#     (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-#       
-#     for folder in stdout_grep:
-#         folder = folder.replace('\n','')
-#         print 'Processing orders for day : %s' %folder
-#           
-#         res_import = import_FIXmsg(dico_FIX, conf['WATFLT01'], folder, type, IO, dico_tags, trader, ignore_tags)
-#         d_orders = res_import[0]
-#         dico_tags = res_import[1]
-#           
-# #         if d_orders != []:
-# #             storeDB(d_orders, 'OrderDeals', Client)
-#           
-#         for order in d_orders:
-#             print 'Order ID : %s' %order['ClOrdID']
-#             l_events = OrderLife(order, dico_FIX, folder, ignore_tags, dico_tags, conf['WATFLT01'])
-#             u_order = l_events[0]
-#             dico_tags = l_events[1]
-#             storeDB(u_order, 'ClientOrders', Client)
+    l_days = ['20130510','20130513','20130514','20130515','20130516','20130517','20130520','20130521','20130522']
     
-    # - Single Day import
-    res_import = import_FIXmsg(dico_FIX, conf['WATFLT01'], day, type, IO, dico_tags, trader, ignore_tags)
-    d_orders = res_import[0]
-    dico_tags = res_import[1]
-     
-    for order in d_orders:
-        print 'Order ID : %s' %order['ClOrdID']
-        l_events = OrderLife(order, dico_FIX, day, ignore_tags, dico_tags, conf['WATFLT01'])
-        u_order = l_events[0]
-        dico_tags = l_events[1]
-        job_id = 'AO%s' %day
-        storeDB(u_order, 'ClientOrders', Client, job_id)
+    for day in l_days:
+        print "-----> Start import for : %s" %day
         
-    # - Example with single message
-#     str_msg = '8=FIX.4.2|9=301|35=D|49=CLNT1|56=FLINKI|34=125|369=151|52=20130214-08:15:33|50=SLEFIX1|57=AV1|1=EUR1576248|11=FY2000005066301|15=CHF|21=1|22=4|38=3000|40=1|48=CH0127480363|54=1|55=AUTNz.AG|58=EUR1576248|59=0|60=20130214-08:15:33|100=S|9249=AV1|9252=5|9253=29.000000|9254=31.000000|9256=2|9261=no|9265=yes|9266=AUTN.S|10=131'
+        if IO == 'O':
+            
+            job_id = 'OD%s' %day
+            type = ''
+            res_import = import_FIXmsg(dico_FIX, conf['WATFLT01'], day, type, IO, dico_tags, trader, ignore_tags)
+            c_orders = res_import[0]
+            dico_tags = res_import[1]
+            
+            storeDB(c_orders, 'OrderDeals', Client, job_id)
+            
+        elif IO == 'I:':
+            
+            type = 'D'
+            # - Single Day import
+            res_import = import_FIXmsg(dico_FIX, conf['WATFLT01'], day, type, IO, dico_tags, trader, ignore_tags)
+            d_orders = res_import[0]
+            dico_tags = res_import[1]
+            
+            l_kep_secids = []
+            job_id = 'AO%s' %day
+            
+            for order in d_orders:
+                print 'Order ID : %s' %order['ClOrdID']
+                l_events = OrderLife(order, dico_FIX, day, ignore_tags, dico_tags, conf['WATFLT01'], dico_trader)
+                u_order = l_events[0]
+                dico_tags = l_events[1]
+                storeDB(u_order, 'AlgoOrders', Client, job_id)
+                l_kep_secids.append(u_order[0]['SecurityID'])
+            
+            l_kec_secids = set(l_kep_secids)
+            
+            # - UPDATE CHEUVREUX SECURITY IDS
+            print "UPDATE CHEUVREUX SECURITY IDS AND MARKET DATA"
+            query = "select SYMBOL3, SYMBOL6 from SECURITY where SYMBOL3 in ('%s')" % "','".join(map(str,l_kep_secids))
+            
+            result = connections.Connections.exec_sql('KGR', query, as_dict = True)
+            dict_secs = {}
+            for sec in result:
+                dict_secs[str(sec['SYMBOL3'])] = str(sec['SYMBOL6'])
+            
+            s_date = datetime.strptime('%s-00:01:00'%day, '%Y%m%d-%H:%M:%S')
+            e_date = datetime.strptime('%s-23:59:00'%day, '%Y%m%d-%H:%M:%S')
+            
+            new_docs = Client['DB_test']['AlgoOrders'].find({"SendingTime": {"$gte":s_date, "$lt":e_date}})
+            
+            # - GET COLUMN NUMBER IN MKT
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(conf['WATFLT01']['ip_addr'], username=conf['WATFLT01']['list_users']['flexapp']['username'], password=conf['WATFLT01']['list_users']['flexapp']['passwd'])
+            cmd = 'grep SYM /home/flexapp/ushare/exportprodAV1%s' %day
+            (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+            
+            header = ""
+            for line in stdout_grep:
+                header = line
+            
+            dico_header = {}
+            f_mkt_data = False
+            if header != "":
+                header = header[:-1]
+                header  = header.rsplit(',')
+                f_mkt_data = True
+                    
+                for col in mkt_data_fields:
+                    if col in header:
+                        dico_header[col.lower()] = header.index(col)
+            
+            for order in new_docs:
+                
+                if f_mkt_data:
+                    # Enrichment Market Data 
+                    if order['MsgType'] == 'D':
+                        Trader_code = order['TargetSubID']
+                        ClOrdID = '%sCLNT1' %order['ClOrdID']
+                        Ticker = order['Symbol']
+                        
+                        cmd = "egrep '%s.*%s' /home/flexapp/ushare/exportprod%s%s" %(Ticker, ClOrdID, Trader_code,day)
+                        (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+                        
+                        mkt_data = None
+                        for line in stdout_grep:
+                            mkt_data = line
+                        
+                        if mkt_data is not None:
+                            mkt_data = mkt_data[:-1]
+                            mkt_data = mkt_data.rsplit(',')
+                            
+                            for u, v in dico_header.iteritems():
+                                if mkt_data[v] != '':
+                                    order['occ_%s'%u] = mkt_data[v]
+                            
+                if str(order['SecurityID']) in dict_secs.keys():
+                    order.update({'cheuvreux_secid':dict_secs[str(order['SecurityID'])]})
+                    Client['DB_test']['AlgoOrders'].save(order)
+                
+        print "----> END OF IMPORT FOR : %s" %day
+        
+#     # - Example with single message
+#     str_msg = '8=FIX.4.2|9=350|35=D|49=CLNT1|56=FLINKI|34=97|52=20130514-06:58:21|50=SLEFIX1|57=AV5|1=EUR1651447|11=FY2000007383101|15=EUR|21=2|22=2|38=5000|40=1|48=5337093|54=2|55=ERGm.AG|58=EUR1651447|59=0|60=20130514-06:58:21|100=MI|9249=AV5|9250= |9251= |9252=3|9253=15.000000|9254=15.000000|9255= |9256=2|9257=3|9258= |9259= |9260= |9261=no|9262= |9264= |9265=yes|9266=ERG.MI|10=136'
 #     res_trans = line_translator(str_msg, dico_FIX, dico_tags, ignore_tags)
 #     order = res_trans[0]
 #     dico_tags = res_trans[1]
-#     l_events = OrderLife(order, dico_FIX, folder, ignore_tags, dico_tags, conf['WATFLT01'])
+#     folder = '20130514'
+#     l_events = OrderLife(order, dico_FIX, folder, ignore_tags, dico_tags, conf['WATFLT01'], dico_trader)
 #     u_order = l_events[0]
 #     dico_tags = l_events[1]
-#     storeDB(u_order, 'ClientOrders', Client)
-    
-#     IO = 'O'
-#     type = ''
-#     trader = ''
-#     c_orders = import_FIXmsg(dico_FIX, conf['WATFLT01'], day, type, IO, trader, ignore_tags)
-#     storeDB(c_orders, 'StreetOrders', Client)
+#     storeDB(u_order, 'AlgoOrders', Client)
     
     
 #     # - Test volumetrie
@@ -521,7 +650,7 @@ if __name__ == '__main__':
 #         
 #         
 #         
-#         stats = database.command({'collStats' : 'ClientOrders', 'scale' : 1024})
+#         stats = database.command({'collStats' : 'AlgoOrders', 'scale' : 1024})
 #         data_size = stats['size']
 #         store_size = stats['totalIndexSize']
 #         total_size = stats['size'] + stats['totalIndexSize']

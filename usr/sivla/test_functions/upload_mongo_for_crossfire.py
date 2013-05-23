@@ -10,14 +10,18 @@ def upload(filename):
     
     f = open(filename, 'r')
     for line in f.readlines():
+	print line
         pairs = line.split("|")
         d = dict()
         for p in pairs:
-            key = p.split("=")[0]
+            splits = p.split("=")
+	    if len(splits) < 2 : continue	    
+	    key = p.split("=")[0]
             value = convertStr(p.split("=")[1])
             d[key] = value
         documents.append(d)
     collection.insert(documents)
+    f.close()
     
 if __name__ ==  "__main__":
     import sys       

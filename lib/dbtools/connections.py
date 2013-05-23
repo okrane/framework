@@ -6,7 +6,7 @@ import pyodbc
 
 import re, os, sys
 
-db_connection_file = "%s\\connections.xml" % os.path.dirname(__file__)
+db_connection_file = "%s/connections.xml" % os.path.dirname(__file__)
 
 class Connections:
     """ Connections Handler and DBAccess Class

@@ -3,7 +3,6 @@ import threading
 import time
 import datetime
 import xml.etree.ElementTree as ET
-# import ConfigParser_NL
 from lib.io.ConfigParser_NL import ConfigParser_NL
 import calendar
 
@@ -230,7 +229,12 @@ class Orchestrator(Application):
         message.setField(fix.ClOrdID("AAA%03d"%long(ClOrderID)))
         message.setField(21, '2')
         message.setField(22, '4')
-        message.setField(40, '2')
+        
+        if param_line['Price'] != "" and param_line['Price'] != "none":
+            message.setField(40, '2')
+        else:
+            message.setField(40, '1')
+        
 #         message.setField(50, 'pws08fctuser006')
         message.setField(115, 'PWARE')
         message.setField(fix.TransactTime(calendar.timegm(time.gmtime())))
@@ -284,7 +288,11 @@ class Orchestrator(Application):
         
         message.setField(21, '2')
         message.setField(22, '4')
-        message.setField(40, '2')
+        if new_params['Price'] != "" and new_params['Price'] != "none":
+            message.setField(40, '2')
+        else:
+            message.setField(40, '1')
+            
         message.setField(47, 'A')
 #         message.setField(50, 'pws08fctuser006')
         message.setField(115, 'PWARE')
@@ -431,12 +439,12 @@ class Orchestrator(Application):
                     self.ModifyAlgo(v, day)
                     
             count = 0
-            while STATUS == 'WAIT' and count < 1:
+            while STATUS == 'WAIT' and count < 10:
                 print "Waiting for ack ..."
                 time.sleep(1)
                 count += 1
                 
-            if count > 0 :
+            if count > 10 :
                 print "No ACK received => continue test process anyway"
                 
             
@@ -458,12 +466,13 @@ if __name__ == '__main__':
 #     OrchesFile = './inputs/basket_REtest.txt'
 #     OrchesFile = './inputs/basket_switch_strategies.txt'
     OrchesFile = './inputs/basket-test.txt'
+#     OrchesFile = './inputs/basket_test_VWAP.txt'
     
     logfile_name = './logs/basket_test_%s.log' %day
     LOG_FILE = logfile_name
     
-    mode = 'submit'
-#     mode = 'switch'
+#     mode = 'submit'
+    mode = 'switch'
     
     duration = 1000
     

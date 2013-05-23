@@ -505,7 +505,7 @@ def ets(idx, vec, ext_idx):
             ext_vec.append(None)
     return ext_vec
 
-def convertStr(s):
+def convertStr(s, date_format = "%Y-%m-%d %H:%M:%S"):
     '''
         Attempts to convert an element to int, 
         if failed it will attempt to convert to float
@@ -520,6 +520,11 @@ def convertStr(s):
         try:
             ret = float(s)
         except ValueError:
-            return s
+            # Try datetime            
+            try:
+                import datetime
+                ret = datetime.datetime.strptime(s, date_format)
+            except ValueError:
+                return s
     return ret
         

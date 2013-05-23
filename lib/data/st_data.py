@@ -32,7 +32,7 @@ def from_mat_file(filename, variable = 'data'):
 
 
 if __name__ == "__main__":
-    data = from_mat_file("Q:/dev_repository/get_tick/ft/FTE/2013_05_01.mat")
+    data = from_mat_file("Q:/dev_repository/get_tick/ft/FTE.PA/2013_05_02.mat")
     spread = 10000 * (data['ask'] - data['bid']) / data['price']
     import matplotlib.pyplot as plt
     spread.plot()        

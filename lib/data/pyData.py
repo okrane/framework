@@ -1,9 +1,7 @@
 """
     @author: Silviu
 """
-from simep.funcs.excelerator import Workbook, parse_xls
-#from simep.bin.simepcore import dateNum
-from simep.funcs.stdio.utils import pyLog
+
 import csv
 from datetime import datetime
 import types

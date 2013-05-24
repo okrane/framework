@@ -12,17 +12,20 @@ import datetime as dt
 def get_algodata(mode, **kwargs):
     
     #### CONFIG and CONNECT
-    server="172.29.0.32"
-    port=27017
+    connect_info="mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test"
+    
     #### DEFAULT OUTPUT    
     data=[]
     
+    #--------------------------------------------------------------------------
+    # MODE : sequence_info
+    #--------------------------------------------------------------------------
     if (mode=="sequence_info"):
         
-        #### CONNECTIONS and DB
+        #### CONNECTIONS and DB 
         db_name="DB_test"
         order_cname="AlgoOrders"
-        client = MongoClient(server,port)
+        client = MongoClient(connect_info)
         occ_db = client[db_name][order_cname]
         
         #### Build the request
@@ -59,12 +62,15 @@ def get_algodata(mode, **kwargs):
         #### CONNECTIONS
         client.close();
         
+    #--------------------------------------------------------------------------
+    # MODE : occurence_info
+    #--------------------------------------------------------------------------        
     elif (mode=="occurence_info"): 
         
         #### CONNECTIONS and DB
         db_name="DB_test"
         order_cname="AlgoOrders"
-        client = MongoClient(server,port)
+        client = MongoClient(connect_info)
         occ_db = client[db_name][order_cname]
         
         #### Build the request
@@ -93,13 +99,16 @@ def get_algodata(mode, **kwargs):
         
         #### CONNECTIONS
         client.close();
-            
+        
+    #--------------------------------------------------------------------------
+    # MODE : deal
+    #--------------------------------------------------------------------------        
     elif (mode=="deal"): 
         
         #### CONNECTIONS and DB
         db_name="DB_test"
         deal_cname="OrderDeals"
-        client = MongoClient(server,port)
+        client = MongoClient(connect_info)
         deal_db = client[db_name][deal_cname]            
             
         #### Build the request
@@ -138,9 +147,3 @@ def get_algodata(mode, **kwargs):
 MAIN
 -------------------------------------------------------------------------------
 """ 
-
-if __name__=='__main__':
-    
-    
-    
-    

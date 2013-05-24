@@ -18,8 +18,42 @@ import matplotlib.pyplot as plt
 import datetime as dt
 from scipy.io  import matlab
 import pandas as pd
+from lib.data.matlabutils import *
+from lib.data.st_data import *
+from lib.dbtools.get_repository import *
+from lib.dbtools.read_dataset import *
 
-    
+""" 
+-------------------------------------------------------------------------------
+USE OF MATLABUTILS
+-------------------------------------------------------------------------------
+""" 
+# uniquexte
+#data=pd.DataFrame({'A' : np.array([1,2,1,3,2,3,2]), 'B' :np.array([2,2,2,3,2,3,2])})
+#res1drow=uniqueext(data['A'].values,return_index=True,return_inverse=True)
+#res1dcol=uniqueext(data[['A']].values,return_index=True,return_inverse=True)
+#res2d=uniqueext(data[['A','B']].values,return_index=True,return_inverse=True,rows=True)
+#    
+## ismember
+#data=pd.DataFrame({'A' : np.array([1,2,1,3,2,3,2]), 'B' :np.array([2,2,2,3,2,3,2])})
+#res1d=ismember(data['A'].values,data['B'].values)
+#data['A'].values[res1d[1][res1d[0]]]
+
+""" 
+-------------------------------------------------------------------------------
+USE OF get repositrory
+-------------------------------------------------------------------------------
+""" 
+# locall_tz_from
+get_repository("local_tz_from",security_id=[0,110])
+
+""" 
+-------------------------------------------------------------------------------
+LOAD OF market data
+-------------------------------------------------------------------------------
+""" 
+data=read_dataset('ft',security_id=10735,date='11/03/2013')
+
 """ 
 -------------------------------------------------------------------------------
 STRING
@@ -265,6 +299,8 @@ timedata = pd.date_range('17/3/2013 10:00', '17/3/2013 11:00', freq='60s')
 tmp=np.random.rand(len(timedata))
 data=pd.DataFrame({'bid' : 10+tmp, 'ask' : 10+tmp+np.abs(tmp)},index=timedata)
 
+
+
 # add
 data["mid"]=0.5*(data["bid"]+data["ask"])
 
@@ -288,8 +324,12 @@ data["mid"]=0.5*(data["bid"]+data["ask"])
 data["mid2"]=0.5*(data["bid"]+data["ask"])
 data=data.drop(['mid','mid2'],axis=1)
 
+# get the values in a numpy array
+data2=data.ix[0]
+a=data2[[b'bid','ask']].values
+b=data[['bid']].values
 
-
+uniqueext(a,return_index=False,return_inverse=False,rows=False)
 
 """ 
 GEt elements
@@ -360,6 +400,26 @@ Aggregation dataframeas a time series
 file_path='C:/st_sim/usr/nijos/data/'
 file_name='test1.txt'
 data=pd.read_csv(file_path+file_name,index_col=0,parse_dates=True)
+
+
+
+""" 
+HANDLE TIMEZONE
+"""
+# create Datetime localized in UTC
+timedata = pd.date_range('17/3/2013 10:00', '17/3/2013 11:00', freq='600s')
+timedata1=timedata.tz_localize('UTC')
+# tranform in another Timezone paris
+timedata2=timedata1.tz_convert('Europe/Berlin')
+tmp=np.random.rand(len(timedata))
+
+timedata3 = pd.date_range('17/3/2013 11:00', '17/3/2013 12:00', freq='600s',tz='UTC')
+data=pd.DataFrame({'bid' : 10+tmp, 'ask' : 10+tmp+np.abs(tmp)},index=timedata)
+data1=pd.DataFrame({'bid' : 10+tmp, 'ask' : 10+tmp+np.abs(tmp)},index=timedata1)
+data2=pd.DataFrame({'bid' : 10+tmp, 'ask' : 10+tmp+np.abs(tmp)},index=timedata2)
+data3=pd.DataFrame({'bid' : 10+tmp, 'ask' : 10+tmp+np.abs(tmp)},index=timedata3)
+
+
 
 
 

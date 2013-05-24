@@ -7,18 +7,10 @@ from datetime import *
 from lib.dbtools.get_repository import *
 from lib.data.matlabutils import *
 
-<<<<<<< HEAD
 
 def to_dataframe(data,timezone=False):
     if not data:
         return []
-    
-=======
-def to_dataframe(data):    
-    """ 
-    This is my first function
-    """        
->>>>>>> 39bf89d8f888632b5db880aad5b3d1e143430180
     value = data[0][0].value
     colnames = [x[0] for x in data[0][0].colnames[0]]
     dates = [x[0] for x in data[0][0].date]
@@ -59,12 +51,8 @@ def from_mat_file(filename, variable = 'data'):
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
     filename="Q:/kc_repository/get_tick/ft/110/2013_05_20.mat"
     data = from_mat_file(filename)
-=======
-    data = from_mat_file("Q:/dev_repository/get_tick/ft/FTE.PA/2013_05_02.mat")
->>>>>>> 39bf89d8f888632b5db880aad5b3d1e143430180
     spread = 10000 * (data['ask'] - data['bid']) / data['price']
     import matplotlib.pyplot as plt
     spread.plot()        

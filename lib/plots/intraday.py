@@ -26,6 +26,7 @@ def kcintraday(data, start_time = None, end_time = None, exlude_auction = False,
     
     axes.step(data_no_auction.index, data_no_auction['bid'], color = kc_main_colors()["blue_1"], linewidth = 2)
     axes.step(data_no_auction.index, data_no_auction['ask'], color = kc_main_colors()["blue_2"], linewidth = 2)
+    
     axes.fill_between(data_no_auction.index, data_no_auction['bid'], data_no_auction['ask'], color = kc_main_colors()["light_blue"])    
     data_no_auction['price'].plot(marker="^", ax = axes, color = kc_main_colors()["dark_blue"], linestyle = 'None')        
     axes.grid(True)

@@ -1,11 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import pymssql
+from lib.dbtools.export import * 
 
 def export_security(filename = "security.kcdb"):
-    conn = pymssql.connect(host='LUIDBC01', user='python_ro', password='python4ever!!', database='KGR', as_dict = True)
-    cur = conn.cursor()
-    cur.execute("""select SECID, 
+    query = """select SECID, 
                 SECNAME, 
                 EXCHGID, 
                 SYMBOL1, 
@@ -24,57 +22,27 @@ def export_security(filename = "security.kcdb"):
                 SOURCE,
                 MKTGROUP,
                 PLC
-                from SECURITY where STATUS='A' """)
+                from SECURITY where STATUS='A' """   
+    export_to_csv("KGR", query, filename, ";")
     
-    f = open(filename, "w")
-    row = cur.fetchone()    
-    f.write( ";".join(row.keys()) + '\n')
-    while row :        
-        f.writelines( ";".join([str(x) if x else '' for x in row.values()])  + '\n')
-        row = cur.fetchone()
-    conn.close()        
-    f.close()
 
 def export_security_market(filename = "security_market.kcdb"):
-    conn = pymssql.connect(host='LUIDBC01', user='python_ro', password='python4ever!!', database='KGR', as_dict = True)
-    cur = conn.cursor()
-    cur.execute("""select * from security_market""")
-    
-    f = open(filename, "w")
-    row = cur.fetchone()    
-    f.write( ";".join(row.keys()) + '\n')
-    while row :        
-        f.writelines( ";".join([str(x) if x else '' for x in row.values()])  + '\n')
-        row = cur.fetchone()
-    conn.close()
-    f.close()
+    query =  """select * from security_market""";   
+    export_to_csv("KGR", query, filename, ";")
 
 def export_quotation_group(filename = "quotation_group.kcdb"):
-    conn = pymssql.connect(host='LUIDBC01', user='python_ro', password='python4ever!!', database='KGR', as_dict = True)
-    cur = conn.cursor()
-    cur.execute("""select * from QUOTATION_GROUP""")
+    query = """select * from QUOTATION_GROUP"""
+    export_to_csv("KGR", query, filename, ";")
     
-    f = open(filename, "w")
-    row = cur.fetchone()    
-    f.write( ";".join(row.keys()) + '\n')
-    while row :        
-        f.writelines( ";".join([str(x) if x else '' for x in row.values()])  + '\n')
-        row = cur.fetchone()
-    conn.close()
-    f.close()
-
 def export_trading_hours(filename = "trading_hours.kcdb"):
-    conn = pymssql.connect(host='LUIDBC01', user='python_ro', password='python4ever!!', database='KGR', as_dict = True)
-    cur = conn.cursor()
-    cur.execute("""select * from trading_hours""")
+    query = """select * from trading_hours"""
+    export_to_csv("KGR", query, filename, ";")
     
-    f = open(filename, "w")
-    row = cur.fetchone()    
-    f.write( ";".join(row.keys()) + '\n')
-    while row :        
-        f.writelines( ";".join([str(x) if x else '' for x in row.values()])  + '\n')
-        row = cur.fetchone()
-    conn.close()
-    f.close()
 
-export_quotation_group()
+if __name__ == "__main__":
+    export_security()
+    export_security_market()
+    export_quotation_group()
+    export_trading_hours()
+    
+

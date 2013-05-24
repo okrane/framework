@@ -179,7 +179,7 @@ def line_translator(line, dico_fix, dico_tags, ignore_tags):
     
     return (dict_order, dico_tags)
 
-def storeDB(l_orders, Collection, client, jobID):
+def storeDB(l_orders, Collection, client, jobID, mode='insert'):
     
     database = client['DB_test']
     collection = database[Collection]
@@ -187,10 +187,52 @@ def storeDB(l_orders, Collection, client, jobID):
     print "insert %s Orders into database" %str(len(l_orders))
     
     for order in l_orders:
-        order.update({'job_id': jobID})
-        collection.insert(order, manipulate=False)
+        if mode == 'insert':
+            order.update({'job_id': jobID})
+            collection.insert(order, manipulate=False)
+        elif mode == 'update':
+            collection.save(order)
+            
         list_columns = order.keys()
         update_colmap(list_columns, client, Collection)
+
+def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags):
+    
+    done = False
+    reason = ''
+    
+    OrigOrderID = d_msg['ClOrdID']
+    print "Looking for other reason for order : %s" %OrigOrderID
+    
+    IN_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
+    ER_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sO.fix' %(day, day)
+    
+    cmd = "prt_fxlog %s 3 | egrep '41=%s'" %(IN_file, OrigOrderID)
+    (stdin, stdout_grep, stderr) = socket.exec_command(cmd)
+    
+    count = 0
+    for line in stdout_grep:
+        line = line.replace('|\n','')
+        [line, dico_tags] = line_translator(line, dico_fix, dico_tags, ignore_tags)
+        count += 1
+    
+    if count == 1:
+        if line['MsgType'] == 'G':
+            reason = 'replaced not acked '
+            cmd = "prt_fxlog %s 3 | egrep '11=%s'" %(ER_file, line['ClOrdID'])
+            
+            (stdin, stdout_grep, stderr) = socket.exec_command(cmd)
+            
+            for er_line in stdout_grep:
+                er_line = er_line.replace('|\n','')
+            
+            [er_line, dico_tags] = line_translator(er_line, dico_fix, dico_tags, ignore_tags)
+            
+            if er_line['ExecType'] == '3':
+                reason = '%s and Done for day' %reason
+                done = True
+                
+    return [reason, done]
 
 def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader):
     
@@ -299,8 +341,12 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader)
             g_eff_endtime = p_eff_endtime
             
         if not done and not replaced :
-            p_reason = 'Front End handling'
-        
+            [p_reason, done] = check_EoL(order, p_reason, day, ssh, dico_fix, dico_tags, ignore_tags)
+            
+            if not done:
+                p_reason = 'Front End handling'
+            
+            
         prev_exec += p_exec_qty
         prev_num_exec_vwap +=  num_exec_vwap
         p_num_exec_vwap = num_exec_vwap
@@ -405,7 +451,10 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader)
                         reason = 'pending replace'
                 
                 if not done and not replaced :
-                    reason = 'Front End handling'
+                    [reason, done] = check_EoL(c_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags)
+                    
+                    if not done:
+                        reason = '%s Front End handling' %reason
                 
                 eff_endtime = cc_msg['SendingTime']
                 g_eff_endtime = eff_endtime
@@ -487,12 +536,15 @@ if __name__ == '__main__':
     ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
     
     trader = ''
-    IO = 'O'
+    IO = 'I'
     dico_tags = {}
+    
+    # - Open MONGODB connection
+    Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test")
     
     # - Trader dico generation for matching alias
     if IO == 'I':
-        print 'Genrating dico for Trader matching'
+        print 'Generating dico for Trader matching'
         temp_dico_trader = Client['DB_test']['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':conf['WATFLT01']['ip_addr']})
         dico_trader = {}
         for trd in temp_dico_trader:
@@ -500,14 +552,12 @@ if __name__ == '__main__':
             
     mkt_data_fields = ['EXEC_SHARES' ,'ORDER_PERC','INMKT_VOLUME','INMKT_TURNOVER','PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','IN_VWAS','ARRIVAL_PRICE','FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
     
-    # - Open MONGODB connection
-    Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test")
-
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(conf['WATFLT01']['ip_addr'], username=conf['WATFLT01']['list_users']['flexapp']['username'], password=conf['WATFLT01']['list_users']['flexapp']['passwd'])
     
-    l_days = ['20130510','20130513','20130514','20130515','20130516','20130517','20130520','20130521','20130522']
+#     l_days = ['20130501', '20130502', '20130503', '20130506', '20130507', '20130508', '20130509', '20130510','20130513','20130514','20130515','20130516','20130517','20130520','20130521','20130522']
+    l_days = ['20130521']
     
     for day in l_days:
         print "-----> Start import for : %s" %day
@@ -522,7 +572,7 @@ if __name__ == '__main__':
             
             storeDB(c_orders, 'OrderDeals', Client, job_id)
             
-        elif IO == 'I:':
+        elif IO == 'I':
             
             type = 'D'
             # - Single Day import
@@ -605,7 +655,8 @@ if __name__ == '__main__':
                             
                 if str(order['SecurityID']) in dict_secs.keys():
                     order.update({'cheuvreux_secid':dict_secs[str(order['SecurityID'])]})
-                    Client['DB_test']['AlgoOrders'].save(order)
+                    storeDB([order], 'AlgoOrders', Client, '','update')
+                    #Client['DB_test']['AlgoOrders'].save(order)
                 
         print "----> END OF IMPORT FOR : %s" %day
         

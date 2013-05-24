@@ -37,6 +37,34 @@ class Connections:
         Connections.bases = handler.bases 
         
     @staticmethod
+    def getClient(server):
+        import pymongo
+        
+        parser = xml.sax.make_parser()
+        handler = db_handler()
+        parser.setContentHandler(handler)
+        parser.parse(db_connection_file)
+        driver = handler.mapping[server.upper()][4]
+        
+        if driver != "Mongo":
+            print "Unable to return a Client of a type which is not Mongo"
+            return None
+        
+        address = handler.mapping[server.upper()][0].split(':')[0]
+        port = handler.mapping[server.upper()][0].split(':')[1]
+        database = handler.mapping[server.upper()][1]            
+        user = handler.mapping[server.upper()][2]
+        password = handler.mapping[server.upper()][3]
+        print driver, address, database, user, password, port
+        
+        if user != "":
+            mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test
+            return pymongo.MongoClient("mongodb://%s:%s@%s:%s/%s" % (user, password, address, port, database))
+        else:
+            return pymongo.MongoClient(address, port)
+        
+    
+    @staticmethod
     def getCursor(server):
         """ 
             @param server: the name of a server

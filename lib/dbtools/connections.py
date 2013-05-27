@@ -58,7 +58,6 @@ class Connections:
         print driver, address, database, user, password, port
         
         if user != "":
-            mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test
             return pymongo.MongoClient("mongodb://%s:%s@%s:%s/%s" % (user, password, address, port, database))
         else:
             return pymongo.MongoClient(address, port)

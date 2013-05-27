@@ -1,3 +1,4 @@
+#!python2.7
 '''
 Created on 23 Apr 2013
 
@@ -547,11 +548,7 @@ if __name__ == '__main__':
     universe_file = '../cfg/KC_universe.xml'
     dico_FIX = '../cfg/FIX42.xml'
     
-<<<<<<< HEAD
-    conf = get_conf('dev', universe_file)
-=======
     conf = get_conf(environment, universe_file)
->>>>>>> 78e1c9cdffeff3c30eae70c24e922004dfd25a72
     
     ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
     
@@ -566,7 +563,7 @@ if __name__ == '__main__':
     # - Trader dico generation for matching alias
     if IO == 'I':
         print 'Generating dico for Trader matching'
-        temp_dico_trader = Client['Vega']['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':conf[server_flex]['ip_addr']})
+        temp_dico_trader = Client['DB_test']['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':conf[server_flex]['ip_addr']})
         dico_trader = {}
         for trd in temp_dico_trader:
             dico_trader[trd['tag_value']] = trd['trader_name']
@@ -578,7 +575,7 @@ if __name__ == '__main__':
     ssh.connect(conf[server_flex]['ip_addr'], username=conf[server_flex]['list_users']['flexapp']['username'], password=conf[server_flex]['list_users']['flexapp']['passwd'])
     
 #     l_days = ['20130501', '20130502', '20130503', '20130506', '20130507', '20130508', '20130509', '20130510','20130513','20130514','20130515','20130516','20130517','20130520','20130521','20130522']
-    l_days = ['20130521']
+    l_days = ['20130524']
     
     for day in l_days:
         print "-----> Start import for : %s" %day

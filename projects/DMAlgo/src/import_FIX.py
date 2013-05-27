@@ -531,7 +531,7 @@ if __name__ == '__main__':
     universe_file = '../cfg/KC_universe.xml'
     dico_FIX = '../cfg/FIX42.xml'
     
-    conf = get_conf('preprod', universe_file)
+    conf = get_conf('dev', universe_file)
     
     ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
     

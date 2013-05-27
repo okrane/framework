@@ -528,7 +528,11 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader)
 if __name__ == '__main__':
     import sys    
     if len(sys.argv) == 1:
-        print "Usage: python2.7 import_FIX.py ..."
+        print "Usage Examples: "
+        print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev I"
+        print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev O"
+        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev I"
+        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev O"
         sys.exit()
     
     database    = sys.argv[1]

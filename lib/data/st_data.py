@@ -9,8 +9,7 @@ from lib.data.matlabutils import *
 
 def to_dataframe(data,timezone=False):
     if not data:
-        return []    
-
+        return
     value = data[0][0].value
     colnames = [x[0] for x in data[0][0].colnames[0]]
     dates = [x[0] for x in data[0][0].date]
@@ -50,13 +49,11 @@ def from_mat_file(filename, variable = 'data'):
 
 
 if __name__ == "__main__":
-
     filename="Q:/kc_repository/get_tick/ft/110/2013_05_20.mat"
     data = from_mat_file(filename)
     spread = 10000 * (data['ask'] - data['bid']) / data['price']
     import matplotlib.pyplot as plt
     spread.plot()        
-    plt.show()
-    
+    plt.show()    
     print spread
 

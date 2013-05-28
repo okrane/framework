@@ -15,3 +15,4 @@ data=get_algodata("sequence_info",start_date="14/05/2013",end_date="15/05/2013")
 data=get_algodata("occurence_info",occurence_id=["FY2000007383101"])
 # mode deal
 data=get_algodata("deal",sequence_id="FY2000004393001")
+

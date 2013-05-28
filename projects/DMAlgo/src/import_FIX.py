@@ -1,3 +1,4 @@
+#!python2.7
 '''
 Created on 23 Apr 2013
 
@@ -76,7 +77,7 @@ def get_conf(referential, dico_universe):
             conf[serv_name] = dict_server
     return conf
 
-def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', ignore_tags=[]):
+def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', ignore_tags=[], source = "CLNT1"):
     
     # - IO :
     #    I for parent order (incoming orders)
@@ -86,7 +87,7 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(server['ip_addr'], username=server['list_users']['flexsys']['username'], password=server['list_users']['flexsys']['passwd'])
     
-    path = './logs/trades/%s/FLINKI_CLNT1%s%s.fix' %(day, day, IO)
+    path = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, source, day, IO)
     l_orders = []
     
     if IO == 'I':
@@ -234,7 +235,7 @@ def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags):
                 
     return [reason, done]
 
-def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader):
+def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader, source="CLNT1"):
     
     # - Open SSH connection 
     ssh = paramiko.SSHClient()
@@ -265,8 +266,8 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader)
     if Type == 'D':
         
         # - Looking for Execution report sequence
-        ER_file = './logs/trades/%s/FLINKI_CLNT1%sO.fix' %(day, day)
-        IN_file = './logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
+        ER_file = './logs/trades/%s/FLINKI_%s%sO.fix' %(day, source, day)
+        IN_file = './logs/trades/%s/FLINKI_%s%sI.fix' %(day, source, day)
         
         cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*%s'" %(ER_file, Trader, ClOrdID)
         
@@ -526,26 +527,44 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader)
     return [order_life, dico_tags]
 
 if __name__ == '__main__':
+    import sys    
+    if len(sys.argv) == 1:
+        print "Usage Examples: "
+        print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev I"
+        print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev O"
+        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev I"
+        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev O"
+        sys.exit()
     
+    database    = sys.argv[1]
+    server_flex = sys.argv[2]
+    environment = sys.argv[3]
+    io          = sys.argv[4]
+    source      = sys.argv[5]
+    
+        
+    from lib.dbtools.connections import Connections
     # - Parameters
+        
     universe_file = '../cfg/KC_universe.xml'
     dico_FIX = '../cfg/FIX42.xml'
     
-    conf = get_conf('preprod', universe_file)
+    conf = get_conf(environment, universe_file)
     
     ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
     
     trader = ''
-    IO = 'I'
+    IO = io
     dico_tags = {}
     
     # - Open MONGODB connection
-    Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test")
+    #Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test")
+    Client = Connections.getClient(database)
     
     # - Trader dico generation for matching alias
     if IO == 'I':
         print 'Generating dico for Trader matching'
-        temp_dico_trader = Client['DB_test']['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':conf['WATFLT01']['ip_addr']})
+        temp_dico_trader = Client['DB_test']['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':conf[server_flex]['ip_addr']})
         dico_trader = {}
         for trd in temp_dico_trader:
             dico_trader[trd['tag_value']] = trd['trader_name']
@@ -554,10 +573,10 @@ if __name__ == '__main__':
     
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(conf['WATFLT01']['ip_addr'], username=conf['WATFLT01']['list_users']['flexapp']['username'], password=conf['WATFLT01']['list_users']['flexapp']['passwd'])
+    ssh.connect(conf[server_flex]['ip_addr'], username=conf[server_flex]['list_users']['flexapp']['username'], password=conf[server_flex]['list_users']['flexapp']['passwd'])
     
 #     l_days = ['20130501', '20130502', '20130503', '20130506', '20130507', '20130508', '20130509', '20130510','20130513','20130514','20130515','20130516','20130517','20130520','20130521','20130522']
-    l_days = ['20130521']
+    l_days = ['20130524']
     
     for day in l_days:
         print "-----> Start import for : %s" %day
@@ -566,7 +585,7 @@ if __name__ == '__main__':
             
             job_id = 'OD%s' %day
             type = ''
-            res_import = import_FIXmsg(dico_FIX, conf['WATFLT01'], day, type, IO, dico_tags, trader, ignore_tags)
+            res_import = import_FIXmsg(dico_FIX, conf[server_flex], day, type, IO, dico_tags, trader, ignore_tags, source)
             c_orders = res_import[0]
             dico_tags = res_import[1]
             
@@ -576,7 +595,7 @@ if __name__ == '__main__':
             
             type = 'D'
             # - Single Day import
-            res_import = import_FIXmsg(dico_FIX, conf['WATFLT01'], day, type, IO, dico_tags, trader, ignore_tags)
+            res_import = import_FIXmsg(dico_FIX, conf[server_flex], day, type, IO, dico_tags, trader, ignore_tags, source)
             d_orders = res_import[0]
             dico_tags = res_import[1]
             
@@ -585,7 +604,7 @@ if __name__ == '__main__':
             
             for order in d_orders:
                 print 'Order ID : %s' %order['ClOrdID']
-                l_events = OrderLife(order, dico_FIX, day, ignore_tags, dico_tags, conf['WATFLT01'], dico_trader)
+                l_events = OrderLife(order, dico_FIX, day, ignore_tags, dico_tags, conf[server_flex], dico_trader, source)
                 u_order = l_events[0]
                 dico_tags = l_events[1]
                 storeDB(u_order, 'AlgoOrders', Client, job_id)
@@ -610,7 +629,7 @@ if __name__ == '__main__':
             # - GET COLUMN NUMBER IN MKT
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(conf['WATFLT01']['ip_addr'], username=conf['WATFLT01']['list_users']['flexapp']['username'], password=conf['WATFLT01']['list_users']['flexapp']['passwd'])
+            ssh.connect(conf[server_flex]['ip_addr'], username=conf[server_flex]['list_users']['flexapp']['username'], password=conf[server_flex]['list_users']['flexapp']['passwd'])
             cmd = 'grep SYM /home/flexapp/ushare/exportprodAV1%s' %day
             (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
             
@@ -666,7 +685,7 @@ if __name__ == '__main__':
 #     order = res_trans[0]
 #     dico_tags = res_trans[1]
 #     folder = '20130514'
-#     l_events = OrderLife(order, dico_FIX, folder, ignore_tags, dico_tags, conf['WATFLT01'], dico_trader)
+#     l_events = OrderLife(order, dico_FIX, folder, ignore_tags, dico_tags, conf[server_flex], dico_trader)
 #     u_order = l_events[0]
 #     dico_tags = l_events[1]
 #     storeDB(u_order, 'AlgoOrders', Client)

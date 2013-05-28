@@ -22,6 +22,7 @@
 		<server name='PARFLT02' ip_addr='172.29.0.32' >
 			<user username='flexsys' passwd='flexsys1' />
 			<user username='flexapp' passwd='flexapp1' />
+			<user username='python_script' passwd='pythonpass' />
 		</server>
 	</env>
 	<env name='preprod' >
@@ -31,5 +32,9 @@
 		</server>
 	</env >
 	<env name='prod'>
+		<server name='LUIFLT01' ip_addr='81.255.55.50' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
 	</env>
 </universe>

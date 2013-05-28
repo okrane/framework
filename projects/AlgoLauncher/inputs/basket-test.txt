@@ -1,7 +1,2 @@
-StrategyName|ExDestination|Symbol|SecurityID|Side|Currency|OrderQty|Price|StartTime|EndTime|MinSize|AggregatedStyle|SweepLit|
-9|XPAR|FTE|FR0000133308|1|EUR|100000|100|10:00|22:00|1|yes|CF|
-9|XPAR|FTE|FR0000133308|1|EUR|100000|100|10:00|22:00|1|no|CF|
-9|XPAR|LNA|FR0004170017|1|EUR|100000|100|10:00|22:00|1|yes|CF|
-9|XPAR|LNA|FR0004170017|1|EUR|100000|100|10:00|22:00|1|no|CF|
-9|DE|BNR|B4YVF56|1|EUR|100000|100|10:00|22:00|1|yes|CF|
-9|DE|BNR|B4YVF56|1|EUR|100000|100|10:00|22:00|1|no|CF|
+StrategyName|ExDestination|Symbol|SecurityID|Side|Currency|OrderQty|Price|StartTime|EndTime|MaxPctVolume|ExecutionStyle|WouldLevel|WouldDark|AuctionPct|AggregatedStyle|ExcludeAuction|MinPctVolume|
+1|XPAR|FTE|FR0000133308|1|EUR|0.0|100.0|07:00|18:00|20.0|0.0|7.0|yes|30.0|yes|3.0|10|

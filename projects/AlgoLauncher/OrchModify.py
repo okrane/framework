@@ -471,8 +471,8 @@ if __name__ == '__main__':
     logfile_name = './logs/basket_test_%s.log' %day
     LOG_FILE = logfile_name
     
-#     mode = 'submit'
-    mode = 'switch'
+    mode = 'submit'
+#     mode = 'switch'
     
     duration = 1000
     

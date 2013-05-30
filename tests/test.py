@@ -23,8 +23,8 @@ Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017
 
 
 db = Client['DB_test']
-print db['AlgoOrders'].find({'job_id':'AO20130521'}).count()
-db['AlgoOrders'].remove({'job_id':'AO20130521'})
+# print db['AlgoOrders'].find({'job_id':'AO20130521'}).count()
+# db['AlgoOrders'].remove({'job_id':'AO20130521'})
 
 # collection = db['map_tagFIX']
 
@@ -80,15 +80,13 @@ db['AlgoOrders'].remove({'job_id':'AO20130521'})
 # 
 # print result.SYMBOL6[1]
 
-# day = '20130516'
-# collec = db['AlgoOrders']
-# s_date = datetime.datetime(2013,05,16)
-# e_date = datetime.datetime(2013,05,22)
-# docs = collec.find({"SendingTime": {"$gt" : s_date}})
-# print docs.count()
-# for doc in docs:
-#     print doc['SendingTime']
-# collec.remove({"SendingTime": {"$gt" : s_date}})
+day = '20130523'
+collec = db['AlgoOrders']
+s_date = datetime.datetime(2013,05,23)
+e_date = datetime.datetime(2013,05,23)
+docs = collec.find({"SendingTime": {"$gt" : s_date}})
+print docs.count()
+collec.remove({"SendingTime": {"$gt" : s_date}})
 
 # collec = db['AlgoOrders']
 # collec.remove()

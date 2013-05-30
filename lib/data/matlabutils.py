@@ -73,7 +73,8 @@ def uniqueext(a,return_index=False,return_inverse=False,rows=False):
     #--------------------------------------------------------------------------
     # CASE 3 : list
     #--------------------------------------------------------------------------
-    # TODO: handle indexes !
+    elif (isinstance(a,list)) and (not rows):
+        return uniqueext(np.array(a),return_index=return_index,return_inverse=return_inverse,rows=rows)
     else:
         raise NameError('uniqueext:input - bad input type')
   

@@ -8,35 +8,68 @@ from lib.dbtools.get_repository import *
 from lib.data.matlabutils import *
 
 def to_dataframe(data,timezone=False):
+    
     if not data:
         return
+    #--------------------------------------------------------------------------
+    # EXTRACT ST_DATA needed info
+    #--------------------------------------------------------------------------
     value = data[0][0].value
     colnames = [x[0] for x in data[0][0].colnames[0]]
     dates = [x[0] for x in data[0][0].date]
     #title = data[0][0].title[0]
     
-    timedata =[datetime.fromordinal(int(matlab_datenum)) + timedelta(days=matlab_datenum%1) - timedelta(days = 366) for matlab_datenum in dates]
-
     frame = {}
     for i in range(len(colnames)):
-        frame[colnames[i]] = [x[i] for x in value]    
+        frame[colnames[i]] = [x[i] for x in value] 
     
-    dataframe = pd.DataFrame(frame, index = timedata)    
+    frame['date']=[datetime.fromordinal(int(matlab_datenum)) + timedelta(days=matlab_datenum%1) - timedelta(days = 366) for matlab_datenum in dates]
+    
     # TODO: rownames and codebook
     
+    dataframe=pd.DataFrame.from_records(frame,columns=colnames.append('date'),index = ['date'])    
+    
+    # test if it is old cheuvreux data info
+    is_old_data=False
+    if (('info' in data[0][0]._fieldnames) and
+        (('version' not in data[0][0].info[0][0]._fieldnames) or
+        (data[0][0].info[0][0].version[0][0] is not 'kepche_1'))):
+            is_old_data=True
+            
+    #--------------------------------------------------------------------------
+    # Mapping des destinations de trading : Cheuvreux -> Kepler
+    #--------------------------------------------------------------------------
+    if (is_old_data and ('trading_destination_id' in colnames)):
+        if ('security_id' not in data[0][0].info[0][0]._fieldnames):
+                raise NameError('to_dataframe:security_id - Security_id info is missing !')      
+        td_newvals=get_repository("tdidch2exchangeid",
+                                  td_id=dataframe['trading_destination_id'].values,
+                                    security_id=data[0][0].info[0][0].security_id[0][0])
+        del dataframe['trading_destination_id']
+        dataframe.insert(0,'trading_destination_id',td_newvals)    
+    
+    #--------------------------------------------------------------------------
+    # TIMEZONE
+    #--------------------------------------------------------------------------
     if timezone:
-        # TODO: better with place_id of td_info, wait for Romain and referentiel to be clean)
         if (('info' in data[0][0]._fieldnames) and 
-            all([x in data[0][0].info[0][0]._fieldnames for x in ['localtime','security_id']]) and 
-            data[0][0].info[0][0].localtime[0][0]):
-                stz=get_repository("local_tz_from",security_id=data[0][0].info[0][0].security_id[0][0])
-                if  not (not stz[0]):
-                   dataframe=dataframe.tz_localize(stz[0])
+            all([x in data[0][0].info[0][0]._fieldnames for x in ['localtime','td_info']])):
+            if (not data[0][0].info[0][0].localtime[0][0]):
+                stz=['GMT']
+            else:
+                if is_old_data:
+                    exchid=get_repository("tdidch2exchangeid",td_id=data[0][0].info[0][0].td_info[0][0].trading_destination_id[0][0])
                 else:
-                    raise NameError('to_dataframe:timezone - No timezone find in database')
+                    exchid=[data[0][0].info[0][0].td_info[0][0].trading_destination_id[0][0]]  
+                stz=get_repository("exchangeid2tz",exchange_id=exchid)
+                
+            if  not (not stz[0]):
+                dataframe=dataframe.tz_localize(stz[0])
+            else:
+                raise NameError('to_dataframe:timezone - No timezone found in database')
         else:
-            raise NameError('to_dataframe:timezone - No information on the loaded matfile')
-               
+            raise NameError('to_dataframe:timezone - Timezone can"t be found in the input matfile')
+       
     return dataframe
     
     

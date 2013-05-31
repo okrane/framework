@@ -13,6 +13,21 @@ from datetime import datetime
 from lib.dbtools import connections
 from pandas import *
 
+
+def get_last_seq(order, l_orders):
+    
+    primID = order['occ_ID']
+    
+    res_ord = order
+    
+    nb_seq = 0
+    for ord in l_orders:
+        if ord['occ_ID'] == primID and nb_seq < ord['nb_replace']:
+            nb_seq = ord['nb_replace']
+            res_ord = ord
+    
+    return res_ord
+    
 def match_trader(trader_name, dico_trader):
     r_trader_name = ""
     if trader_name in dico_trader.keys():
@@ -168,7 +183,7 @@ def line_translator(line, dico_fix, dico_tags, ignore_tags):
         if item[1] != ' ' and item[1] != '':
             if int(item[0]) not in ignore_tags:
                 if int(item[0]) not in dico_tags.keys():
-                    dico_info = get_FIX(dico_FIX, int(item[0]))
+                    dico_info = get_FIX(dico_fix, int(item[0]))
                     dico_tags[int(item[0])] = dico_info
                 
                 name = dico_tags[int(item[0])][0]
@@ -235,7 +250,7 @@ def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags):
                 
     return [reason, done]
 
-def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader, source="CLNT1"):
+def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader, source="CLNT1", import_type='Client'):
     
     # - Open SSH connection 
     ssh = paramiko.SSHClient()
@@ -266,10 +281,17 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
     if Type == 'D':
         
         # - Looking for Execution report sequence
-        ER_file = './logs/trades/%s/FLINKI_%s%sO.fix' %(day, source, day)
-        IN_file = './logs/trades/%s/FLINKI_%s%sI.fix' %(day, source, day)
+        if import_type == 'Client':
+            ER_file = './logs/trades/%s/FLINKI_%s%sO.fix' %(day, source, day)
+            IN_file = './logs/trades/%s/FLINKI_%s%sI.fix' %(day, source, day)
+            cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*%s'" %(ER_file, Trader, ClOrdID)
+        elif import_type == 'Street':
+            ER_file = './logs/trades/%s/FLEX_ULPROD%sI.fix' %(day, day)
+            IN_file = './logs/trades/%s/FLEX_ULPROD%sO.fix' %(day, day)
+            cmd = "prt_fxlog %s 3 | egrep '35=8.*%s'" %(ER_file, ClOrdID)
         
-        cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*%s'" %(ER_file, Trader, ClOrdID)
+        
+        print cmd
         
         (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
         
@@ -283,6 +305,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
             WouldLevel = order['WouldLevel']
         
         for str_msg in stdout_grep:
+            
             str_msg = str_msg.replace('|\n','')
             res_trans = line_translator(str_msg, dico_fix, dico_tags, ignore_tags)
             p_msg = res_trans[0]
@@ -386,8 +409,11 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 WouldLevel = 0
                 if "WouldLevel" in c_msg.keys():
                     WouldLevel = c_msg['WouldLevel']
-            
-                cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*%s'" %(ER_file, Trader, ClOrdID)
+                
+                if import_type == 'Client':
+                    cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*%s'" %(ER_file, Trader, ClOrdID)
+                elif import_type == 'Street':
+                    cmd = "prt_fxlog %s 3 | egrep '35=8.*%s'" %(ER_file, ClOrdID)
     
                 (stdin, stdout_grep, stderr)= ssh.exec_command(cmd)
                 rpl_checked = False
@@ -452,7 +478,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                         reason = 'pending replace'
                 
                 if not done and not replaced :
-                    [reason, done] = check_EoL(c_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags)
+                    [reason, done] = check_EoL(c_msg, reason, day, ssh, dico_fix, dico_tags, ignore_tags)
                     
                     if not done:
                         reason = '%s Front End handling' %reason
@@ -532,15 +558,24 @@ if __name__ == '__main__':
         print "Usage Examples: "
         print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev I"
         print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev O"
-        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev I"
-        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev O"
-        sys.exit()
+        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev I CLNT1"
+        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev O CLNT1"
+        print "python2.7 import_FIX.py HPP WATFLT01 preprod I CLNT1"
+        print "python2.7 import_FIX.py HPP WATFLT01 preprod O CLNT1"
+        
+        database    = 'HPP'
+        server_flex = 'WATFLT01'
+        environment = 'preprod'
+        io          = 'I'
+        source      = 'CLNT1'
+        # sys.exit()
+    else:
     
-    database    = sys.argv[1]
-    server_flex = sys.argv[2]
-    environment = sys.argv[3]
-    io          = sys.argv[4]
-    source      = sys.argv[5]
+        database    = sys.argv[1]
+        server_flex = sys.argv[2]
+        environment = sys.argv[3]
+        io          = sys.argv[4]
+        source      = sys.argv[5]
     
         
     from lib.dbtools.connections import Connections
@@ -559,7 +594,7 @@ if __name__ == '__main__':
     
     # - Open MONGODB connection
     #Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test")
-    Client = Connections.getClient(database)
+    Client = connections.Connections.getClient(database)
     
     # - Trader dico generation for matching alias
     if IO == 'I':
@@ -576,7 +611,7 @@ if __name__ == '__main__':
     ssh.connect(conf[server_flex]['ip_addr'], username=conf[server_flex]['list_users']['flexapp']['username'], password=conf[server_flex]['list_users']['flexapp']['passwd'])
     
 #     l_days = ['20130501', '20130502', '20130503', '20130506', '20130507', '20130508', '20130509', '20130510','20130513','20130514','20130515','20130516','20130517','20130520','20130521','20130522']
-    l_days = ['20130524']
+    l_days = ['20130523']
     
     for day in l_days:
         print "-----> Start import for : %s" %day
@@ -654,7 +689,9 @@ if __name__ == '__main__':
                     # Enrichment Market Data 
                     if order['MsgType'] == 'D':
                         Trader_code = order['TargetSubID']
-                        ClOrdID = '%sCLNT1' %order['ClOrdID']
+                        last_seq = get_last_seq(order, new_docs)
+                        
+                        ClOrdID = '%sCLNT1' %last_seq['ClOrdID']
                         Ticker = order['Symbol']
                         
                         cmd = "egrep '%s.*%s' /home/flexapp/ushare/exportprod%s%s" %(Ticker, ClOrdID, Trader_code,day)

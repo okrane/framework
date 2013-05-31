@@ -12,7 +12,11 @@ import time
 from datetime import datetime
 from lib.dbtools import connections
 from pandas import *
+<<<<<<< HEAD
 from lib.data.pyData import *
+=======
+from lib.data.pyData import convertStr
+>>>>>>> 77ce5a86e11e7ddfdd2d5542cabbbb3722093b37
 
 def get_last_seq(order, l_orders):
     
@@ -190,7 +194,7 @@ def line_translator(line, dico_fix, dico_tags, ignore_tags):
                 name = dico_tags[int(item[0])][0]
                 type = dico_tags[int(item[0])][1]
                 if type != 'UTCTIMESTAMP':
-                    dict_order[name] = item[1]
+                    dict_order[name] = convertStr(item[1])
                 else:
                     dict_order[name] = datetime.strptime(item[1], '%Y%m%d-%H:%M:%S')
     
@@ -557,39 +561,17 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
     
     return [order_life, dico_tags]
 
-if __name__ == '__main__':
-    import sys    
-    if len(sys.argv) == 1:
-        print "Usage Examples: "
-        print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev I"
-        print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev O"
-        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev I CLNT1"
-        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev O CLNT1"
-        print "python2.7 import_FIX.py HPP WATFLT01 preprod I CLNT1"
-        print "python2.7 import_FIX.py HPP WATFLT01 preprod O CLNT1"
-        
-        database    = 'HPP'
-        server_flex = 'WATFLT01'
-        environment = 'preprod'
-        io          = 'I'
-        source      = 'CLNT1'
-        # sys.exit()
-    else:
-    
-        database    = sys.argv[1]
-        server_flex = sys.argv[2]
-        environment = sys.argv[3]
-        io          = sys.argv[4]
-        source      = sys.argv[5]
-    
-        
+def export(database, server_flex, environement, io, source, dates):
+    import os
+    full_path = os.path.realpath(__file__)    
+    path, f = os.path.split(full_path)        
     from lib.dbtools.connections import Connections
+    
     # - Parameters
         
-    universe_file = '../cfg/KC_universe.xml'
-    dico_FIX = '../cfg/FIX42.xml'
-    
-    conf = get_conf(environment, universe_file)
+    universe_file = path +'/../cfg/KC_universe.xml'
+    dico_FIX = path + '/../cfg/FIX42.xml'    
+    conf = get_conf(environement, universe_file)
     
     ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
     
@@ -599,6 +581,7 @@ if __name__ == '__main__':
     
     # - Open MONGODB connection
     #Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test")
+    print database
     Client = connections.Connections.getClient(database)
     
     # - Trader dico generation for matching alias
@@ -615,15 +598,15 @@ if __name__ == '__main__':
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(conf[server_flex]['ip_addr'], username=conf[server_flex]['list_users']['flexapp']['username'], password=conf[server_flex]['list_users']['flexapp']['passwd'])
     
-#     l_days = ['20130501', '20130502', '20130503', '20130506', '20130507', '20130508', '20130509', '20130510','20130513','20130514','20130515','20130516','20130517','20130520','20130521','20130522']
-    l_days = ['20130523']
-    
-    for day in l_days:
+    for day in dates:
         print "-----> Start import for : %s" %day
         
         if IO == 'O':
             
             job_id = 'OD%s' %day
+            
+            Client['DB_test']['AlgoOrders'].remove({'job_id':job_id})
+            
             type = ''
             res_import = import_FIXmsg(dico_FIX, conf[server_flex], day, type, IO, dico_tags, trader, ignore_tags, source)
             c_orders = res_import[0]
@@ -642,14 +625,22 @@ if __name__ == '__main__':
             l_kep_secids = []
             job_id = 'AO%s' %day
             
+            Client['DB_test']['AlgoOrders'].remove({'job_id':job_id})
+            
             for order in d_orders:
                 print 'Order ID : %s' %order['ClOrdID']
                 l_events = OrderLife(order, dico_FIX, day, ignore_tags, dico_tags, conf[server_flex], dico_trader, source)
                 u_order = l_events[0]
                 dico_tags = l_events[1]
                 storeDB(u_order, 'AlgoOrders', Client, job_id)
+<<<<<<< HEAD
                 l_kep_secids.append(u_order[0]['SecurityID'])
              
+=======
+                if 'SecurityID' in u_order[0].keys():
+                    l_kep_secids.append(u_order[0]['SecurityID'])  
+            
+>>>>>>> 77ce5a86e11e7ddfdd2d5542cabbbb3722093b37
             l_kec_secids = set(l_kep_secids)
              
             # - UPDATE CHEUVREUX SECURITY IDS
@@ -723,7 +714,7 @@ if __name__ == '__main__':
                              
                             storeDB([order], 'AlgoOrders', Client, '','update')
                             
-                if str(order['SecurityID']) in dict_secs.keys():
+                if "SecurityID" in order.keys() and str(order['SecurityID']) in dict_secs.keys():
                     order.update({'cheuvreux_secid':dict_secs[str(order['SecurityID'])]})
                     storeDB([order], 'AlgoOrders', Client, '','update')
                 
@@ -784,4 +775,34 @@ if __name__ == '__main__':
     # - Close session
     if Client.alive():
         Client.close()
+
+if __name__ == '__main__':
+    import sys    
+    if len(sys.argv) == 1:
+        print "Usage Examples: "
+        print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev I"
+        print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev O"
+        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev I CLNT1"
+        print "python2.7 import_FIX.py HPP PARFLTLAB02 dev O CLNT1"
+        print "python2.7 import_FIX.py HPP WATFLT01 preprod I CLNT1"
+        print "python2.7 import_FIX.py HPP WATFLT01 preprod O CLNT1"
+        
+        database    = 'HPP'
+        server_flex = 'WATFLT01'
+        environment = 'preprod'
+        io          = 'I'
+        source      = 'CLNT1'
+        # sys.exit()
+    else:
+    
+        database    = sys.argv[1]
+        server_flex = sys.argv[2]
+        environment = sys.argv[3]
+        io          = sys.argv[4]
+        source      = sys.argv[5]
+        date        = sys.argv[6]
+        
+        export(database, server_flex, environement, io, source, [date])
+    
+    
     

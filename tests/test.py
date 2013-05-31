@@ -4,6 +4,16 @@ from lib.dbtools import connections
 import datetime
 import paramiko
 from projects.DMAlgo.src import import_FIX as fix
+# 
+# from lib.dbtools.connections import Connections
+# db = Connections.getClient("HPP").DB_test
+# from datetime import *
+# #result = db.AlgoOrders.aggregate([{"$project": {"ClOrdID": 1, "_id": 0}}])
+# result = db.AlgoOrders.aggregate([{"$match": {"SendingTime" : {"$gt" : datetime(2013, 05, 22), "$lte": datetime(2013, 05, 23)}, "OrderQty" : {"$gt": "9"}}}, {"$project": {"ClOrdID": 1, "_id": 0}}])
+# #print [k["ClOrdID"] for k in result["result"]]
+# deals = db.OrderDeals.aggregate([{"$match" : {"ClOrdID" : {"$in": [k["ClOrdID"] for k in result["result"]]} }}, {"$project": {"Symbol": 1, "OrderQty": 1, "_id": 0}}])
+# print deals["result"]
+
 
 # cnxn = pyodbc.connect('DSN=PARSRV21;UID=python_ro;PWD=python4ever!!')
 # cursor = cnxn.cursor()

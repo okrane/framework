@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 from lib.dbtools import connections
 from pandas import *
-
+from lib.data.pyData import *
 
 def get_last_seq(order, l_orders):
     
@@ -22,9 +22,10 @@ def get_last_seq(order, l_orders):
     
     nb_seq = 0
     for ord in l_orders:
-        if ord['occ_ID'] == primID and nb_seq < ord['nb_replace']:
-            nb_seq = ord['nb_replace']
-            res_ord = ord
+        if ord['occ_ID'] == primID and ord['MsgType'] == 'G':
+            if nb_seq < ord['nb_replace']:
+                nb_seq = ord['nb_replace']
+                res_ord = ord
     
     return res_ord
     
@@ -204,6 +205,7 @@ def storeDB(l_orders, Collection, client, jobID, mode='insert'):
     
     for order in l_orders:
         if mode == 'insert':
+                
             order.update({'job_id': jobID})
             collection.insert(order, manipulate=False)
         elif mode == 'update':
@@ -212,7 +214,7 @@ def storeDB(l_orders, Collection, client, jobID, mode='insert'):
         list_columns = order.keys()
         update_colmap(list_columns, client, Collection)
 
-def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags):
+def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, import_type='Client'):
     
     done = False
     reason = ''
@@ -220,8 +222,12 @@ def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags):
     OrigOrderID = d_msg['ClOrdID']
     print "Looking for other reason for order : %s" %OrigOrderID
     
-    IN_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
-    ER_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sO.fix' %(day, day)
+    if import_type == 'Client':
+        IN_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
+        ER_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sO.fix' %(day, day)
+    elif import_type == 'Street':
+        IN_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sI.fix' %(day, day)
+        ER_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sO.fix' %(day, day)
     
     cmd = "prt_fxlog %s 3 | egrep '41=%s'" %(IN_file, OrigOrderID)
     (stdin, stdout_grep, stderr) = socket.exec_command(cmd)
@@ -290,8 +296,6 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
             IN_file = './logs/trades/%s/FLEX_ULPROD%sO.fix' %(day, day)
             cmd = "prt_fxlog %s 3 | egrep '35=8.*%s'" %(ER_file, ClOrdID)
         
-        
-        print cmd
         
         (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
         
@@ -365,7 +369,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
             g_eff_endtime = p_eff_endtime
             
         if not done and not replaced :
-            [p_reason, done] = check_EoL(order, p_reason, day, ssh, dico_fix, dico_tags, ignore_tags)
+            [p_reason, done] = check_EoL(order, p_reason, day, ssh, dico_fix, dico_tags, ignore_tags, import_type)
             
             if not done:
                 p_reason = 'Front End handling'
@@ -386,7 +390,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 replaced = False
                 loop_count += 1
                 
-                cmd = "prt_fxlog %s 3 | egrep '35=G.*57=%s.*41=%s'" %(IN_file, Trader, ClOrdID)
+                cmd = "prt_fxlog %s 3 | egrep '35=G.*41=%s'" %(IN_file, ClOrdID)
                 (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
                 
                 for str_msg in stdout_grep:
@@ -405,6 +409,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 dico_tags = res_trans[1]
                 
                 ClOrdID = c_msg['ClOrdID']
+                Trader = c_msg['TargetSubID']
                 
                 WouldLevel = 0
                 if "WouldLevel" in c_msg.keys():
@@ -478,7 +483,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                         reason = 'pending replace'
                 
                 if not done and not replaced :
-                    [reason, done] = check_EoL(c_msg, reason, day, ssh, dico_fix, dico_tags, ignore_tags)
+                    [reason, done] = check_EoL(c_msg, reason, day, ssh, dico_fix, dico_tags, ignore_tags, import_type)
                     
                     if not done:
                         reason = '%s Front End handling' %reason
@@ -512,7 +517,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 
                 if volume_at_would != 0:
                     enrichment.update({'volume_at_would': volume_at_would})
-                
+                    
                 c_msg.update(enrichment)
                 order_life.append(c_msg)
                 
@@ -633,7 +638,7 @@ if __name__ == '__main__':
             res_import = import_FIXmsg(dico_FIX, conf[server_flex], day, type, IO, dico_tags, trader, ignore_tags, source)
             d_orders = res_import[0]
             dico_tags = res_import[1]
-            
+             
             l_kep_secids = []
             job_id = 'AO%s' %day
             
@@ -644,13 +649,13 @@ if __name__ == '__main__':
                 dico_tags = l_events[1]
                 storeDB(u_order, 'AlgoOrders', Client, job_id)
                 l_kep_secids.append(u_order[0]['SecurityID'])
-            
+             
             l_kec_secids = set(l_kep_secids)
-            
+             
             # - UPDATE CHEUVREUX SECURITY IDS
             print "UPDATE CHEUVREUX SECURITY IDS AND MARKET DATA"
             query = "select SYMBOL3, SYMBOL6 from SECURITY where SYMBOL3 in ('%s')" % "','".join(map(str,l_kep_secids))
-            
+             
             result = connections.Connections.exec_sql('KGR', query, as_dict = True)
             dict_secs = {}
             for sec in result:
@@ -683,36 +688,44 @@ if __name__ == '__main__':
                     if col in header:
                         dico_header[col.lower()] = header.index(col)
             
-            for order in new_docs:
+            print new_docs.count()
+            
+            l_docs = []
+            for doc in new_docs:
+                l_docs.append(doc)
                 
-                if f_mkt_data:
+            if f_mkt_data:
+                for order in l_docs:
                     # Enrichment Market Data 
                     if order['MsgType'] == 'D':
-                        Trader_code = order['TargetSubID']
-                        last_seq = get_last_seq(order, new_docs)
-                        
+                        last_seq = get_last_seq(order, l_docs)
+                        Trader_code = last_seq['TargetSubID']
+                         
+                         
                         ClOrdID = '%sCLNT1' %last_seq['ClOrdID']
                         Ticker = order['Symbol']
-                        
+                         
                         cmd = "egrep '%s.*%s' /home/flexapp/ushare/exportprod%s%s" %(Ticker, ClOrdID, Trader_code,day)
+                         
                         (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-                        
+                         
                         mkt_data = None
                         for line in stdout_grep:
                             mkt_data = line
-                        
+                         
                         if mkt_data is not None:
                             mkt_data = mkt_data[:-1]
                             mkt_data = mkt_data.rsplit(',')
-                            
+                             
                             for u, v in dico_header.iteritems():
                                 if mkt_data[v] != '':
                                     order['occ_%s'%u] = mkt_data[v]
+                             
+                            storeDB([order], 'AlgoOrders', Client, '','update')
                             
                 if str(order['SecurityID']) in dict_secs.keys():
                     order.update({'cheuvreux_secid':dict_secs[str(order['SecurityID'])]})
                     storeDB([order], 'AlgoOrders', Client, '','update')
-                    #Client['DB_test']['AlgoOrders'].save(order)
                 
         print "----> END OF IMPORT FOR : %s" %day
         

@@ -12,11 +12,7 @@ import time
 from datetime import datetime
 from lib.dbtools import connections
 from pandas import *
-<<<<<<< HEAD
-from lib.data.pyData import *
-=======
 from lib.data.pyData import convertStr
->>>>>>> 77ce5a86e11e7ddfdd2d5542cabbbb3722093b37
 
 def get_last_seq(order, l_orders):
     
@@ -127,7 +123,9 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     line = line.replace('|\n','')
                     res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
                     dico_tags = res_trans[1]
-                    l_orders.append(res_trans[0])
+                    
+                    if res_trans[0] != {} and len(res_trans[0]) > 1:
+                        l_orders.append(res_trans[0])
         else:
             l_FIXtype = ['D', 'G', 'F']
             for tp in l_FIXtype:
@@ -142,7 +140,9 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     line = line.replace('|\n','')
                     res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
                     dico_tags = res_trans[1]
-                    l_orders.append(res_trans[0])
+                    
+                    if res_trans[0] != {} and len(res_trans[0]) > 1:
+                        l_orders.append(res_trans[0])
     else:
         if str(type) != '':
             
@@ -161,6 +161,9 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
                     dico_tags = res_trans[1]
                     l_orders.append(res_trans[0])
+                    
+                    if res_trans[0] != {} and len(res_trans[0]) > 1:
+                        l_orders.append(res_trans[0])
         else:
             l_FIXtype = ['1', '2']
             for tp in l_FIXtype:
@@ -175,7 +178,9 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     line = line.replace('|\n','')
                     res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
                     dico_tags = res_trans[1]
-                    l_orders.append(res_trans[0])
+                    
+                    if res_trans[0] != {} and len(res_trans[0]) > 1:
+                        l_orders.append(res_trans[0])
                     
     return [l_orders, dico_tags]
 
@@ -183,20 +188,22 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
 def line_translator(line, dico_fix, dico_tags, ignore_tags):
     line = line.rsplit('|')
     dict_order = {}
+    
     for item in line:
         item = item.rsplit('=')
-        if item[1] != ' ' and item[1] != '':
-            if int(item[0]) not in ignore_tags:
-                if int(item[0]) not in dico_tags.keys():
-                    dico_info = get_FIX(dico_fix, int(item[0]))
-                    dico_tags[int(item[0])] = dico_info
-                
-                name = dico_tags[int(item[0])][0]
-                type = dico_tags[int(item[0])][1]
-                if type != 'UTCTIMESTAMP':
-                    dict_order[name] = convertStr(item[1])
-                else:
-                    dict_order[name] = datetime.strptime(item[1], '%Y%m%d-%H:%M:%S')
+        if len(item) == 2:
+            if item[1] != ' ' and item[1] != '':
+                if int(item[0]) not in ignore_tags:
+                    if int(item[0]) not in dico_tags.keys():
+                        dico_info = get_FIX(dico_fix, int(item[0]))
+                        dico_tags[int(item[0])] = dico_info
+                    
+                    name = dico_tags[int(item[0])][0]
+                    type = dico_tags[int(item[0])][1]
+                    if type != 'UTCTIMESTAMP':
+                        dict_order[name] = convertStr(item[1])
+                    else:
+                        dict_order[name] = datetime.strptime(item[1], '%Y%m%d-%H:%M:%S')
     
     return (dict_order, dico_tags)
 
@@ -205,11 +212,12 @@ def storeDB(l_orders, Collection, client, jobID, mode='insert'):
     database = client['DB_test']
     collection = database[Collection]
     
-    print "insert %s Orders into database" %str(len(l_orders))
+    if mode == 'insert':
+        print "insert %s Orders into database" %str(len(l_orders))
     
     for order in l_orders:
-        if mode == 'insert':
-                
+        
+        if mode == 'insert':    
             order.update({'job_id': jobID})
             collection.insert(order, manipulate=False)
         elif mode == 'update':
@@ -236,13 +244,16 @@ def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, impo
     cmd = "prt_fxlog %s 3 | egrep '41=%s'" %(IN_file, OrigOrderID)
     (stdin, stdout_grep, stderr) = socket.exec_command(cmd)
     
-    count = 0
-    for line in stdout_grep:
+
+    if stdout_grep.readlines() == 1:
+        
+        line = stdout_grep.readlines()[0]
         line = line.replace('|\n','')
         [line, dico_tags] = line_translator(line, dico_fix, dico_tags, ignore_tags)
-        count += 1
-    
-    if count == 1:
+        
+        if line == {}:
+            return [reason, done]
+        
         if line['MsgType'] == 'G':
             reason = 'replaced not acked '
             cmd = "prt_fxlog %s 3 | egrep '11=%s'" %(ER_file, line['ClOrdID'])
@@ -253,6 +264,9 @@ def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, impo
                 er_line = er_line.replace('|\n','')
             
             [er_line, dico_tags] = line_translator(er_line, dico_fix, dico_tags, ignore_tags)
+            
+            if 'ExecType' not in er_line.keys():
+                pass
             
             if er_line['ExecType'] == '3':
                 reason = '%s and Done for day' %reason
@@ -316,9 +330,17 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
             
             str_msg = str_msg.replace('|\n','')
             res_trans = line_translator(str_msg, dico_fix, dico_tags, ignore_tags)
-            p_msg = res_trans[0]
+            
+            if res_trans[0] != {}:
+                p_msg = res_trans[0]
+            else:
+                continue
+            
             dico_tags = res_trans[1]
-                
+            
+            if 'ExecType' not in p_msg.keys():
+                continue
+            
             if str(p_msg['ExecType']) == '0':
                 p_reason = 'new acked'
                 
@@ -430,7 +452,12 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 for str_msg in stdout_grep:
                     str_msg = str_msg.replace('|\n','')
                     res_trans = line_translator(str_msg, dico_fix, dico_tags, ignore_tags)
-                    cc_msg = res_trans[0]
+                    
+                    if res_trans[0] != {}:
+                        cc_msg = res_trans[0]
+                    else:
+                        continue
+                    
                     dico_tags = res_trans[1]
                     
                     if str(cc_msg['ExecType']) == '0':
@@ -561,7 +588,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
     
     return [order_life, dico_tags]
 
-def export(database, server_flex, environement, io, source, dates):
+def export(database, server_flex, environment, io, source, dates):
     import os
     full_path = os.path.realpath(__file__)    
     path, f = os.path.split(full_path)        
@@ -571,7 +598,7 @@ def export(database, server_flex, environement, io, source, dates):
         
     universe_file = path +'/../cfg/KC_universe.xml'
     dico_FIX = path + '/../cfg/FIX42.xml'    
-    conf = get_conf(environement, universe_file)
+    conf = get_conf(environment, universe_file)
     
     ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
     
@@ -605,7 +632,7 @@ def export(database, server_flex, environement, io, source, dates):
             
             job_id = 'OD%s' %day
             
-            Client['DB_test']['AlgoOrders'].remove({'job_id':job_id})
+            Client['DB_test']['OrderDeals'].remove({'job_id':job_id})
             
             type = ''
             res_import = import_FIXmsg(dico_FIX, conf[server_flex], day, type, IO, dico_tags, trader, ignore_tags, source)
@@ -633,14 +660,10 @@ def export(database, server_flex, environement, io, source, dates):
                 u_order = l_events[0]
                 dico_tags = l_events[1]
                 storeDB(u_order, 'AlgoOrders', Client, job_id)
-<<<<<<< HEAD
-                l_kep_secids.append(u_order[0]['SecurityID'])
              
-=======
                 if 'SecurityID' in u_order[0].keys():
                     l_kep_secids.append(u_order[0]['SecurityID'])  
             
->>>>>>> 77ce5a86e11e7ddfdd2d5542cabbbb3722093b37
             l_kec_secids = set(l_kep_secids)
              
             # - UPDATE CHEUVREUX SECURITY IDS
@@ -719,60 +742,7 @@ def export(database, server_flex, environement, io, source, dates):
                     storeDB([order], 'AlgoOrders', Client, '','update')
                 
         print "----> END OF IMPORT FOR : %s" %day
-        
-#     # - Example with single message
-#     str_msg = '8=FIX.4.2|9=350|35=D|49=CLNT1|56=FLINKI|34=97|52=20130514-06:58:21|50=SLEFIX1|57=AV5|1=EUR1651447|11=FY2000007383101|15=EUR|21=2|22=2|38=5000|40=1|48=5337093|54=2|55=ERGm.AG|58=EUR1651447|59=0|60=20130514-06:58:21|100=MI|9249=AV5|9250= |9251= |9252=3|9253=15.000000|9254=15.000000|9255= |9256=2|9257=3|9258= |9259= |9260= |9261=no|9262= |9264= |9265=yes|9266=ERG.MI|10=136'
-#     res_trans = line_translator(str_msg, dico_FIX, dico_tags, ignore_tags)
-#     order = res_trans[0]
-#     dico_tags = res_trans[1]
-#     folder = '20130514'
-#     l_events = OrderLife(order, dico_FIX, folder, ignore_tags, dico_tags, conf[server_flex], dico_trader)
-#     u_order = l_events[0]
-#     dico_tags = l_events[1]
-#     storeDB(u_order, 'AlgoOrders', Client)
     
-    
-#     # - Test volumetrie
-#     
-#     line = '8=FIX.4.2|9=314|35=D|49=CLNT1|56=FLINKI|34=1092|52=20130422-14:43:44|57=TU4|115=PWARE|1=A1|11=FYAAA211|15=EUR|21=2|22=2|38=150|40=2|44=154.3|48=5972643|54=1|55=ERFp.AG|59=0|60=20130422-14:43:44|100=PA|9249=TU4|9250= |9251= |9252=9|9253= |9254= |9255= |9256= |9257=0|9258= |9259= |9260= |9261=no|9262= |9264= |9265=yes|9266=ERF.PA|10=208'
-#     dico_tags = {}
-#     t_line = line_translator(line, dico_FIX, dico_tags, ignore_tags)
-#     t_line = t_line[0]
-#     nb_line = 765038
-#     
-#     rec_file = open('./stats_file.txt','w')
-#     
-#     header = 'nb_lines;duration;data_size;total_size;store_size;\n'
-#     rec_file.write(header)
-#     
-#     frac = int(float(nb_line)/365)
-#     lines = 0
-#     duration = 0
-#     for i in range(365):
-#         
-#         l_orders = []
-#         for i in range(frac):
-#             l_orders.append(t_line)
-#         
-#         t0 = time.time()
-#         storeDB(l_orders, Client)
-#         
-#         duration = duration + time.time() - t0
-#         
-#         
-#         
-#         stats = database.command({'collStats' : 'AlgoOrders', 'scale' : 1024})
-#         data_size = stats['size']
-#         store_size = stats['totalIndexSize']
-#         total_size = stats['size'] + stats['totalIndexSize']
-#         lines = lines + frac
-#         stats = '%s;%s;%s;%s;%s;\n' %(str(lines), str(duration), str(data_size), str(total_size), str(store_size))
-#         rec_file.write(stats)
-#     
-#     rec_file.close()
-
-
-    # - Close session
     if Client.alive():
         Client.close()
 
@@ -792,7 +762,8 @@ if __name__ == '__main__':
         environment = 'preprod'
         io          = 'I'
         source      = 'CLNT1'
-        # sys.exit()
+        date        = '20130529'
+        
     else:
     
         database    = sys.argv[1]
@@ -802,7 +773,7 @@ if __name__ == '__main__':
         source      = sys.argv[5]
         date        = sys.argv[6]
         
-        export(database, server_flex, environement, io, source, [date])
+    export(database, server_flex, environment, io, source, [date])
     
     
     

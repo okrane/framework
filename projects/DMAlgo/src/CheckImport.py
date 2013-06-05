@@ -72,8 +72,7 @@ def check_lines(job_id, day, collection, conf_DB, conf_FT, log_file):
     if db_nb_lines == file_nb_lines:
         check =  'CHECK PASSED no difference'
     else:
-        check = 'CHECK FAILED %d lines difference' %(file_nb_lines - db_nb_lines) 
-#         collection.remove({'job_id':job_id})
+        check = 'CHECK FAILED %d lines difference' %(file_nb_lines - db_nb_lines)
     
     msg = "DAY : %s - JOB_ID : %s - %s lines stored in Database - %s lines in file ====> %s \n" %(day, job_id, str(db_nb_lines), str(file_nb_lines), check)
     file.write(msg)
@@ -94,8 +93,8 @@ if __name__ == '__main__':
     conf_db = get_conf('HPP', universe_file)
     log_file = '../cfg/log_import.txt'
     
-    l_day = ['20130510','20130513','20130514','20130515','20130516','20130517','20130520','20130521','20130522']
-#     l_day = ['20130521']
+#     l_day = ['20130510','20130513','20130514','20130515','20130516','20130517','20130520','20130521','20130522']
+    l_day = ['20130528']
     for day in l_day:
         collection = 'AlgoOrders'
         job_id = 'AO%s' %day

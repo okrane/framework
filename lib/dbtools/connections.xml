@@ -20,12 +20,6 @@
                 <!--<SERVER NAME="CAL_EVENT">pasyb005:9160|temp_works|bret|bret90</SERVER>-->
                 <SERVER NAME="CAL_EVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
             </connections>
-            <connections driver="mysql">
-                <SERVER NAME="semlab_v2">thmlb006:3306|newsgateway|newsgateway|newsgateway</SERVER>
-				<SERVER NAME="semlab">pamlb00x:3306|semlabjboss|newsgateway|g4t3w4ypr0xy</SERVER>
-                <SERVER NAME="semlab2">pamlb00x:3306|semlabjboss2|newsgateway2|kf934kdj38d</SERVER>
-                <SERVER NAME="semlab_test">localhost:3306|newsgateway|newsgateway|newsgateway</SERVER>
-            </connections>
             <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
                 <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
 				<SERVER NAME="KGR">172.29.0.24:1433|LUIDBC01_KGR|python_ro|python4ever!!</SERVER>
@@ -181,14 +175,5 @@
                 <table key="repository" name="repository.."/>
             </tables>
         </target>
-    </target_connections>
-    <SQLINI>
-        <DSN connection="ASE-SIRIUS:9250">SIRIUS</DSN>
-        <DSN connection="pasyb005:9160">GANDALF</DSN>
-        <DSN connection="vega:9110">VEGA</DSN>
-        <DSN connection="pasyb016:9240">BILBO</DSN>
-        <DSN connection="bksyb019:9360">BSIRIUS</DSN>                
-        <DSN connection="pasyb043:9550">DELTAHC</DSN>                                      
-        <DSN connection="pasyb002-bis:5010">PREPA15</DSN>
-    </SQLINI>    
+    </target_connections>    
 </configuration>

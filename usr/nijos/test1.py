@@ -46,6 +46,8 @@ USE OF get repositrory
 """ 
 # locall_tz_from
 get_repository("local_tz_from",security_id=[0,110])
+get_repository("exchangeid2tz",exchange_id=get_repository("tdidch2exchangeid",td_id=[1,4,61,4]))
+
 
 """ 
 -------------------------------------------------------------------------------
@@ -53,6 +55,9 @@ LOAD OF market data
 -------------------------------------------------------------------------------
 """ 
 data=read_dataset('ft',security_id=10735,date='11/03/2013')
+data=read_dataset('ft',security_id=110,date='11/03/2013')
+data=read_dataset('histocurrencypair',start_date='01/01/2013',end_date='01/05/2013')
+data=read_dataset('histocurrencypair',start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])
 
 """ 
 -------------------------------------------------------------------------------
@@ -286,8 +291,6 @@ def create_dict(dtime):
 
 documents = [create_dict(i) for i in pd.date_range('17/3/2013 10:00', '17/3/2013 11:00', freq='5Min')]
 data = pd.DataFrame.from_records(documents, columns=['datetime', 'quantity', 'price'], index='datetime')
-
-
 
 
 

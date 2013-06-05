@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Fri May 24 16:04:51 2013
 
+@author: silviu
+"""
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np

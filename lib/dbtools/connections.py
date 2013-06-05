@@ -51,11 +51,11 @@ class Connections:
             return None
         
         address = handler.mapping[server.upper()][0].split(':')[0]
-        port = handler.mapping[server.upper()][0].split(':')[1]
+        port = int(handler.mapping[server.upper()][0].split(':')[1])
         database = handler.mapping[server.upper()][1]            
         user = handler.mapping[server.upper()][2]
         password = handler.mapping[server.upper()][3]
-        print driver, address, database, user, password, port
+        #print driver, address, database, user, password, port
         
         if user != "":
             return pymongo.MongoClient("mongodb://%s:%s@%s:%s/%s" % (user, password, address, port, database))

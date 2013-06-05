@@ -702,8 +702,6 @@ def export(database, server_flex, environment, io, source, dates):
                     if col in header:
                         dico_header[col.lower()] = header.index(col)
             
-            print new_docs.count()
-            
             l_docs = []
             for doc in new_docs:
                 l_docs.append(doc)
@@ -733,7 +731,7 @@ def export(database, server_flex, environment, io, source, dates):
                              
                             for u, v in dico_header.iteritems():
                                 if mkt_data[v] != '':
-                                    order['occ_%s'%u] = mkt_data[v]
+                                    order['occ_%s'%u] = convertStr(mkt_data[v])
                              
                             storeDB([order], 'AlgoOrders', Client, '','update')
                             

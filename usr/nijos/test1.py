@@ -16,18 +16,23 @@ import numpy as np
 import scipy 
 import matplotlib.pyplot as plt
 import datetime as dt
+import time
 from scipy.io  import matlab
 import pandas as pd
 from lib.data.matlabutils import *
 from lib.data.st_data import *
-from lib.dbtools.get_repository import *
-from lib.dbtools.read_dataset import *
+import lib.dbtools.get_repository as get_repository
+import lib.dbtools.read_dataset as read_dataset
+
 
 """ 
 -------------------------------------------------------------------------------
 USE OF MATLABUTILS
 -------------------------------------------------------------------------------
 """ 
+data=read_dataset.bic(security_id=10735,date='15/05/2013')
+data=read_dataset.bic(security_id=10735,start_date='15/05/2013',end_date='25/05/2013')
+
 # uniquexte
 #data=pd.DataFrame({'A' : np.array([1,2,1,3,2,3,2]), 'B' :np.array([2,2,2,3,2,3,2])})
 #res1drow=uniqueext(data['A'].values,return_index=True,return_inverse=True)
@@ -45,8 +50,8 @@ USE OF get repositrory
 -------------------------------------------------------------------------------
 """ 
 # locall_tz_from
-get_repository("local_tz_from",security_id=[0,110])
-get_repository("exchangeid2tz",exchange_id=get_repository("tdidch2exchangeid",td_id=[1,4,61,4]))
+get_repository.local_tz_from(security_id=[0,110])
+get_repository.exchangeid2tz(exchange_id=get_repository.tdidch2exchangeid(td_id=[1,4,61,4]))
 
 
 """ 
@@ -54,10 +59,10 @@ get_repository("exchangeid2tz",exchange_id=get_repository("tdidch2exchangeid",td
 LOAD OF market data
 -------------------------------------------------------------------------------
 """ 
-data=read_dataset('ft',security_id=10735,date='11/03/2013')
-data=read_dataset('ft',security_id=110,date='11/03/2013')
-data=read_dataset('histocurrencypair',start_date='01/01/2013',end_date='01/05/2013')
-data=read_dataset('histocurrencypair',start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])
+data=read_dataset.ft(security_id=10735,date='11/03/2013')
+data=read_dataset.ft(security_id=110,date='11/03/2013')
+data=read_dataset.histocurrencypair(start_date='01/01/2013',end_date='01/05/2013')
+data=read_dataset.histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])
 
 """ 
 -------------------------------------------------------------------------------
@@ -292,8 +297,10 @@ def create_dict(dtime):
 documents = [create_dict(i) for i in pd.date_range('17/3/2013 10:00', '17/3/2013 11:00', freq='5Min')]
 data = pd.DataFrame.from_records(documents, columns=['datetime', 'quantity', 'price'], index='datetime')
 
-
-
+""" 
+VIEW
+"""
+data.to_excel('C:/viewdf.xlsx')
 
 """ 
 TRANSFORM
@@ -329,7 +336,7 @@ data=data.drop(['mid','mid2'],axis=1)
 
 # get the values in a numpy array
 data2=data.ix[0]
-a=data2[[b'bid','ask']].values
+a=data2[['bid','ask']].values
 b=data[['bid']].values
 
 uniqueext(a,return_index=False,return_inverse=False,rows=False)
@@ -351,10 +358,40 @@ data.columns.tolist()
 data.index
 
 
+"""
+rolling
+"""
+data=read_dataset.ft(security_id=110,date='13/03/2013')
+datevals=np.array([x.to_datetime() for x in data.index])
+vals_rolling_mean=[np.mean(data['volume'].values[(datevals>=x) & (datevals<(x + timedelta(seconds=60)))]) for x in datevals]
+
     
 """
 Aggregation dataframe
 """
+data=read_dataset.ft(security_id=110,date='13/03/2013')
+
+convertTime(data.index[0],step_sec=60,out_mode='grid')
+a=gridTime(date=data.index[0:1000],step_sec=600,out_mode='grid')
+
+a=gridTime(start_time=datetime.strptime('10/03/2013 10:03:02', '%d/%m/%Y %H:%M:%S'),
+           end_time=datetime.strptime('10/03/2013 10:08:10', '%d/%m/%Y %H:%M:%S'),step_sec=600,out_mode='grid')
+a=gridTime(start_time=datetime.strptime('10/03/2013 10:03:02', '%d/%m/%Y %H:%M:%S'),
+           end_time=datetime.strptime('10/03/2013 10:28:10', '%d/%m/%Y %H:%M:%S'),step_sec=600,out_mode='ceil',tz='Europe/London')
+a=gridTime(start_time=data.index[0].to_datetime(),
+           end_time=data.index[1000].to_datetime(),step_sec=600,out_mode='ceil')
+
+
+grouped=data.groupby([gridTime(date=data.index,step_sec=600,out_mode='ceil'),'auction'])
+#grouped=data.groupby([,'auction'])
+data_agg=pd.DataFrame([{'date': k[0],
+                        'auction': k[1],
+                        'date_close' :v.index.max(),
+                        'volume': v.volume.sum()}
+                        for k,v in grouped])
+
+a=np.array([gridTime(x,step_sec=360,out_mode='ceil') for x in data.index[0:5]])
+
 
 # import example
 #file_path='../data/'
@@ -373,7 +410,9 @@ data_agg_1=pd.DataFrame([{'time': k,
                         'vwap2': np.sum(v.price * v.volume) / np.sum(v.volume),
                         'volume': v.volume.mean()}
                         for k,v in grouped])
-                        
+data_agg_1=pd.DataFrame([{'time': k,
+                        'volume': v.volume.mean()}
+                        for k,v in grouped])                        
                         
 # aggregate by same time !
 grouped=data.groupby(['time','contract'])
@@ -387,6 +426,7 @@ data_agg_2=pd.DataFrame([{'time': k[0],
                         
 # aggregate by same timeframe !
 grouped=data.groupby(pd.TimeGrouper(freq='5Min'))
+
 # 1/
 data_agg_3=pd.DataFrame([{'time': k[0],
                         'contract': k[1],
@@ -395,7 +435,8 @@ data_agg_3=pd.DataFrame([{'time': k[0],
                         'volume': v.volume.mean()}
                         for k,v in grouped])
 
-
+data.groupby(data.index.map(lambda t: t.minute))
+data.groupby(np.array([k for k,v in data.groupby(pd.TimeGrouper(freq='5Min'))]))
 
 """
 Aggregation dataframeas a time series
@@ -423,7 +464,15 @@ data2=pd.DataFrame({'bid' : 10+tmp, 'ask' : 10+tmp+np.abs(tmp)},index=timedata2)
 data3=pd.DataFrame({'bid' : 10+tmp, 'ask' : 10+tmp+np.abs(tmp)},index=timedata3)
 
 
+""" 
+HANDLE TIMEZONE
+"""
+import lib.plots.intraday as intrplot
+data=read_dataset.ftickdb(security_id=110,date='17/03/2013')
+intrplot.plot_intraday(data,exclude_auction=[0,0,0,0],step_sec=360)
 
+
+data=read_dataset.ft(security_id=10735,date='11/05/2013')
 
 
 # only started if uit is this script 

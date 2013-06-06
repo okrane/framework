@@ -58,6 +58,9 @@ def kcintraday(data, start_time = None, end_time = None, exlude_auction = False,
     
 if __name__ == "__main__":
     from lib.data.st_data import *
-    data = from_mat_file("Q:/dev_repository/get_tick/ft/FTE.PA/2013_05_02.mat")
+    data=read_dataset.ftickdb(security_id=110,date='17/05/2013')
+
+    
+   # data = from_mat_file("Q:/dev_repository/get_tick/ft/FTE.PA/2013_05_02.mat")
    
     kcintraday(data) 

@@ -4,6 +4,7 @@ from lib.dbtools import connections
 import datetime
 import paramiko
 from projects.DMAlgo.src import import_FIX as fix
+from lib.data.pyData import convertStr
 # 
 # from lib.dbtools.connections import Connections
 # db = Connections.getClient("HPP").DB_test
@@ -33,6 +34,9 @@ Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017
 
 
 db = Client['DB_test']
+collec = db['AlgoOrders']
+
+
 # print db['AlgoOrders'].find({'job_id':'AO20130521'}).count()
 # db['AlgoOrders'].remove({'job_id':'AO20130521'})
 
@@ -90,13 +94,13 @@ db = Client['DB_test']
 # 
 # print result.SYMBOL6[1]
 
-day = '20130523'
-collec = db['AlgoOrders']
-s_date = datetime.datetime(2013,05,23)
-e_date = datetime.datetime(2013,05,23)
-docs = collec.find({"SendingTime": {"$gt" : s_date}})
-print docs.count()
-collec.remove({"SendingTime": {"$gt" : s_date}})
+# day = '20130523'
+# collec = db['AlgoOrders']
+# s_date = datetime.datetime(2013,05,23)
+# e_date = datetime.datetime(2013,05,23)
+# docs = collec.find({"SendingTime": {"$gt" : s_date}})
+# print docs.count()
+# collec.remove({"SendingTime": {"$gt" : s_date}})
 
 # collec = db['AlgoOrders']
 # collec.remove()

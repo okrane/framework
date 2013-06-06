@@ -13,8 +13,7 @@ import os as os
 from lib.dbtools.connections import Connections
 # import lib.dbtools.get_repository as get_repository
 from lib.data.matlabutils import *
-from lib.data.st_data import *
-
+import lib.data.st_data as st_data
 
 #--------------------------------------------------------------------------
 #  FT : LOAD MATFILES OF STOCK TBT DATA
@@ -22,7 +21,10 @@ from lib.data.st_data import *
 def ft(**kwargs):
     #### CONFIG and CONNECT
     # TODO: in xml file
-    ft_root_path="Q:\\kc_repository"
+    if os.name=='nt':
+        ft_root_path="Q:\\kc_repository"
+    else:
+        ft_root_path="home\\flexsys\\quant\\kc_repository"
     
     ##############################################################
     # input handling
@@ -48,15 +50,17 @@ def ft(**kwargs):
     except:
         raise NameError('read_dataset:ft - This file does not exist <'+filename+'>')  
         
-    return to_dataframe(mat['data'],timezone=True)
-   
+    return st_data.to_dataframe(mat['data'],timezone=True)
+
 #--------------------------------------------------------------------------
-#  ftickdb : FILETR tick data
+#  ftickdb : filter and LOAD MATFILES OF STOCK TBT DATA
 #--------------------------------------------------------------------------
 def ftickdb(**kwargs):
     data=ft(**kwargs)
-    return data[(data['trading_after_hours']==0) & (data['trading_at_last']==0) & (data['cross']==0)]
-    
+    if data.shape[0]>0:
+        data=data[(data['trading_after_hours']==0) & (data['trading_at_last']==0) & (data['cross']==0)]
+    return data
+
 #--------------------------------------------------------------------------
 # histocurrency 
 #--------------------------------------------------------------------------
@@ -129,8 +133,64 @@ def histocurrencypair(**kwargs):
         return out   
         
     return pd.DataFrame.from_records(vals,columns=['date','ccy','ccyref','rate'],index=['date'])
+
+
+#--------------------------------------------------------------------------
+# bic : basic indicatos compted
+#--------------------------------------------------------------------------    
+def bic(step_sec=300,**kwargs):
+    
+    ##############################################################
+    # input handling
+    ##############################################################
+    #---- security_info
+    if "security_id" in kwargs.keys():  
+        ids=kwargs["security_id"]
+    else:
+        raise NameError('read_dataset:bic - Bad input')
+    #---- date info
+    if "date" in kwargs.keys():
+        from_newf=datetime.strptime(kwargs["date"], '%d/%m/%Y')
+        # from_newf=datetime.strftime(datetime.strptime(kwargs["date"], '%d/%m/%Y'),'%Y%m%d')
+        to_newf=from_newf
+    elif all([x in kwargs.keys() for x in ["start_date","end_date"]]):
+        from_newf=datetime.strptime(kwargs["start_date"], '%d/%m/%Y')
+        to_newf=datetime.strptime(kwargs["end_date"], '%d/%m/%Y')          
+    else:
+        raise NameError('read_dataset:bic - Bad input for dates') 
+        
+    ##############################################################
+    # computation
+    ##############################################################
+    out=pd.DataFrame()
+    curr_newf=from_newf
+    while curr_newf<=to_newf:
+        try:
+            # --- get tick data
+            datatick=ftickdb(security_id=ids,date=datetime.strftime(curr_newf, '%d/%m/%Y'))
+
+            if datatick.shape[0]>0:
+                # --- aggregate
+                grouped=datatick.groupby([st_data.gridTime(date=datatick.index,step_sec=step_sec,out_mode='ceil'),
+                                      'opening_auction','intraday_auction','closing_auction','exchange_id'])
+                grouped_data=pd.DataFrame([{'date':k[0],
+                                            'opening_auction':k[1],'intraday_auction':k[2],'closing_auction':k[3],'exchange_id':k[4],
+                'time_open': v.index.max(),
+                'time_close': v.index.min(),
+                'nb_trades': np.size(v.volume),
+                'volume': np.sum(v.volume),
+                'vwap': np.sum(v.price * v.volume) / np.sum(v.volume)} for k,v in grouped])
                 
-       
+                grouped_data=grouped_data.set_index('date')
+                
+                #----- add
+                out=out.append(grouped_data)
+                
+        except Exception,e:
+            print "%s" % e
+        curr_newf=curr_newf+timedelta(days=1)
+    
+    return out       
 
 
 if __name__=='__main__':

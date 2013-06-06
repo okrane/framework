@@ -30,6 +30,9 @@ import lib.dbtools.read_dataset as read_dataset
 USE OF MATLABUTILS
 -------------------------------------------------------------------------------
 """ 
+data=read_dataset.bic(security_id=10735,date='15/05/2013')
+data=read_dataset.bic(security_id=10735,start_date='15/05/2013',end_date='25/05/2013')
+
 # uniquexte
 #data=pd.DataFrame({'A' : np.array([1,2,1,3,2,3,2]), 'B' :np.array([2,2,2,3,2,3,2])})
 #res1drow=uniqueext(data['A'].values,return_index=True,return_inverse=True)
@@ -294,8 +297,10 @@ def create_dict(dtime):
 documents = [create_dict(i) for i in pd.date_range('17/3/2013 10:00', '17/3/2013 11:00', freq='5Min')]
 data = pd.DataFrame.from_records(documents, columns=['datetime', 'quantity', 'price'], index='datetime')
 
-
-
+""" 
+VIEW
+"""
+data.to_excel('C:/viewdf.xlsx')
 
 """ 
 TRANSFORM
@@ -463,8 +468,12 @@ data3=pd.DataFrame({'bid' : 10+tmp, 'ask' : 10+tmp+np.abs(tmp)},index=timedata3)
 HANDLE TIMEZONE
 """
 import lib.plots.intraday as intrplot
-data=read_dataset.ftickdb(security_id=110,date='13/03/2013')
+data=read_dataset.ftickdb(security_id=110,date='17/03/2013')
 intrplot.plot_intraday(data,exclude_auction=[0,0,0,0],step_sec=360)
+
+
+data=read_dataset.ft(security_id=10735,date='11/05/2013')
+
 
 # only started if uit is this script 
 if __name__=='__main__':

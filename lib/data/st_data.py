@@ -14,7 +14,7 @@ from lib.data.matlabutils import *
 def to_dataframe(data,timezone=False):
     
     if not data:
-        return
+        return pd.DataFrame()
     #--------------------------------------------------------------------------
     # EXTRACT ST_DATA needed info
     #--------------------------------------------------------------------------

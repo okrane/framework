@@ -24,7 +24,7 @@ def ft(**kwargs):
     if os.name=='nt':
         ft_root_path="Q:\\kc_repository"
     else:
-        ft_root_path="/home/flexsys/quant/kc_repository"
+        ft_root_path="/quant/kc_repository"
     
     ##############################################################
     # input handling
@@ -138,7 +138,7 @@ def histocurrencypair(**kwargs):
 #--------------------------------------------------------------------------
 # bic : basic indicatos compted
 #--------------------------------------------------------------------------    
-def bic(step_sec=300,**kwargs):
+def bic(step_sec=300,exchange=False,**kwargs):
     
     ##############################################################
     # input handling
@@ -171,20 +171,24 @@ def bic(step_sec=300,**kwargs):
 
             if datatick.shape[0]>0:
                 # --- aggregate
-                grouped=datatick.groupby([st_data.gridTime(date=datatick.index,step_sec=step_sec,out_mode='ceil'),
-                                      'opening_auction','intraday_auction','closing_auction','exchange_id'])
-                grouped_data=pd.DataFrame([{'date':k[0],
-                                            'opening_auction':k[1],'intraday_auction':k[2],'closing_auction':k[3],'exchange_id':k[4],
-                'time_open': v.index.max(),
-                'time_close': v.index.min(),
-                'nb_trades': np.size(v.volume),
-                'volume': np.sum(v.volume),
-                'vwap': np.sum(v.price * v.volume) / np.sum(v.volume)} for k,v in grouped])
-                
-                grouped_data=grouped_data.set_index('date')
-                
-                #----- add
-                out=out.append(grouped_data)
+                if not exchange:
+                    grouped=datatick.groupby([st_data.gridTime(date=datatick.index,step_sec=step_sec,out_mode='ceil'),
+                                          'opening_auction','intraday_auction','closing_auction'])
+                    grouped_data=pd.DataFrame([{'date':k[0],
+                                                'opening_auction':k[1],'intraday_auction':k[2],'closing_auction':k[3],
+                    'time_open': v.index.max(),
+                    'time_close': v.index.min(),
+                    'nb_trades': np.size(v.volume),
+                    'volume': np.sum(v.volume),
+                    'vwap': np.sum(v.price * v.volume) / np.sum(v.volume),
+                    'open': v.price[0],
+                    'high': np.max(v.price),
+                    'low': np.min(v.price),
+                    'close': v.price[-1]} for k,v in grouped])
+                    
+                    grouped_data=grouped_data.set_index('date')
+                    #----- add
+                    out=out.append(grouped_data)
                 
         except Exception,e:
             print "%s" % e

@@ -34,7 +34,10 @@ data=read_dataset.ftickdb(security_id=110,date='17/05/2013')
 Explorer(data)
 
 
-
+grouped_data=pd.DataFrame([{'date': k[0], 'auction': k[1],
+                            'time_close' :v.index.max(),
+                            'volume': v.volume.sum()}
+                            for k,v in grouped])
 
 
 

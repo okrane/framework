@@ -25,7 +25,7 @@ def ft(**kwargs):
         ft_root_path="Q:\\kc_repository"
     else:
         ft_root_path="/home/flexsys/quant/kc_repository"
-
+    
     ##############################################################
     # input handling
     ##############################################################

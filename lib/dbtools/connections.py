@@ -58,7 +58,8 @@ class Connections:
         #print driver, address, database, user, password, port
         
         if user != "":
-            return pymongo.MongoClient("mongodb://%s:%s@%s:%s/%s" % (user, password, address, port, database))
+            URI = "mongodb://%s:%s@%s:%s/%s" % (user, password, address, port, database)
+            return pymongo.MongoClient(URI)
         else:
             return pymongo.MongoClient(address, port)
         

@@ -758,9 +758,9 @@ if __name__ == '__main__':
         database    = 'HPP'
         server_flex = 'WATFLT01'
         environment = 'preprod'
-        io          = 'I'
+        io          = 'O'
         source      = 'CLNT1'
-        date        = '20130529'
+        date        = '20130531'
         
     else:
     
@@ -772,6 +772,5 @@ if __name__ == '__main__':
         date        = sys.argv[6]
         
     export(database, server_flex, environment, io, source, [date])
-    
     
     

@@ -29,7 +29,7 @@ def sequence_info(**kwargs):
     
     #### Build the request
     # get all the sequences from sequence ids
-    if "sequence_id" in kwargs.keys():  
+    if "sequence_id" in kwargs.keys():
         ids=kwargs["sequence_id"]
         if isinstance(ids,str):
             ids=[ids] 

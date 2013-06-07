@@ -7,7 +7,7 @@ Created on Fri May 24 16:04:51 2013
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import datetime
+from datetime import datetime, timedelta
 import pytz
 from lib.plots.color_schemes import *
 import lib.data.st_data as st_data
@@ -115,7 +115,7 @@ def plot_intraday(data,start_datetime=None,end_datetime=None,exclude_auction=[0,
     color_bar_continuous = color_grayscale(kc_main_colors()["light_blue"], 10)[8]    
 
     for i in range(len(xaxis)-1):
-        axes_twin.fill([xaxis[i]-datetime.timedelta(seconds=step_sec),xaxis[i],xaxis[i],xaxis[i]-datetime.timedelta(seconds=step_sec)],
+        axes_twin.fill([xaxis[i]- timedelta(seconds=step_sec),xaxis[i],xaxis[i],xaxis[i]- timedelta(seconds=step_sec)],
                [0,0,grouped_data['volume'].ix[i],grouped_data['volume'].ix[i]],facecolor=color_bar_continuous,alpha = 0.5,edgecolor='none')
     
     axes.step(data.index, data['bid'], color = kc_main_colors()["blue_1"], linewidth = 2)
@@ -147,10 +147,10 @@ def plot_intraday(data,start_datetime=None,end_datetime=None,exclude_auction=[0,
     
 if __name__ == "__main__":
     from lib.data.st_data import *
-    data = from_mat_file("Q:/dev_repository/get_tick/ft/FTE.PA/2013_05_02.mat")
-    kcintraday(data) 
-    
     import lib.dbtools.read_dataset as read_dataset
+    data=read_dataset.ftickdb(security_id=110,date='17/05/2013')
+   # data = from_mat_file("Q:/dev_repository/get_tick/ft/FTE.PA/2013_05_02.mat")    kcintraday(data)     
+    
     data=read_dataset.ftickdb(security_id=110,date='13/03/2013')
     plot_intraday(data,exclude_auction=[0,0,0,0],step_sec=5*60)
     

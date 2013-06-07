@@ -20,16 +20,27 @@ import time
 from scipy.io  import matlab
 import pandas as pd
 from lib.data.matlabutils import *
-from lib.data.st_data import *
+import lib.data.st_data as st_data
 import lib.dbtools.get_repository as get_repository
 import lib.dbtools.read_dataset as read_dataset
-
+from lib.data.ui.Explorer import Explorer
 
 """ 
 -------------------------------------------------------------------------------
 USE OF MATLABUTILS
 -------------------------------------------------------------------------------
 """ 
+data=read_dataset.ftickdb(security_id=110,date='17/05/2013')
+Explorer(data)
+
+
+grouped_data=pd.DataFrame([{'date': k[0], 'auction': k[1],
+                            'time_close' :v.index.max(),
+                            'volume': v.volume.sum()}
+                            for k,v in grouped])
+
+
+
 # uniquexte
 #data=pd.DataFrame({'A' : np.array([1,2,1,3,2,3,2]), 'B' :np.array([2,2,2,3,2,3,2])})
 #res1drow=uniqueext(data['A'].values,return_index=True,return_inverse=True)
@@ -294,8 +305,10 @@ def create_dict(dtime):
 documents = [create_dict(i) for i in pd.date_range('17/3/2013 10:00', '17/3/2013 11:00', freq='5Min')]
 data = pd.DataFrame.from_records(documents, columns=['datetime', 'quantity', 'price'], index='datetime')
 
-
-
+""" 
+VIEW
+"""
+data.to_excel('C:/viewdf.xlsx')
 
 """ 
 TRANSFORM
@@ -463,8 +476,27 @@ data3=pd.DataFrame({'bid' : 10+tmp, 'ask' : 10+tmp+np.abs(tmp)},index=timedata3)
 HANDLE TIMEZONE
 """
 import lib.plots.intraday as intrplot
-data=read_dataset.ftickdb(security_id=110,date='13/03/2013')
+data=read_dataset.ftickdb(security_id=110,date='17/03/2013')
 intrplot.plot_intraday(data,exclude_auction=[0,0,0,0],step_sec=360)
+
+
+
+
+""" 
+Create a volume curve
+"""
+data=read_dataset.bic(security_id=110,step_sec=60,start_date='01/05/2013',end_date='05/06/2013')
+
+grouped=data.groupby([[x.to_datetime() for x in data.index]-st_data.gridTime(date=data.index,step_sec=60*60*24,out_mode='floor'),
+                       'opening_auction','intraday_auction','closing_auction'])
+grouped_data=pd.DataFrame([{'date':k[0],
+                'opening_auction':k[1],'intraday_auction':k[2],'closing_auction':k[3],
+                'nb_day':np.size(v.volume),
+                'volume': np.sum(v.volume),
+                'vwap': np.sum(v.vwap * v.volume) / np.sum(v.volume)} for k,v in grouped])
+                
+grouped_data['volume'].plot()                
+data.to_excel('C:/view_df.xlsx')
 
 # only started if uit is this script 
 if __name__=='__main__':

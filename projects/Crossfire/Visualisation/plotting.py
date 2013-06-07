@@ -41,7 +41,7 @@ def plot_fillrates(ax = None, start = None, end = None, sampling = 150):
     plt.show()
     #cumvolumes = dict( (k, np.sum(v["volume"])) for k, v in grouped )   
         
-    
+
             
     
         

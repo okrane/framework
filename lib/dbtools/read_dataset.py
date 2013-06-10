@@ -14,6 +14,8 @@ from lib.dbtools.connections import Connections
 # import lib.dbtools.get_repository as get_repository
 from lib.data.matlabutils import *
 import lib.data.st_data as st_data
+import lib.stats.slicer as slicer
+import lib.stats.formula as formula
 
 #--------------------------------------------------------------------------
 #  FT : LOAD MATFILES OF STOCK TBT DATA
@@ -172,6 +174,7 @@ def bic(step_sec=300,exchange=False,**kwargs):
             if datatick.shape[0]>0:
                 # --- aggregate
                 if not exchange:
+                    #---- aggregation
                     grouped=datatick.groupby([st_data.gridTime(date=datatick.index,step_sec=step_sec,out_mode='ceil'),
                                           'opening_auction','intraday_auction','closing_auction'])
                     grouped_data=pd.DataFrame([{'date':k[0],
@@ -180,13 +183,17 @@ def bic(step_sec=300,exchange=False,**kwargs):
                     'time_close': v.index.min(),
                     'nb_trades': np.size(v.volume),
                     'volume': np.sum(v.volume),
-                    'vwap': np.sum(v.price * v.volume) / np.sum(v.volume),
+                    'vwap': slicer.vwap(v.price,v.volume),
+                    'vwasbp': slicer.vwasbp(v.bid,v.ask,v.price,v.volume,v.auction),
                     'open': v.price[0],
                     'high': np.max(v.price),
                     'low': np.min(v.price),
                     'close': v.price[-1]} for k,v in grouped])
                     
                     grouped_data=grouped_data.set_index('date')
+                    #---- after aggregation
+                    grouped_data['vol_GK']=formula.vol_gk(grouped_data['open'].values,grouped_data['high'].values,grouped_data['low'].values,grouped_data['close'].values,grouped_data['nb_trades'].values,
+                           np.tile(timedelta(seconds=step_sec),grouped_data.shape[0]))
                     #----- add
                     out=out.append(grouped_data)
                 

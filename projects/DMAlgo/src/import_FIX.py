@@ -143,7 +143,7 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     
                     if res_trans[0] != {} and len(res_trans[0]) > 1:
                         l_orders.append(res_trans[0])
-    else:
+    elif IO == 'O':
         if str(type) != '':
             
             if str(type) not in ['1', '2'] :
@@ -181,7 +181,9 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     
                     if res_trans[0] != {} and len(res_trans[0]) > 1:
                         l_orders.append(res_trans[0])
-                    
+    else:
+        print "wrong connection IO only 'I' or 'O' accepted !"
+    
     return [l_orders, dico_tags]
 
 
@@ -738,7 +740,9 @@ def export(database, server_flex, environment, io, source, dates):
                 if "SecurityID" in order.keys() and str(order['SecurityID']) in dict_secs.keys():
                     order.update({'cheuvreux_secid':dict_secs[str(order['SecurityID'])]})
                     storeDB([order], 'AlgoOrders', Client, '','update')
-                
+        else:
+            print "wrong type of FIX connection : only 'I' or 'O' accepted !"
+            
         print "----> END OF IMPORT FOR : %s" %day
     
     if Client.alive():
@@ -758,9 +762,9 @@ if __name__ == '__main__':
         database    = 'HPP'
         server_flex = 'WATFLT01'
         environment = 'preprod'
-        io          = 'O'
+        io          = '0'
         source      = 'CLNT1'
-        date        = '20130531'
+        date        = '20130603'
         
     else:
     

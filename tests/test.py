@@ -2,6 +2,7 @@ import pyodbc
 import pymongo as mongo
 from lib.dbtools import connections
 import datetime
+import time
 import paramiko
 from projects.DMAlgo.src import import_FIX as fix
 from lib.data.pyData import convertStr
@@ -38,23 +39,43 @@ Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017
 db = Client['DB_test']
 collec = db['AlgoOrders']
 
-job_id = 'AO20130510'
+job_ids = ['AO20130521','AO20130522','AO20130523','AO20130524','AO20130527','AO20130528','AO20130529','AO20130530', 'AO20130531','AO20130603']
 
 time_fields = ['TransactTime','SendingTime','eff_starttime', 'eff_endtime', 'EndTime', 'StartTime', 'ExpireTime']
-docs = collec.find({'job_id':job_id})
+mkt_data_fields = ['EXEC_SHARES' ,'ORDER_PERC','INMKT_VOLUME','INMKT_TURNOVER','PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','IN_VWAS','ARRIVAL_PRICE','FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
 
-for doc in docs:
-    print doc['_id']
-    for u, v in doc.iteritems():
-        if u in time_fields:
-            print v
-            
-            if v.tzinfo == pytz.utc:
-                print "conversion passed !"
-            else:
+for job_id in job_ids:
+    
+    docs = collec.find({'job_id':job_id})
+    for doc in docs:
+        print doc['_id']
+        for u, v in doc.iteritems():
+            if u in time_fields:
                 doc[u] = v.replace(tzinfo=pytz.timezone('UTC'))
-                
-    collec.save(doc)
+            
+            if u[4:].upper() in mkt_data_fields:
+                doc['occ_fe_%s'%u[4:]] = doc[u]
+                del doc[u]
+            
+        if 'eff_starttime' in doc.keys():
+            doc['first_deal_time'] = doc['eff_starttime']
+            del doc['eff_starttime']
+        
+        if 'duration' in doc.keys() and 'eff_endtime' in doc.keys():
+            duration = time.mktime(doc['eff_endtime'].timetuple()) - time.mktime(doc['SendingTime'].timetuple())
+            doc['duration'] = duration
+            print 'seq_duration : %d' %duration
+            
+        if 'occ_duration' in doc.keys() and 'eff_endtime' in doc.keys():
+            sub_ords = collec.find({'occ_ID':doc['occ_ID']}).sort('SendingTime',1)
+            last_ord = sub_ords[sub_ords.count()-1] 
+            
+            if 'eff_endtime' in last_ord.keys():
+                duration = time.mktime(last_ord['eff_endtime'].timetuple()) - time.mktime(doc['SendingTime'].timetuple())
+                doc['occ_duration'] = duration
+                print 'occ_duration : %d' %duration
+        
+        collec.save(doc)
             
             
 # print db['AlgoOrders'].find({'job_id':'AO20130521'}).count()

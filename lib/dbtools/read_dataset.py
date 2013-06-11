@@ -14,13 +14,9 @@ from lib.dbtools.connections import Connections
 # import lib.dbtools.get_repository as get_repository
 from lib.data.matlabutils import *
 import lib.data.st_data as st_data
-<<<<<<< HEAD
-import paramiko
-import socket
-=======
 import lib.stats.slicer as slicer
 import lib.stats.formula as formula
->>>>>>> 5a5998160102faefbc29286920553a3207d5c3d8
+
 
 #--------------------------------------------------------------------------
 #  FT : LOAD MATFILES OF STOCK TBT DATA

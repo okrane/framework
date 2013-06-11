@@ -5,7 +5,9 @@ import datetime
 import paramiko
 from projects.DMAlgo.src import import_FIX as fix
 from lib.data.pyData import convertStr
-# 
+import pytz
+
+#
 # from lib.dbtools.connections import Connections
 # db = Connections.getClient("HPP").DB_test
 # from datetime import *
@@ -29,14 +31,32 @@ from lib.data.pyData import convertStr
 
 # - Open MONGODB connection
 # Client = mongo.MongoClient('172.29.0.32', 27017)
-Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test")
+Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test",tz_aware=True)
 #"mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test"
 
 
 db = Client['DB_test']
 collec = db['AlgoOrders']
 
+job_id = 'AO20130510'
 
+time_fields = ['TransactTime','SendingTime','eff_starttime', 'eff_endtime', 'EndTime', 'StartTime', 'ExpireTime']
+docs = collec.find({'job_id':job_id})
+
+for doc in docs:
+    print doc['_id']
+    for u, v in doc.iteritems():
+        if u in time_fields:
+            print v
+            
+            if v.tzinfo == pytz.utc:
+                print "conversion passed !"
+            else:
+                doc[u] = v.replace(tzinfo=pytz.timezone('UTC'))
+                
+    collec.save(doc)
+            
+            
 # print db['AlgoOrders'].find({'job_id':'AO20130521'}).count()
 # db['AlgoOrders'].remove({'job_id':'AO20130521'})
 

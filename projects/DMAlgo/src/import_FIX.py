@@ -294,7 +294,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
     p_real_duration = 0
     global_duration = 0
     p_reason = 'unknown'
-    p_eff_starttime = "none"
+    p_eff_starttime = 'none'
     g_eff_endtime = "none"
     prev_exec = 0
     num_exec_vwap = 0
@@ -424,6 +424,10 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 for str_msg in stdout_grep:
                     str_msg = str_msg.replace('|\n','')
                 
+                res_trans = line_translator(str_msg, dico_fix, dico_tags, ignore_tags)
+                c_msg = res_trans[0]
+                dico_tags = res_trans[1]
+                
                 nb_exec = 0
                 exec_qty = 0
                 reason = 'unknown'
@@ -431,10 +435,6 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 real_duration = 0
                 num_exec_vwap = 0
                 volume_at_would = 0
-                
-                res_trans = line_translator(str_msg, dico_fix, dico_tags, ignore_tags)
-                c_msg = res_trans[0]
-                dico_tags = res_trans[1]
                 
                 ClOrdID = c_msg['ClOrdID']
                 Trader = c_msg['TargetSubID']
@@ -525,7 +525,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 g_eff_endtime = eff_endtime
                 
                 if eff_starttime != 'none':
-                    real_duration = time.mktime(eff_endtime.timetuple()) - time.mktime(eff_starttime.timetuple())
+                    real_duration = time.mktime(eff_endtime.timetuple()) - time.mktime(c_msg['SendingTime'].timetuple())
                 
                 vwap = 0
                 prev_vwap = 0
@@ -543,7 +543,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 enrichment = {'reason': reason, 'nb_exec' : nb_exec, 'exec_qty': exec_qty, 'duration': real_duration, 'occ_ID': p_ClOrdID, 'occ_prev_exec_qty': prev_exec, 'exec_vwap': vwap, 'occ_prev_exec_vwap': prev_vwap, 'turnover': num_exec_vwap, 'occ_prev_turnover': prev_num_exec_vwap, 'nb_replace': loop_count}
                 
                 if eff_starttime != 'none':
-                    enrichment.update({'eff_starttime': eff_starttime})
+                    enrichment.update({'first_deal': eff_starttime})
                 
                 if eff_starttime != 'none':
                     enrichment.update({'eff_endtime': eff_endtime})
@@ -557,8 +557,8 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 prev_exec += exec_qty
                 prev_num_exec_vwap += num_exec_vwap
                 
-        if g_eff_endtime != 'none' and p_eff_starttime != 'none':
-            global_duration = time.mktime(g_eff_endtime.timetuple()) - time.mktime(p_eff_starttime.timetuple())
+        if g_eff_endtime != 'none':
+            global_duration = time.mktime(g_eff_endtime.timetuple()) - time.mktime(order['SendingTime'].timetuple())
         
         p_vwap = 0
         if p_exec_qty != 0:
@@ -567,7 +567,7 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
         enrichment = {'reason': p_reason, 'nb_exec' : p_nb_exec, 'occ_nb_replace' : nb_replace, 'exec_qty': p_exec_qty, 'duration': p_real_duration, 'occ_duration': global_duration, 'occ_ID': p_ClOrdID, 'occ_prev_exec_qty': 0, 'exec_vwap': p_vwap, 'occ_prev_exec_vwap': 0, 'turnover': p_num_exec_vwap, 'occ_prev_turnover': 0}
         
         if p_eff_starttime != 'none':
-            enrichment.update({'eff_starttime': p_eff_starttime})
+            enrichment.update({'first_deal': p_eff_starttime})
         
         if p_eff_starttime != 'none':
             enrichment.update({'eff_endtime': p_eff_endtime})

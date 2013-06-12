@@ -17,7 +17,41 @@ import lib.data.st_data as st_data
 import lib.stats.slicer as slicer
 import lib.stats.formula as formula
 
+if os.name != 'nt':
+    import socket
+    import paramiko
 
+#--------------------------------------------------------------------------
+#  GET_LOCAL : TOOL FUNCTION TO DOWNLOAD FILE IN LOCAL TEMP FOLDER
+#--------------------------------------------------------------------------
+def get_local(day, sec_id, srv_addr, local_temp = ''):
+    
+    full_path = os.path.realpath(__file__)
+    path, f = os.path.split(full_path)
+    
+    if local_temp == '':
+        full_path = os.path.realpath(__file__)
+        local_temp, f = os.path.split(full_path)
+        
+    remote_data_path = '/quant/kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
+    
+    local_addr = socket.gethostbyname(socket.gethostname())
+    local_data_path = '%s/temp_buffer/%s.mat' %(path, day) 
+    
+    print "Importing file from distant repository :"
+    print "Source : %s @ %s ==>" %(remote_data_path, srv_addr)
+    print "Target : %s @ %s <==" %(local_data_path, local_addr)
+    
+    transport = paramiko.Transport((srv_addr, 22))
+    transport.connect(username = 'flexsys', password = 'flexsys1')
+    
+    sftp = paramiko.SFTPClient.from_transport(transport)
+    
+    sftp.get(remote_data_path, '%s/%s.mat' %(local_temp,day))
+    
+    sftp.close()
+    transport.close()
+    return 0
 
 #--------------------------------------------------------------------------
 #  FT : LOAD MATFILES OF STOCK TBT DATA
@@ -53,19 +87,18 @@ def ft(**kwargs):
         remote = kwargs['remote']
         
     if remote == True and os.name != 'nt':
-        r_filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
-        local_ip = socket.gethostbyname(socket.gethostname())
         
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect('172.29.0.32', username='flexsys', password='flexsys1')
-        cmd = 'scp r_filename flexsys@'
+        get_local(date_newf,kwargs['security_id'],'172.29.0.32')
+        full_path = os.path.realpath(__file__)
+        path, f = os.path.split(full_path)
         
-        filename = './temp_buffer/%s.mat'%(date_newf)
+        filename = '%s/%s.mat'%(path, date_newf)
     else:
         filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
     try:
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
+        if remote == True and os.name != 'nt':
+            os.remove(filename)
     except:
         raise NameError('read_dataset:ft - This file does not exist <'+filename+'>')  
         
@@ -226,5 +259,7 @@ if __name__=='__main__':
     data=read_dataset.ft(security_id=10735,date='11/03/2013')
     # ft french stock
     data=read_dataset.ft(security_id=110,date='11/03/2013')
+    # ft french stock (local)
+    data=read_dataset.ft(security_id=110,date='11/03/2013', remote=True)
     # currency rate
     data=read_dataset.histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])

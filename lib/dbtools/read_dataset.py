@@ -206,8 +206,8 @@ def bic(step_sec=300,exchange=False,**kwargs):
 
 if __name__=='__main__':
     # ft london stock
-    data=read_dataset('ft',security_id=10735,date='11/03/2013')
+    data=read_dataset.ft(security_id=10735,date='11/03/2013')
     # ft french stock
-    data=read_dataset('ft',security_id=110,date='11/03/2013')
+    data=read_dataset.ft(security_id=110,date='11/03/2013')
     # currency rate
-    data=read_dataset('histocurrencypair',start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])
+    data=read_dataset.histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])

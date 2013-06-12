@@ -17,6 +17,7 @@ import lib.data.st_data as st_data
 import lib.stats.slicer as slicer
 import lib.stats.formula as formula
 
+
 #--------------------------------------------------------------------------
 #  FT : LOAD MATFILES OF STOCK TBT DATA
 #--------------------------------------------------------------------------
@@ -46,7 +47,22 @@ def ft(**kwargs):
     ##############################################################
     # load and format
     ##############################################################
-    filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
+    remote = False
+    if 'remote' in kwargs.keys():
+        remote = kwargs['remote']
+        
+    if remote == True and os.name != 'nt':
+        r_filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
+        local_ip = socket.gethostbyname(socket.gethostname())
+        
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect('172.29.0.32', username='flexsys', password='flexsys1')
+        cmd = 'scp r_filename flexsys@'
+        
+        filename = './temp_buffer/%s.mat'%(date_newf)
+    else:
+        filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
     try:
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
     except:

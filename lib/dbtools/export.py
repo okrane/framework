@@ -8,3 +8,6 @@ def export_to_csv(server, query, filename, delimiter = ';'):
     for row in result:     
         f.writelines( delimiter.join([str(x) if x else '' for x in row.values()])  + '\n')
     f.close()
+    
+
+    

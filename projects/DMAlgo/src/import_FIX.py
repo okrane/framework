@@ -13,6 +13,7 @@ from datetime import datetime
 from lib.dbtools import connections
 from pandas import *
 from lib.data.pyData import convertStr
+import pytz
 
 def get_last_seq(order, l_orders):
     
@@ -143,7 +144,7 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     
                     if res_trans[0] != {} and len(res_trans[0]) > 1:
                         l_orders.append(res_trans[0])
-    else:
+    elif IO == 'O':
         if str(type) != '':
             
             if str(type) not in ['1', '2'] :
@@ -181,7 +182,9 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     
                     if res_trans[0] != {} and len(res_trans[0]) > 1:
                         l_orders.append(res_trans[0])
-                    
+    else:
+        print "wrong connection IO only 'I' or 'O' accepted !"
+    
     return [l_orders, dico_tags]
 
 
@@ -203,8 +206,8 @@ def line_translator(line, dico_fix, dico_tags, ignore_tags):
                     if type != 'UTCTIMESTAMP':
                         dict_order[name] = convertStr(item[1])
                     else:
-                        dict_order[name] = datetime.strptime(item[1], '%Y%m%d-%H:%M:%S')
-    
+                        data = datetime.strptime(item[1], '%Y%m%d-%H:%M:%S')
+                        dict_order[name] = data.replace(tzinfo=pytz.timezone('UTC'))
     return (dict_order, dico_tags)
 
 def storeDB(l_orders, Collection, client, jobID, mode='insert'):
@@ -292,8 +295,11 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
     p_real_duration = 0
     global_duration = 0
     p_reason = 'unknown'
-    p_eff_starttime = "none"
-    g_eff_endtime = "none"
+    p_eff_starttime = 'none'
+    
+    p_eff_endtime = 'none'
+    g_eff_endtime = 'none'
+    
     prev_exec = 0
     num_exec_vwap = 0
     prev_num_exec_vwap = 0
@@ -405,8 +411,8 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
         prev_num_exec_vwap +=  num_exec_vwap
         p_num_exec_vwap = num_exec_vwap
         
-        if p_eff_starttime != "none":
-            p_real_duration = time.mktime(p_eff_endtime.timetuple()) - time.mktime(p_eff_starttime.timetuple())
+        if p_eff_endtime != "none":
+            p_real_duration = time.mktime(p_eff_endtime.timetuple()) - time.mktime(order['SendingTime'].timetuple())
         
         if replaced:
             
@@ -422,6 +428,10 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 for str_msg in stdout_grep:
                     str_msg = str_msg.replace('|\n','')
                 
+                res_trans = line_translator(str_msg, dico_fix, dico_tags, ignore_tags)
+                c_msg = res_trans[0]
+                dico_tags = res_trans[1]
+                
                 nb_exec = 0
                 exec_qty = 0
                 reason = 'unknown'
@@ -429,10 +439,6 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 real_duration = 0
                 num_exec_vwap = 0
                 volume_at_would = 0
-                
-                res_trans = line_translator(str_msg, dico_fix, dico_tags, ignore_tags)
-                c_msg = res_trans[0]
-                dico_tags = res_trans[1]
                 
                 ClOrdID = c_msg['ClOrdID']
                 Trader = c_msg['TargetSubID']
@@ -522,8 +528,8 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 eff_endtime = cc_msg['SendingTime']
                 g_eff_endtime = eff_endtime
                 
-                if eff_starttime != 'none':
-                    real_duration = time.mktime(eff_endtime.timetuple()) - time.mktime(eff_starttime.timetuple())
+                if eff_endtime != 'none':
+                    real_duration = time.mktime(eff_endtime.timetuple()) - time.mktime(c_msg['SendingTime'].timetuple())
                 
                 vwap = 0
                 prev_vwap = 0
@@ -541,9 +547,9 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 enrichment = {'reason': reason, 'nb_exec' : nb_exec, 'exec_qty': exec_qty, 'duration': real_duration, 'occ_ID': p_ClOrdID, 'occ_prev_exec_qty': prev_exec, 'exec_vwap': vwap, 'occ_prev_exec_vwap': prev_vwap, 'turnover': num_exec_vwap, 'occ_prev_turnover': prev_num_exec_vwap, 'nb_replace': loop_count}
                 
                 if eff_starttime != 'none':
-                    enrichment.update({'eff_starttime': eff_starttime})
+                    enrichment.update({'first_deal_time': eff_starttime})
                 
-                if eff_starttime != 'none':
+                if eff_endtime != 'none':
                     enrichment.update({'eff_endtime': eff_endtime})
                 
                 if volume_at_would != 0:
@@ -555,8 +561,8 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
                 prev_exec += exec_qty
                 prev_num_exec_vwap += num_exec_vwap
                 
-        if g_eff_endtime != 'none' and p_eff_starttime != 'none':
-            global_duration = time.mktime(g_eff_endtime.timetuple()) - time.mktime(p_eff_starttime.timetuple())
+        if g_eff_endtime != 'none':
+            global_duration = time.mktime(g_eff_endtime.timetuple()) - time.mktime(order['SendingTime'].timetuple())
         
         p_vwap = 0
         if p_exec_qty != 0:
@@ -565,9 +571,9 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
         enrichment = {'reason': p_reason, 'nb_exec' : p_nb_exec, 'occ_nb_replace' : nb_replace, 'exec_qty': p_exec_qty, 'duration': p_real_duration, 'occ_duration': global_duration, 'occ_ID': p_ClOrdID, 'occ_prev_exec_qty': 0, 'exec_vwap': p_vwap, 'occ_prev_exec_vwap': 0, 'turnover': p_num_exec_vwap, 'occ_prev_turnover': 0}
         
         if p_eff_starttime != 'none':
-            enrichment.update({'eff_starttime': p_eff_starttime})
+            enrichment.update({'first_deal_time': p_eff_starttime})
         
-        if p_eff_starttime != 'none':
+        if p_eff_endtime != 'none':
             enrichment.update({'eff_endtime': p_eff_endtime})
         
         if p_volume_at_would != 0:
@@ -585,8 +591,8 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
         print 'invalid order type : only NewOrderSingle (D) are allowed !'
     
     ssh.close()
-    
     return [order_life, dico_tags]
+
 
 def export(database, server_flex, environment, io, source, dates):
     import os
@@ -731,14 +737,16 @@ def export(database, server_flex, environment, io, source, dates):
                              
                             for u, v in dico_header.iteritems():
                                 if mkt_data[v] != '':
-                                    order['occ_%s'%u] = convertStr(mkt_data[v])
+                                    order['occ_fe_%s'%u] = convertStr(mkt_data[v])
                              
                             storeDB([order], 'AlgoOrders', Client, '','update')
                             
                 if "SecurityID" in order.keys() and str(order['SecurityID']) in dict_secs.keys():
                     order.update({'cheuvreux_secid':dict_secs[str(order['SecurityID'])]})
                     storeDB([order], 'AlgoOrders', Client, '','update')
-                
+        else:
+            print "wrong type of FIX connection : only 'I' or 'O' accepted !"
+            
         print "----> END OF IMPORT FOR : %s" %day
     
     if Client.alive():
@@ -758,9 +766,9 @@ if __name__ == '__main__':
         database    = 'HPP'
         server_flex = 'WATFLT01'
         environment = 'preprod'
-        io          = 'I'
+        io          = 'O'
         source      = 'CLNT1'
-        date        = '20130529'
+        date        = '20130604'
         
     else:
     
@@ -772,6 +780,5 @@ if __name__ == '__main__':
         date        = sys.argv[6]
         
     export(database, server_flex, environment, io, source, [date])
-    
     
     

@@ -14,6 +14,44 @@ from lib.dbtools.connections import Connections
 # import lib.dbtools.get_repository as get_repository
 from lib.data.matlabutils import *
 import lib.data.st_data as st_data
+import lib.stats.slicer as slicer
+import lib.stats.formula as formula
+
+if os.name != 'nt':
+    import socket
+    import paramiko
+
+#--------------------------------------------------------------------------
+#  GET_LOCAL : TOOL FUNCTION TO DOWNLOAD FILE IN LOCAL TEMP FOLDER
+#--------------------------------------------------------------------------
+def get_local(day, sec_id, srv_addr, local_temp = ''):
+    
+    full_path = os.path.realpath(__file__)
+    path, f = os.path.split(full_path)
+    
+    if local_temp == '':
+        full_path = os.path.realpath(__file__)
+        local_temp, f = os.path.split(full_path)
+        
+    remote_data_path = '/quant/kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
+    
+    local_addr = socket.gethostbyname(socket.gethostname())
+    local_data_path = '%s/temp_buffer/%s.mat' %(path, day) 
+    
+    print "Importing file from distant repository :"
+    print "Source : %s @ %s ==>" %(remote_data_path, srv_addr)
+    print "Target : %s @ %s <==" %(local_data_path, local_addr)
+    
+    transport = paramiko.Transport((srv_addr, 22))
+    transport.connect(username = 'flexsys', password = 'flexsys1')
+    
+    sftp = paramiko.SFTPClient.from_transport(transport)
+    
+    sftp.get(remote_data_path, '%s/%s.mat' %(local_temp,day))
+    
+    sftp.close()
+    transport.close()
+    return 0
 
 #--------------------------------------------------------------------------
 #  FT : LOAD MATFILES OF STOCK TBT DATA
@@ -24,8 +62,8 @@ def ft(**kwargs):
     if os.name=='nt':
         ft_root_path="Q:\\kc_repository"
     else:
-        ft_root_path="/home/flexsys/quant/kc_repository"
-
+        ft_root_path="/quant/kc_repository"
+    
     ##############################################################
     # input handling
     ##############################################################
@@ -44,9 +82,23 @@ def ft(**kwargs):
     ##############################################################
     # load and format
     ##############################################################
-    filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
+    remote = False
+    if 'remote' in kwargs.keys():
+        remote = kwargs['remote']
+        
+    if remote == True and os.name != 'nt':
+        
+        get_local(date_newf,kwargs['security_id'],'172.29.0.32')
+        full_path = os.path.realpath(__file__)
+        path, f = os.path.split(full_path)
+        
+        filename = '%s/%s.mat'%(path, date_newf)
+    else:
+        filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
     try:
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
+        if remote == True and os.name != 'nt':
+            os.remove(filename)
     except:
         raise NameError('read_dataset:ft - This file does not exist <'+filename+'>')  
         
@@ -138,7 +190,7 @@ def histocurrencypair(**kwargs):
 #--------------------------------------------------------------------------
 # bic : basic indicatos compted
 #--------------------------------------------------------------------------    
-def bic(step_sec=300,**kwargs):
+def bic(step_sec=300,exchange=False,**kwargs):
     
     ##############################################################
     # input handling
@@ -171,20 +223,29 @@ def bic(step_sec=300,**kwargs):
 
             if datatick.shape[0]>0:
                 # --- aggregate
-                grouped=datatick.groupby([st_data.gridTime(date=datatick.index,step_sec=step_sec,out_mode='ceil'),
-                                      'opening_auction','intraday_auction','closing_auction','exchange_id'])
-                grouped_data=pd.DataFrame([{'date':k[0],
-                                            'opening_auction':k[1],'intraday_auction':k[2],'closing_auction':k[3],'exchange_id':k[4],
-                'time_open': v.index.max(),
-                'time_close': v.index.min(),
-                'nb_trades': np.size(v.volume),
-                'volume': np.sum(v.volume),
-                'vwap': np.sum(v.price * v.volume) / np.sum(v.volume)} for k,v in grouped])
-                
-                grouped_data=grouped_data.set_index('date')
-                
-                #----- add
-                out=out.append(grouped_data)
+                if not exchange:
+                    #---- aggregation
+                    grouped=datatick.groupby([st_data.gridTime(date=datatick.index,step_sec=step_sec,out_mode='ceil'),
+                                          'opening_auction','intraday_auction','closing_auction'])
+                    grouped_data=pd.DataFrame([{'date':k[0],
+                                                'opening_auction':k[1],'intraday_auction':k[2],'closing_auction':k[3],
+                    'time_open': v.index.max(),
+                    'time_close': v.index.min(),
+                    'nb_trades': np.size(v.volume),
+                    'volume': np.sum(v.volume),
+                    'vwap': slicer.vwap(v.price,v.volume),
+                    'vwasbp': slicer.vwasbp(v.bid,v.ask,v.price,v.volume,v.auction),
+                    'open': v.price[0],
+                    'high': np.max(v.price),
+                    'low': np.min(v.price),
+                    'close': v.price[-1]} for k,v in grouped])
+                    
+                    grouped_data=grouped_data.set_index('date')
+                    #---- after aggregation
+                    grouped_data['vol_GK']=formula.vol_gk(grouped_data['open'].values,grouped_data['high'].values,grouped_data['low'].values,grouped_data['close'].values,grouped_data['nb_trades'].values,
+                           np.tile(timedelta(seconds=step_sec),grouped_data.shape[0]))
+                    #----- add
+                    out=out.append(grouped_data)
                 
         except Exception,e:
             print "%s" % e
@@ -195,8 +256,10 @@ def bic(step_sec=300,**kwargs):
 
 if __name__=='__main__':
     # ft london stock
-    data=read_dataset('ft',security_id=10735,date='11/03/2013')
+    data=read_dataset.ft(security_id=10735,date='11/03/2013')
     # ft french stock
-    data=read_dataset('ft',security_id=110,date='11/03/2013')
+    data=read_dataset.ft(security_id=110,date='11/03/2013')
+    # ft french stock (local)
+    data=read_dataset.ft(security_id=110,date='11/03/2013', remote=True)
     # currency rate
-    data=read_dataset('histocurrencypair',start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])
+    data=read_dataset.histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])

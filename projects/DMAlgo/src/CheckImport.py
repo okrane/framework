@@ -94,7 +94,7 @@ if __name__ == '__main__':
     log_file = '../cfg/log_import.txt'
     
 #     l_day = ['20130510','20130513','20130514','20130515','20130516','20130517','20130520','20130521','20130522']
-    l_day = ['20130529']
+    l_day = ['20130604']
     for day in l_day:
         collection = 'AlgoOrders'
         job_id = 'AO%s' %day

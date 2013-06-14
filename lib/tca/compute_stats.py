@@ -28,7 +28,9 @@ def aggmarket(# market information
         # period information
         start_datetime=None,end_datetime=None,exclude_auction=[0,0,0,0],exclude_dark=False,
         # order information
-        limit_price=0,side=1):
+        limit_price=0,side=1,
+        # params
+        out_datetime=True):
     
     ##############################################################
     # check input + default
@@ -140,10 +142,14 @@ def aggmarket(# market information
                                                  np.array([data.ix[idx_period_lit[-1]]['price']]), np.array([np.size(data.ix[idx_period_lit_cont]['auction'].values)]), np.array([end_datetime-start_datetime]))[0]}
         else:
             indicators=default_indicators
-        indicators.update({'data' : 1,'start_datetime':start_datetime,'end_datetime':end_datetime})
+        indicators.update({'data' : 1})
+        if out_datetime:
+            indicators.update({'start_datetime':start_datetime,'end_datetime':end_datetime})
         out=pd.DataFrame([indicators])
     else:
-        default_indicators=default_indicators.update({'data' : 0,'start_datetime':start_datetime,'end_datetime':end_datetime})
+        default_indicators=default_indicators.update({'data' : 0})
+        if out_datetime:
+            indicators.update({'start_datetime':start_datetime,'end_datetime':end_datetime})
         out=pd.DataFrame([default_indicators])        
     
     ##############################################################

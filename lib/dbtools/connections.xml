@@ -27,6 +27,7 @@
 			<connections driver="Mongo"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
 				<SERVER NAME="PARFLTLAB02">172.29.0.31:27017|||</SERVER>
 				<SERVER NAME="HPP">172.29.0.32:27017|DB_test|python_script|pythonpass</SERVER>
+				<SERVER NAME="PROD">172.29.100.27:27017|Mars|python_script|pythonpass</SERVER>
             </connections> 
             <bases>
                 <base key="quant" name="quant"/>

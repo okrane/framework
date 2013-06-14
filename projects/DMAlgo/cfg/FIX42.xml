@@ -2644,5 +2644,6 @@
     <field number="9252" name="StrategyName" type="INT"/>
     <field number="9266" name="TickerHisto" type="CHAR"/>
     <field number="9249" name="TraderName" type="CHAR"/>
+    <field number="851" name="LastLiquidityInd" type="INT"/>
   </fields>
 </fix>

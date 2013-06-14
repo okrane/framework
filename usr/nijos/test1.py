@@ -35,6 +35,10 @@ data=read_dataset.bic(security_id=110,date='17/05/2013')
 
 
 
+    
+
+
+
 
 # uniquexte
 #data=pd.DataFrame({'A' : np.array([1,2,1,3,2,3,2]), 'B' :np.array([2,2,2,3,2,3,2])})
@@ -66,7 +70,7 @@ data=read_dataset.ft(security_id=10735,date='11/03/2013')
 data=read_dataset.ft(security_id=110,date='11/03/2013')
 data=read_dataset.histocurrencypair(start_date='01/01/2013',end_date='01/05/2013')
 data=read_dataset.histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])
-
+data=read_dataset.lastrate2ref(currency='GBX',date='01/05/2013')
 """ 
 -------------------------------------------------------------------------------
 STRING
@@ -279,6 +283,10 @@ PANDAS
 -------------------------------------------------------------------------------
 """
 
+""" 
+index from dataframe with nan
+"""
+np.nonzero(map(lambda x : (not isinstance(x,basestring)) and (np.isnan(x)),var_occ.values))[0]
 
 """ 
 CREATE

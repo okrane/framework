@@ -35,7 +35,8 @@ if __name__ == "__main__":
     step_sec=300
     data=read_dataset.bic(security_id=110,step_sec=step_sec,date='03/05/2013')
     a=vol_gk(data['open'].values,data['high'].values,data['low'].values,data['close'].values,data['nb_trades'].values,
-           np.tile(datetime.timedelta(seconds=step_sec),data.shape[0]))
+           np.tile(timedelta(seconds=step_sec),data.shape[0]))
+
     
     
     

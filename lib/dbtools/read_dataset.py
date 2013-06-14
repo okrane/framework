@@ -17,6 +17,42 @@ import lib.data.st_data as st_data
 import lib.stats.slicer as slicer
 import lib.stats.formula as formula
 
+if os.name != 'nt':
+    import socket
+    import paramiko
+
+#--------------------------------------------------------------------------
+#  GET_LOCAL : TOOL FUNCTION TO DOWNLOAD FILE IN LOCAL TEMP FOLDER
+#--------------------------------------------------------------------------
+def get_local(day, sec_id, srv_addr, local_temp = ''):
+    
+    full_path = os.path.realpath(__file__)
+    path, f = os.path.split(full_path)
+    
+    if local_temp == '':
+        full_path = os.path.realpath(__file__)
+        local_temp, f = os.path.split(full_path)
+        
+    remote_data_path = '/quant/kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
+    
+    local_addr = socket.gethostbyname(socket.gethostname())
+    local_data_path = '%s/temp_buffer/%s.mat' %(path, day) 
+    
+    print "Importing file from distant repository :"
+    print "Source : %s @ %s ==>" %(remote_data_path, srv_addr)
+    print "Target : %s @ %s <==" %(local_data_path, local_addr)
+    
+    transport = paramiko.Transport((srv_addr, 22))
+    transport.connect(username = 'flexsys', password = 'flexsys1')
+    
+    sftp = paramiko.SFTPClient.from_transport(transport)
+    
+    sftp.get(remote_data_path, '%s/%s.mat' %(local_temp,day))
+    
+    sftp.close()
+    transport.close()
+    return 0
+
 #--------------------------------------------------------------------------
 #  FT : LOAD MATFILES OF STOCK TBT DATA
 #--------------------------------------------------------------------------
@@ -46,9 +82,24 @@ def ft(**kwargs):
     ##############################################################
     # load and format
     ##############################################################
-    filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
+    remote = False
+    if 'remote' in kwargs.keys():
+        remote = kwargs['remote']
+        
+    if remote == True and os.name != 'nt':
+        
+        get_local(date_newf,kwargs['security_id'],'172.29.0.32')
+        full_path = os.path.realpath(__file__)
+        path, f = os.path.split(full_path)
+        
+        filename = '%s/%s.mat'%(path, date_newf)
+    else:
+        filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
+
     try:
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
+        if remote == True and os.name != 'nt':
+            os.remove(filename)
     except:
         raise NameError('read_dataset:ft - This file does not exist <'+filename+'>')  
         
@@ -68,14 +119,15 @@ def ftickdb(**kwargs):
 #--------------------------------------------------------------------------
 def histocurrencypair(**kwargs):
     
-    out=[]
+    out=pd.DataFrame()
+    
     ##############################################################
     # input handling
     ##############################################################
     #---- date info
     if "date" in kwargs.keys():
-        from_newf=datetime.strftime(datetime.strptime(kwargs["date"], '%d/%m/%Y'),'%Y%m%d')
-        to_newf=from_newf
+        to_newf=datetime.strftime(datetime.strptime(kwargs["date"], '%d/%m/%Y'),'%Y%m%d')
+        from_newf=to_newf
     elif all([x in kwargs.keys() for x in ["start_date","end_date"]]):
         from_newf=datetime.strftime(datetime.strptime(kwargs["start_date"], '%d/%m/%Y'),'%Y%m%d')
         to_newf=datetime.strftime(datetime.strptime(kwargs["end_date"], '%d/%m/%Y'),'%Y%m%d')           
@@ -83,7 +135,7 @@ def histocurrencypair(**kwargs):
         raise NameError('read_dataset:histocurrencypair - Bad input for dates') 
         
     #---- currencyref info
-    if "currency_ref" in kwargs.keys():
+    if "currency_ref" in kwargs.keys(): 
         raise NameError('read_dataset:histocurrencypair - currency_ref not available NOW') 
         # TODO:  autre que euro pour la ref
 #            curr_ref=kwargs["currency_ref"]   
@@ -107,7 +159,7 @@ def histocurrencypair(**kwargs):
         str_curr=str_curr[:-1]+")" 
     else:
         curr=[] 
-   
+    
     ##############################################################
     # request and format
     ##############################################################
@@ -124,18 +176,33 @@ def histocurrencypair(**kwargs):
             " and SOURCEID=1 "
             " and ATTRIBUTEID=43 "
             " and CCYREF in %s ") % (pref_,from_newf,to_newf,str_curr_ref)
-    if not (not curr):
+    if curr is not []:
         req=req+((" and CCY in %s ") % (str_curr))
-            
+    
     #### EXECUTE REQUEST 
     vals=Connections.exec_sql('KGR',req)
-     
+    
     ####  OUTPUT 
     if not vals:
         return out   
-        
-    return pd.DataFrame.from_records(vals,columns=['date','ccy','ccyref','rate'],index=['date'])
+    
+    out=pd.DataFrame.from_records(vals,columns=['date','ccy','ccyref','rate'],index=['date'])
+    out=out.sort_index()
+    return out
 
+#--------------------------------------------------------------------------
+# lastrate2ref 
+#--------------------------------------------------------------------------
+def lastrate2ref(currency=None,date=None,nb_days=10):
+    # TODO : only ref is euro rigt now
+    out=np.nan
+    data=histocurrencypair(currency=currency,
+                           start_date=datetime.strftime(datetime.strptime(date, '%d/%m/%Y')-timedelta(days=nb_days),'%d/%m/%Y'),
+                            end_date=date)
+    if data.shape[0]>0:
+        out=data.ix[data.shape[0]-1]['rate']
+    return out
+    
 
 #--------------------------------------------------------------------------
 # bic : basic indicatos compted
@@ -160,7 +227,7 @@ def bic(step_sec=300,exchange=False,**kwargs):
         to_newf=datetime.strptime(kwargs["end_date"], '%d/%m/%Y')          
     else:
         raise NameError('read_dataset:bic - Bad input for dates') 
-        
+    
     ##############################################################
     # computation
     ##############################################################
@@ -206,8 +273,10 @@ def bic(step_sec=300,exchange=False,**kwargs):
 
 if __name__=='__main__':
     # ft london stock
-    data=read_dataset('ft',security_id=10735,date='11/03/2013')
+    data=read_dataset.ft(security_id=10735,date='11/03/2013')
     # ft french stock
-    data=read_dataset('ft',security_id=110,date='11/03/2013')
+    data=read_dataset.ft(security_id=110,date='11/03/2013')
+    # ft french stock (local)
+    data=read_dataset.ft(security_id=110,date='11/03/2013', remote=True)
     # currency rate
-    data=read_dataset('histocurrencypair',start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])
+    data=read_dataset.histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])

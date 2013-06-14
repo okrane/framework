@@ -13,6 +13,84 @@ from lib.dbtools.connections import Connections
 
 
   
+  
+#------------------------------------------------------------------------------
+# e
+#------------------------------------------------------------------------------
+def exchangeidmain(**kwargs):
+    ##############################################################
+    # input handling
+    ##############################################################
+    #---- exchange_id
+    if "security_id" in kwargs.keys():
+        lids=kwargs["security_id"]
+        if isinstance(lids,list):
+            lids=np.array(lids)
+        elif not isinstance(lids,np.ndarray):
+            lids=np.array([lids])
+    else:
+        raise NameError('get_repository:exchangeidmain - Bad input : security_id is missing')
+    
+    out=np.array([np.nan]*lids.size) 
+    ##############################################################
+    # request and format
+    ##############################################################    
+    data=exchangeinfo(security_id=lids)
+    if data.shape[0]>0:
+        data=data[data['EXCHANGETYPE']=='M']
+        for i in range(0,data.shape[0]):
+            out[np.nonzero(lids==data['security_id'].values[i])[0]]=data['EXCHANGE'].values[i]
+    return out
+    
+#------------------------------------------------------------------------------
+# exchangeinfo
+#------------------------------------------------------------------------------
+def exchangeinfo(**kwargs):
+    ##############################################################
+    # input handling
+    ##############################################################
+    #---- exchange_id
+    if "security_id" in kwargs.keys():
+        lids=kwargs["security_id"]
+        if isinstance(lids,list):
+            lids=np.array(lids)
+        elif not isinstance(lids,np.ndarray):
+            lids=np.array([lids])
+    else:
+        raise NameError('get_repository:exchangeinfo - Bad input : security_id is missing')
+    
+    ##############################################################
+    # request and format
+    ##############################################################
+    # ----------------
+    # NEEDED
+    # ----------------
+    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
+    str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
+    str_lids=str_lids[:-1]+")"
+    # ----------------
+    # request
+    # ----------------
+    req=(" SELECT  sm.security_id,sm.ranking,sm.quotation_group, "
+     " erefcompl.EXCHANGE,erefcompl.EXCHGID,erefcompl.MIC,erefcompl.EXCHANGETYPE,erefcompl.TIMEZONE, "
+     " gzone.NAME as GLOBALZONE,ex.EXCHGNAME "
+     " FROM  %sKGR..security_market sm "
+     " LEFT JOIN %sKGR..EXCHANGEREFCOMPL erefcompl ON ( "
+     " sm.trading_destination_id=erefcompl.EXCHANGE  "
+     " )  "
+     " LEFT JOIN %sKGR..GLOBALZONE gzone ON ( "
+     " erefcompl.GLOBALZONEID=gzone.GLOBALZONEID  "
+     " )  "
+     " LEFT JOIN %sKGR..EXCHANGE ex ON ( "
+     " erefcompl.EXCHGID=ex.EXCHGID  "
+     " )  "
+     " WHERE  sm.security_id in %s "
+     " ORDER BY sm.security_id,sm.ranking ") % (pref_,pref_,pref_,pref_,str_lids)
+    
+    vals=Connections.exec_sql('KGR',req,schema = True)
+    
+    return pd.DataFrame.from_records(vals[0],columns=vals[1])
+ 
 #------------------------------------------------------------------------------
 # exchangeid2tz
 #------------------------------------------------------------------------------
@@ -195,3 +273,173 @@ def local_tz_from(**kwargs):
         out[np.where(lids==int(x[0]))[0]]=x[1]
     
     return out
+
+#------------------------------------------------------------------------------
+# matlab 'trading-destination'
+#------------------------------------------------------------------------------ 
+#case { 'trading-destination', 'trading_destination', 'trading_destination_id', 'td', 'tdi' }
+#        %<* Get EXCHANGE from table EXCHANGEMAPPING
+#        repository = st_version.bases.repository;
+#        code = varargin{1};
+#        if ischar(code)
+#            opt = options( { 'source', nan}, varargin(2:end));
+#            source = opt.get('source');
+#            if ischar(source)
+#                error('get_repository:trading_destination', 'Argument source should be an integer');
+#            elseif isnan(source)
+#                res = exec_sql( 'KGR', sprintf( ...
+#                    [ 'select sm.trading_destination_id,ss.source_id,td.EXCHGNAME, sm.security_id',...
+#                    ' from ',repository,'..security_market sm, ',repository,'..security_source ss ,',...
+#                    repository,'..EXCHANGEMAPPING map,',repository,'..EXCHANGE td'...
+#                    ' where sm.security_id=ss.security_id  ' ...
+#                    ' and  sm.trading_destination_id = map.EXCHANGE' ...
+#                    ' and map.EXCHGID = td.EXCHGID' ...
+#                    ' and ss.reference = ''%s'' ' ...
+#                    ' group by sm.trading_destination_id, ss.source_id,td.EXCHGNAME, sm.security_id,sm.ranking',...
+#                    ' order by sm.ranking,sm.trading_destination_id asc'], ...
+#                    code));
+#                if isempty(res)
+#                    error('get_repository:no_result', 'REPOSITORY: no such a code');
+#                end
+#                if length(unique( cell2mat(res(:,4))))~=1
+#                    sources = unique(cell2mat(res(:,2)));
+#                    sources = sprintf('%d;', sources);
+#                    error('get_repository:ambiguity', 'REPOSITORY: more than one security id for this code, please specify your source (%s)', ...
+#                        sources(1:end-1));
+#                end
+#                sid = unique( cell2mat( res(:,4)));
+#                res = cell2mat( res(:,1));
+#            else
+#                res = exec_sql( 'KGR', sprintf( ...
+#                    [ 'select sm.trading_destination_id,sm.security_id from ' ...
+#                    ' ',repository,'..security_source ss, ',repository,'..security_market sm' ...
+#                    ' where   ss.source_id = %d ' ...
+#                    ' and ss.reference = ''%s'' ' ...
+#                    ' and sm.security_id = ss.security_id ' ...
+#                    ' order by sm.ranking, sm.trading_destination_id asc '], ...
+#                    source,code));
+#                if isempty(res)
+#                    error('get_repository:no_result', 'REPOSITORY: no such a code on <%s>', source);
+#                end
+#                sid = unique(cell2mat(res(:,2)));
+#                if length(sid)~=1
+#                    error('get_repository:ambiguity', 'REPOSITORY: more than one security id for this code, please stop this!');
+#                end
+#                res = cell2mat(res(:,1));
+#            end
+#        elseif isnumeric(code)
+#            res = exec_sql( 'KGR', sprintf(['select trading_destination_id',...
+#                ' from ',repository,'..security_market where security_id=%d',...
+#                ' order by ranking, trading_destination_id asc'], code));
+#            if isempty( res)
+#                error(['get_repository:no_result', 'REPOSITORY: no such security_id : ',...
+#                    '<%d> in ',repository,'..security_market'], code);
+#            end
+#            sid = code;
+#            res = cell2mat(res);
+#        else
+#            error('get_repository:code', 'BAD_USE: code must be numeric or char');
+#        end
+#        varargout = { res, sid};
+#        %>*
+    
+#------------------------------------------------------------------------------
+# matlab 'td_info'
+#------------------------------------------------------------------------------    
+#        repository = st_version.bases.repository;
+#        opt = options({'trading_destination_id',[]},varargin(2:end));
+#        if isempty(opt.get('trading_destination_id'))
+#            [td, sec_id] = get_repository('trading-destination', varargin{1});
+#        else
+#            td = opt.get('trading_destination_id');
+#            sec_id = varargin{1};
+#        end
+#        
+#        in_txt = sprintf('%d,', td);
+#        in_txt = sprintf(' in (%s) ', in_txt(1:end-1));
+#        
+#        td_info = exec_sql('KGR', ...
+#            sprintf(['select' ...
+#            ' em.place_id "place timezone/id",' ...
+#            ' /*em.execution_market_id,*/null,' ...
+#            ' em.EXCHGID,' ...
+#            ' ex_ref_comp.TIMEZONE,' ...
+#            ' em.EXCHANGE,' ...
+#            ' /*fzone.zone*/null, ' ...
+#            ' /*fzone.zone_suffix*/ (case when ex_ref_comp.GLOBALZONEID = 2 then ''_ameri'' else case when ex_ref_comp.GLOBALZONEID = 3 then ''_asia'' else '''' end end ),' ...
+#            ' /*fzone.use_localtime*/0,' ...
+#            ' /*fzone.default_timezone*/null,' ...
+#            ' sm.ranking'...
+#            ' from  ' ...
+#            ' ',repository,'..EXCHANGEREFCOMPL ex_ref_comp,'...
+#            ' ',repository,'..EXCHANGEMAPPING em' ...
+#            ' left outer join ',repository,'..security_market sm',...
+#            ' on sm.trading_destination_id = em.EXCHANGE and sm.security_id = ',num2str(sec_id),...
+#            ' where em.EXCHANGE  %s' ...
+#            ' and ex_ref_comp.EXCHANGE = em.EXCHANGE' ...
+#            ' group by em.place_id,em.EXCHGID,ex_ref_comp.TIMEZONE,em.EXCHANGE,ex_ref_comp.GLOBALZONEID,sm.ranking' ...
+#            ' order by isnull(sm.ranking,1e6),em.EXCHANGE'], ...
+#            in_txt));
+#        
+#        
+#        available_td = ismember(td, [td_info{:, 5}]);
+#        if ~all(available_td)
+#            warning('get_repository:tdinfo', 'Not enough information available for trading_destination_id: \n\t%sAs a consequence these trading_destinations wont be used', sprintf('<%d>\n\t', td(~available_td)));
+#        end
+#        td = td(available_td);
+#        % < On ordonne td_info suivant le ranking que l'on a recupere grace
+#        % a l'appel a [td, sec_id] = get_repository('trading-destination',
+#        % varargin{:});
+#        %         A = [ 1 25 3 5 27 7 9 10 15 13];
+#        [~, idx] = sort(td);
+#        [~, idx] = sort(idx);
+#        td_info = td_info(idx, :);
+#        % all([td_info{:, end}]==td)
+#        % >
+#        quotation_group = cell(length(td), 1);
+#        available_td = true(length(td), 1);
+#        price_scale = cell(length(td), 1);
+#        for i = 1 : length(td)
+#            % kepchTODO: Recuperation des tailles de tick.
+#            tmp = exec_sql('KGR',...
+#                sprintf(['select quotation_group, /*price_scale_id*/null ' ...
+#                ' from ',repository,'..security_market' ...
+#                ' where security_id = %d  ' ...
+#                ' and trading_destination_id = %d ' ...
+#                ' order by ranking,trading_destination_id asc'], sec_id, td(i)));
+#            if isempty(tmp)
+#                quotation_group{i} = 'null';
+#            else
+#                quotation_group{i} = tmp(:, 1);
+#            end
+#            
+#%             if isfinite(tmp{:,2})
+#%                 price_scale{i} = cell2mat(exec_sql('BSIRIUS',...
+#%                     sprintf('select threshold, tick_size from repository..price_scale_rule_threshold where price_scale_id = %d order by threshold asc', tmp{:,2})));
+#%             end
+#            available_td(i) = ~isempty(quotation_group{i});
+#        end
+#        if ~all(available_td)
+#            warning('get_repository:tdinfo', 'No quotation_group for security_id : <%d> and trading_destination_id: \n\t%s', sec_id, sprintf('<%d>\n\t', td(~available_td)));
+#        end
+#        td = td(available_td);
+#        quotation_group = cellflat(quotation_group(available_td))';
+#        td_info = td_info(available_td, :);
+#        if ~isempty(td_info)
+#            varargout = { struct('place_id', td_info(:,1), 'trading_destination_id', num2cell(td(:)), 'execution_market_id', td_info(:,2), ...
+#                'short_name', td_info(:,3), 'timezone', td_info(:,4), 'quotation_group', quotation_group, ...
+#                'global_zone_name', td_info(:,6), ...
+#                'global_zone_suffix', td_info(:,7), ...
+#                'localtime', td_info(:,8), ...
+#                'default_timezone', td_info(:,9), ...
+#                'price_scale', price_scale)};
+#        else
+#            error('get_repository:tdinfo', 'REPOSITORY:No trading destination with enough information to work with it!');
+#        end    
+    
+    
+    
+    
+    
+    
+    

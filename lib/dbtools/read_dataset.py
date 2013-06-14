@@ -17,7 +17,6 @@ import lib.data.st_data as st_data
 import lib.stats.slicer as slicer
 import lib.stats.formula as formula
 
-
 #--------------------------------------------------------------------------
 #  FT : LOAD MATFILES OF STOCK TBT DATA
 #--------------------------------------------------------------------------
@@ -47,22 +46,7 @@ def ft(**kwargs):
     ##############################################################
     # load and format
     ##############################################################
-    remote = False
-    if 'remote' in kwargs.keys():
-        remote = kwargs['remote']
-        
-    if remote == True and os.name != 'nt':
-        r_filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
-        local_ip = socket.gethostbyname(socket.gethostname())
-        
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect('172.29.0.32', username='flexsys', password='flexsys1')
-        cmd = 'scp r_filename flexsys@'
-        
-        filename = './temp_buffer/%s.mat'%(date_newf)
-    else:
-        filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
+    filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
     try:
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
     except:
@@ -84,14 +68,15 @@ def ftickdb(**kwargs):
 #--------------------------------------------------------------------------
 def histocurrencypair(**kwargs):
     
-    out=[]
+    out=pd.DataFrame()
+    
     ##############################################################
     # input handling
     ##############################################################
     #---- date info
     if "date" in kwargs.keys():
-        from_newf=datetime.strftime(datetime.strptime(kwargs["date"], '%d/%m/%Y'),'%Y%m%d')
-        to_newf=from_newf
+        to_newf=datetime.strftime(datetime.strptime(kwargs["date"], '%d/%m/%Y'),'%Y%m%d')
+        from_newf=to_newf
     elif all([x in kwargs.keys() for x in ["start_date","end_date"]]):
         from_newf=datetime.strftime(datetime.strptime(kwargs["start_date"], '%d/%m/%Y'),'%Y%m%d')
         to_newf=datetime.strftime(datetime.strptime(kwargs["end_date"], '%d/%m/%Y'),'%Y%m%d')           
@@ -99,7 +84,7 @@ def histocurrencypair(**kwargs):
         raise NameError('read_dataset:histocurrencypair - Bad input for dates') 
         
     #---- currencyref info
-    if "currency_ref" in kwargs.keys():
+    if "currency_ref" in kwargs.keys(): 
         raise NameError('read_dataset:histocurrencypair - currency_ref not available NOW') 
         # TODO:  autre que euro pour la ref
 #            curr_ref=kwargs["currency_ref"]   
@@ -123,7 +108,7 @@ def histocurrencypair(**kwargs):
         str_curr=str_curr[:-1]+")" 
     else:
         curr=[] 
-   
+    
     ##############################################################
     # request and format
     ##############################################################
@@ -140,18 +125,33 @@ def histocurrencypair(**kwargs):
             " and SOURCEID=1 "
             " and ATTRIBUTEID=43 "
             " and CCYREF in %s ") % (pref_,from_newf,to_newf,str_curr_ref)
-    if not (not curr):
+    if curr is not []:
         req=req+((" and CCY in %s ") % (str_curr))
-            
+    
     #### EXECUTE REQUEST 
     vals=Connections.exec_sql('KGR',req)
-     
+    
     ####  OUTPUT 
     if not vals:
         return out   
-        
-    return pd.DataFrame.from_records(vals,columns=['date','ccy','ccyref','rate'],index=['date'])
+    
+    out=pd.DataFrame.from_records(vals,columns=['date','ccy','ccyref','rate'],index=['date'])
+    out=out.sort_index()
+    return out
 
+#--------------------------------------------------------------------------
+# lastrate2ref 
+#--------------------------------------------------------------------------
+def lastrate2ref(currency=None,date=None,nb_days=10):
+    # TODO : only ref is euro rigt now
+    out=np.nan
+    data=histocurrencypair(currency=currency,
+                           start_date=datetime.strftime(datetime.strptime(date, '%d/%m/%Y')-timedelta(days=nb_days),'%d/%m/%Y'),
+                            end_date=date)
+    if data.shape[0]>0:
+        out=data.ix[data.shape[0]-1]['rate']
+    return out
+    
 
 #--------------------------------------------------------------------------
 # bic : basic indicatos compted
@@ -176,7 +176,7 @@ def bic(step_sec=300,exchange=False,**kwargs):
         to_newf=datetime.strptime(kwargs["end_date"], '%d/%m/%Y')          
     else:
         raise NameError('read_dataset:bic - Bad input for dates') 
-        
+    
     ##############################################################
     # computation
     ##############################################################

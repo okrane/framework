@@ -17,8 +17,6 @@ import lib.data.st_data as st_data
 import lib.stats.slicer as slicer
 import lib.stats.formula as formula
 
-<<<<<<< HEAD
-=======
 if os.name != 'nt':
     import socket
     import paramiko
@@ -55,7 +53,6 @@ def get_local(day, sec_id, srv_addr, local_temp = ''):
     transport.close()
     return 0
 
->>>>>>> de9406f6591bc53ba3edf08fc51ec986ffe13da4
 #--------------------------------------------------------------------------
 #  FT : LOAD MATFILES OF STOCK TBT DATA
 #--------------------------------------------------------------------------
@@ -85,9 +82,6 @@ def ft(**kwargs):
     ##############################################################
     # load and format
     ##############################################################
-<<<<<<< HEAD
-    filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
-=======
     remote = False
     if 'remote' in kwargs.keys():
         remote = kwargs['remote']
@@ -101,7 +95,7 @@ def ft(**kwargs):
         filename = '%s/%s.mat'%(path, date_newf)
     else:
         filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
->>>>>>> de9406f6591bc53ba3edf08fc51ec986ffe13da4
+
     try:
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
         if remote == True and os.name != 'nt':

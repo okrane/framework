@@ -23,6 +23,7 @@ import lib.stats.formula as formula
 #------------------------------------------------------------------------------
 # agg market
 #------------------------------------------------------------------------------
+# renorm_datetime : is for handling times for occurence and algo sequence
 def aggmarket(# market information
         data=pd.DataFrame(),exchange_id_main=None,
         # period information
@@ -30,7 +31,7 @@ def aggmarket(# market information
         # order information
         limit_price=0,side=1,
         # params
-        out_datetime=True):
+        out_datetime=True,renorm_datetime=False):
     
     ##############################################################
     # check input + default
@@ -77,6 +78,10 @@ def aggmarket(# market information
         # -- find needed index to compute stats
         #--------------------------
         # base
+        if renorm_datetime:
+            start_datetime=start_datetime+timedelta(seconds=0.5)
+            end_datetime=end_datetime+timedelta(seconds=0.5)
+        
         idx_period=np.nonzero(map(lambda x : x>=start_datetime and x<end_datetime,[x.to_datetime() for x in data.index]))[0]
         if any(np.array(exclude_auction)==1):
             if exclude_auction[0]==1:

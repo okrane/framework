@@ -245,8 +245,23 @@ def deal(**kwargs):
     
     #### CONNECTIONS
     client.close();
+    
+    #### HANDLING COLNAMES
+    needed_colnames=[ # - id/order infos
+    "ExecID","ClOrdID",
+     # - deal infos
+    "Side","Symbol","LastPx","LastShares","LastMkt","ExecType","Currency"]
+    
+    # - drop colnames
+    for x in data.columns.tolist():
+        if x not in needed_colnames:
+            data=data.drop([x],axis=1)
+    # - add colnames
+    for x in needed_colnames:
+        if x not in data.columns.tolist():
+            data[x]=np.NaN 
+    
     return data
-
 
 #--------------------------------------------------------------------------
 # fieldList

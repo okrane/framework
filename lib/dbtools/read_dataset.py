@@ -60,9 +60,9 @@ def ft(**kwargs):
     #### CONFIG and CONNECT
     # TODO: in xml file
     if os.name=='nt':
-        ft_root_path="Q:\\kc_repository"
+        ft_root_path="Q:\\kc_repository_"
     else:
-        ft_root_path="/quant/kc_repository"
+        ft_root_path="/quant/kc_repository_"
     
     ##############################################################
     # input handling

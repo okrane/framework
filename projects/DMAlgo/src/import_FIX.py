@@ -675,7 +675,7 @@ def export(database, server_flex, environment, io, source, dates):
             # - UPDATE CHEUVREUX SECURITY IDS
             print "UPDATE CHEUVREUX SECURITY IDS AND MARKET DATA"
             query = "select SYMBOL3, SYMBOL6 from SECURITY where SYMBOL3 in ('%s')" % "','".join(map(str,l_kep_secids))
-             
+            
             result = connections.Connections.exec_sql('KGR', query, as_dict = True)
             dict_secs = {}
             for sec in result:
@@ -712,38 +712,35 @@ def export(database, server_flex, environment, io, source, dates):
             for doc in new_docs:
                 l_docs.append(doc)
                 
-            if f_mkt_data:
-                for order in l_docs:
-                    # Enrichment Market Data 
-                    if order['MsgType'] == 'D':
-                        last_seq = get_last_seq(order, l_docs)
-                        Trader_code = last_seq['TargetSubID']
+            for order in l_docs:
+                # Enrichment Market Data 
+                if order['MsgType'] == 'D' and f_mkt_data:
+                    last_seq = get_last_seq(order, l_docs)
+                    Trader_code = last_seq['TargetSubID']
+                     
+                     
+                    ClOrdID = '%sCLNT1' %last_seq['ClOrdID']
+                    Ticker = order['Symbol']
+                     
+                    cmd = "egrep '%s.*%s' /home/flexapp/ushare/exportprod%s%s" %(Ticker, ClOrdID, Trader_code,day)
+                     
+                    (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+                     
+                    mkt_data = None
+                    mkt_data = stdout_grep.readlines()[0]
+                    
+                    if mkt_data is not None:
+                        mkt_data = mkt_data[:-1]
+                        mkt_data = mkt_data.rsplit(',')
                          
-                         
-                        ClOrdID = '%sCLNT1' %last_seq['ClOrdID']
-                        Ticker = order['Symbol']
-                         
-                        cmd = "egrep '%s.*%s' /home/flexapp/ushare/exportprod%s%s" %(Ticker, ClOrdID, Trader_code,day)
-                         
-                        (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-                         
-                        mkt_data = None
-                        for line in stdout_grep:
-                            mkt_data = line
-                         
-                        if mkt_data is not None:
-                            mkt_data = mkt_data[:-1]
-                            mkt_data = mkt_data.rsplit(',')
-                             
-                            for u, v in dico_header.iteritems():
-                                if mkt_data[v] != '':
-                                    order['occ_fe_%s'%u] = convertStr(mkt_data[v])
-                             
-                            storeDB([order], 'AlgoOrders', Client, '','update')
+                        for u, v in dico_header.iteritems():
+                            if mkt_data[v] != '':
+                                order['occ_fe_%s'%u] = convertStr(mkt_data[v])
                             
                 if "SecurityID" in order.keys() and str(order['SecurityID']) in dict_secs.keys():
-                    order.update({'cheuvreux_secid':dict_secs[str(order['SecurityID'])]})
-                    storeDB([order], 'AlgoOrders', Client, '','update')
+                    order['cheuvreux_secid'] = dict_secs[str(order['SecurityID'])]
+        
+                storeDB([order], 'AlgoOrders', Client, '','update')
         else:
             print "wrong type of FIX connection : only 'I' or 'O' accepted !"
             
@@ -766,7 +763,7 @@ if __name__ == '__main__':
         database    = 'HPP'
         server_flex = 'WATFLT01'
         environment = 'preprod'
-        io          = 'O'
+        io          = 'I'
         source      = 'CLNT1'
         date        = '20130604'
         

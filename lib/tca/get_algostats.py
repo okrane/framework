@@ -11,6 +11,7 @@ import pytz
 import lib.data.matlabutils as matlabutils
 import lib.dbtools.get_algodata as get_algodata
 import lib.dbtools.read_dataset as read_dataset
+import lib.dbtools.get_repository as get_repository
 import lib.tca.compute_stats as compute_stats
 import lib.tca.mapping as mapping
 
@@ -51,14 +52,15 @@ def sequence_info(**kwargs):
     for i in range(0,len(uni_vals)):  
         
         #-----------------
-        # extract TICK MARKET DATA  
+        # extract TICK MARKET DATA  + security info 
         #-----------------    
         sec_id=int(uni_vals[i][0])
         datestr=uni_vals[i][1]
         datatick=pd.DataFrame()
         if sec_id>0:
             datatick=read_dataset.ftickdb(security_id=sec_id,date=datestr)
-    
+        exchange_id_main=get_repository.exchangeidmain(security_id=sec_id)[0]
+          
         #-----------------
         # Compute stats for each sequence
         #-----------------  
@@ -70,20 +72,19 @@ def sequence_info(**kwargs):
             endtime=data.ix[idx]['eff_endtime']
             if isinstance(endtime,datetime):
                 endtime=endtime.replace(tzinfo=pytz.UTC)
-            exchange_id_main=np.min(datatick['exchange_id'])
             excl_auction=mapping.ExcludeAuction(data.ix[idx]['ExcludeAuction'])
             
             #-- compute
             if (not isinstance(endtime,float)) and (not isinstance(starttime,float)):
                 tmp=compute_stats.aggmarket(data=datatick,exchange_id_main=exchange_id_main,
                               start_datetime=starttime,end_datetime=endtime,
-                              exclude_auction=excl_auction,exclude_dark=False,
+                              exclude_auction=excl_auction,exclude_dark=True,
                               limit_price=data.ix[idx]['Price'],side=data.ix[idx]['Side'],
                               out_datetime=False)
                 tmp=tmp.join(pd.DataFrame([data.ix[idx][['ClOrdID','occ_ID']].to_dict()]))                 
                 dataggseq=dataggseq.append(tmp)           
     
-    data=data.reset_index().merge(dataggseq, how="left",on=['ClOrdID','occ_ID'],).set_index('SendingTime')
+    data=data.reset_index().merge(dataggseq, how="left",on=['ClOrdID','occ_ID']).set_index('SendingTime')
     
     return data
 

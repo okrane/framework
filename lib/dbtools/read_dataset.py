@@ -60,9 +60,9 @@ def ft(**kwargs):
     #### CONFIG and CONNECT
     # TODO: in xml file
     if os.name=='nt':
-        ft_root_path="Q:\\kc_repository"
+        ft_root_path="Q:\\kc_repository_"
     else:
-        ft_root_path="/quant/kc_repository"
+        ft_root_path="/quant/kc_repository_"
     
     ##############################################################
     # input handling
@@ -95,6 +95,7 @@ def ft(**kwargs):
         filename = '%s/%s.mat'%(path, date_newf)
     else:
         filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
+
     try:
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
         if remote == True and os.name != 'nt':
@@ -118,14 +119,15 @@ def ftickdb(**kwargs):
 #--------------------------------------------------------------------------
 def histocurrencypair(**kwargs):
     
-    out=[]
+    out=pd.DataFrame()
+    
     ##############################################################
     # input handling
     ##############################################################
     #---- date info
     if "date" in kwargs.keys():
-        from_newf=datetime.strftime(datetime.strptime(kwargs["date"], '%d/%m/%Y'),'%Y%m%d')
-        to_newf=from_newf
+        to_newf=datetime.strftime(datetime.strptime(kwargs["date"], '%d/%m/%Y'),'%Y%m%d')
+        from_newf=to_newf
     elif all([x in kwargs.keys() for x in ["start_date","end_date"]]):
         from_newf=datetime.strftime(datetime.strptime(kwargs["start_date"], '%d/%m/%Y'),'%Y%m%d')
         to_newf=datetime.strftime(datetime.strptime(kwargs["end_date"], '%d/%m/%Y'),'%Y%m%d')           
@@ -133,7 +135,7 @@ def histocurrencypair(**kwargs):
         raise NameError('read_dataset:histocurrencypair - Bad input for dates') 
         
     #---- currencyref info
-    if "currency_ref" in kwargs.keys():
+    if "currency_ref" in kwargs.keys(): 
         raise NameError('read_dataset:histocurrencypair - currency_ref not available NOW') 
         # TODO:  autre que euro pour la ref
 #            curr_ref=kwargs["currency_ref"]   
@@ -157,7 +159,7 @@ def histocurrencypair(**kwargs):
         str_curr=str_curr[:-1]+")" 
     else:
         curr=[] 
-   
+    
     ##############################################################
     # request and format
     ##############################################################
@@ -174,18 +176,33 @@ def histocurrencypair(**kwargs):
             " and SOURCEID=1 "
             " and ATTRIBUTEID=43 "
             " and CCYREF in %s ") % (pref_,from_newf,to_newf,str_curr_ref)
-    if not (not curr):
+    if curr is not []:
         req=req+((" and CCY in %s ") % (str_curr))
-            
+    
     #### EXECUTE REQUEST 
     vals=Connections.exec_sql('KGR',req)
-     
+    
     ####  OUTPUT 
     if not vals:
         return out   
-        
-    return pd.DataFrame.from_records(vals,columns=['date','ccy','ccyref','rate'],index=['date'])
+    
+    out=pd.DataFrame.from_records(vals,columns=['date','ccy','ccyref','rate'],index=['date'])
+    out=out.sort_index()
+    return out
 
+#--------------------------------------------------------------------------
+# lastrate2ref 
+#--------------------------------------------------------------------------
+def lastrate2ref(currency=None,date=None,nb_days=10):
+    # TODO : only ref is euro rigt now
+    out=np.nan
+    data=histocurrencypair(currency=currency,
+                           start_date=datetime.strftime(datetime.strptime(date, '%d/%m/%Y')-timedelta(days=nb_days),'%d/%m/%Y'),
+                            end_date=date)
+    if data.shape[0]>0:
+        out=data.ix[data.shape[0]-1]['rate']
+    return out
+    
 
 #--------------------------------------------------------------------------
 # bic : basic indicatos compted
@@ -210,7 +227,7 @@ def bic(step_sec=300,exchange=False,**kwargs):
         to_newf=datetime.strptime(kwargs["end_date"], '%d/%m/%Y')          
     else:
         raise NameError('read_dataset:bic - Bad input for dates') 
-        
+    
     ##############################################################
     # computation
     ##############################################################

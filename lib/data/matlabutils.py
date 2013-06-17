@@ -107,16 +107,5 @@ def ismember(a,b,rows=False):
         raise NameError('ismember:input - bad input type')
         
         
-###############################################################################
-# isint
-###############################################################################
-def isint(a):
-    try:
-        int(a)
-        return True
-    except:
-        return False
-    
-    
-    
+
     

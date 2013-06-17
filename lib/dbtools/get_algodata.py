@@ -9,6 +9,8 @@ from pymongo import *
 import pandas as pd
 import datetime as dt
 import numpy as np
+import lib.dbtools.read_dataset as read_dataset
+import lib.data.matlabutils as matlabutils
 #from lib.dbtools.connections import Connections
 
 #--------------------------------------------------------------------------
@@ -65,19 +67,6 @@ def sequence_info(**kwargs):
     #data=pd.DataFrame.from_records(documents, columns=columns)
     data=data.tz_localize('GMT')
     data=data.sort_index()
-    
-    #### Transform the data
-    if (('nb_replace' in data.columns.tolist()) and (any(np.isnan(data['nb_replace'].values)))):
-        tmp=data['nb_replace']
-        tmp[np.nonzero(np.isnan(data['nb_replace'].values))[0]]=0
-        data['nb_replace']=tmp
-    if ('Side' in data.columns.tolist()):
-        tmp=np.array([np.NaN]*data.shape[0])
-        tmp[np.nonzero([x in [1,3] for x in data['Side']])[0]]=1
-        tmp[np.nonzero([x in [2,4] for x in data['Side']])[0]]=-1
-        if np.any(np.isnan(tmp)):
-            raise NameError('get_algodata:sequence_info - Side : strange values')
-        data['Side']=tmp
         
     #### CONNECTIONS
     client.close();
@@ -113,15 +102,39 @@ def sequence_info(**kwargs):
         if x not in data.columns.tolist():
             data[x]=np.NaN 
     
+    #### Transform the data
+    if (('nb_replace' in data.columns.tolist()) and (any(np.isnan(data['nb_replace'].values)))):
+        tmp=data['nb_replace']
+        tmp[np.nonzero(np.isnan(data['nb_replace'].values))[0]]=0
+        data['nb_replace']=tmp
+    if ('Side' in data.columns.tolist()):
+        tmp=np.array([np.NaN]*data.shape[0])
+        tmp[np.nonzero([x in [1,3] for x in data['Side']])[0]]=1
+        tmp[np.nonzero([x in [2,4] for x in data['Side']])[0]]=-1
+        if np.any(np.isnan(tmp)):
+            raise NameError('get_algodata:sequence_info - Side : strange values')
+        data['Side']=tmp
+        
+    #### add rate2euro info
+    rate2euro=np.array([np.nan]*data.shape[0])
+    uni_curr=np.unique(data['Currency'].values)
+    uni_curr=uni_curr[np.nonzero(map(lambda x : (not isinstance(x,float)) or (not np.isnan(x)),uni_curr))[0]]
+    
+    if uni_curr.shape[0]:
+        data_curr=read_dataset.histocurrencypair(currency=uni_curr,
+                                         start_date=dt.datetime.strftime(data.index.min().to_datetime(),'%d/%m/%Y'),
+                                         end_date=dt.datetime.strftime(data.index.max().to_datetime(),'%d/%m/%Y'))
+        if data_curr.shape[0]>0:
+            dates_curr=[x.date() for x in data_curr.index]
+            for i in range(0,data.shape[0]):
+                idx_tmp=np.nonzero((map(lambda x,y: (x==data.index[i].date()) and (y==data.ix[i]['Currency']),dates_curr,data_curr['ccy'].values)))[0]
+                if idx_tmp.shape[0]==1:
+                    rate2euro[i]=data_curr.ix[idx_tmp[0]]['rate']
+                    
+    data['rate2euro']=rate2euro
+
     return data
-#from lib.dbtools.connections import Connections
-#db = Connections.getClient("HPP").DB_test
-#from datetime import *
-##result = db.AlgoOrders.aggregate([{"$project": {"ClOrdID": 1, "_id": 0}}])
-#result = db.AlgoOrders.aggregate([{"$match": {"SendingTime" : {"$gt" : datetime(2013, 05, 22), "$lte": datetime(2013, 05, 23)}, "OrderQty" : {"$gt": "9"}}}, {"$project": {"ClOrdID": 1, "_id": 0}}])
-##print [k["ClOrdID"] for k in result["result"]]
-#deals = db.OrderDeals.aggregate([{"$match" : {"ClOrdID" : {"$in": [k["ClOrdID"] for k in result["result"]]} }}, {"$project": {"Symbol": 1, "OrderQty": 1, "_id": 0}}])
-#print deals["result"]
+
 #--------------------------------------------------------------------------
 # occurence_info
 #--------------------------------------------------------------------------        
@@ -232,8 +245,23 @@ def deal(**kwargs):
     
     #### CONNECTIONS
     client.close();
+    
+    #### HANDLING COLNAMES
+    needed_colnames=[ # - id/order infos
+    "ExecID","ClOrdID",
+     # - deal infos
+    "Side","Symbol","LastPx","LastShares","LastMkt","ExecType","Currency"]
+    
+    # - drop colnames
+    for x in data.columns.tolist():
+        if x not in needed_colnames:
+            data=data.drop([x],axis=1)
+    # - add colnames
+    for x in needed_colnames:
+        if x not in data.columns.tolist():
+            data[x]=np.NaN 
+    
     return data
-
 
 #--------------------------------------------------------------------------
 # fieldList

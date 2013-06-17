@@ -2,10 +2,12 @@
 
 from lib.dbtools.connections import Connections
 from lib.dbtools.read_dataset import ftickdb
+from lib.dbtools.get_repository import *
 from datetime import datetime, timedelta
 
 def export_level1_market_data(filename, security_id, date):
     datestr = date.strftime('%d/%m/%Y') if isinstance(date, datetime) else date
+    symbol = 
     data = ftickdb(security_id = security_id, date = datestr)
     f = open(filename, 'w')
     for i in range(len(data.index)):
@@ -50,4 +52,9 @@ def export_level1_market_data(filename, security_id, date):
         fix_message += '110=1|'
         fix_message += '290=1|'
         
+        f.writelines(fix_message + '\n')
         
+    f.close()
+        
+if __name__ == "__main__":
+    export_level1_market_data("C:/Downloads/exports.fmd", 110, "13/05/2013")       

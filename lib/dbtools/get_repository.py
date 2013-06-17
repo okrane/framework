@@ -12,7 +12,65 @@ from lib.data.matlabutils import *
 from lib.dbtools.connections import Connections
 
 
-  
+def convert_symbol(**kwargs):
+    """ Converts between:  (security_id, ric, glid, bloomberg, sedol, SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6)
+        the keys to be passed are :
+        a. a key < value > containing the value to convert
+        b. a key < source > with the type of the element in the above list
+            with the value equal to the requested value to convert
+        c. a key < dest > containing the target key to convert to always from the above list.
+        d. optionally pass the EXCHGID for disambiguation purposes
+        
+        @return the requested symbol in a string format (empty string if not found)
+    """   
+    ##############################################################
+    # input handling: allowed keys
+    ##############################################################
+    fields = {'security_id': 'SYMBOL6',
+              'sec_id': 'SECID',
+              'SECID': 'SECID',
+              'SYMBOL6': 'SYMBOL6',
+              'flex_id': 'flex_id',
+              'bloomberg': 'SYMBOL5',
+              'ric': 'SYMBOL4',
+              'reuters': 'SYMBOL4',
+              'isin': 'SYMBOL2',
+              'ISIN': 'SYMBOL2',
+              'gl_id': 'SYMBOL1',
+              'glid': 'SYMBOL1',
+              'sedol': 'SYMBOL3',
+              'SYMBOL5': 'SYMBOL5',
+              'SYMBOL4': 'SYMBOL4',
+              'SYMBOL3': 'SYMBOL3',
+              'SYMBOL2': 'SYMBOL2',
+              'SYMBOL1': 'SYMBOL1',              
+              }
+    ##############################################################
+    # input handling: manage errors
+    ##############################################################
+    if 'source' not in kwargs.keys():
+        raise NameError('get_repository:convert_symbol - Bad input : "from" paramter is missing')
+
+    if 'dest' not in kwargs.keys():
+        raise NameError('get_repository:convert_symbol - Bad input : "to" paramter is missing')    
+    
+    if 'value' not in kwargs.keys():
+        raise NameError('get_repository:convert_symbol - Bad input : "value" paramter is missing')    
+    
+    if kwargs['source'] not in fields.keys(): 
+        raise ValueError('get_repository:convert_symbol - Bad input : unknown symbol type <%s>' % kwargs['source'])    
+    
+    if kwargs['dest'] not in fields.keys(): 
+        raise ValueError('get_repository:convert_symbol - Bad input : unknown symbol type <%s>' % kwargs['dest'])    
+    
+    # ----------------
+    # request
+    # ----------------  
+    query = "SELECT %s from SECURITY where %s = '%s'" % (fields[kwargs['dest']], fields[kwargs['source']], kwargs['value'])
+    query += " and EXCHGID = '%s'" % kwargs['exchgid'] if kwargs.has_key('exchgid') else ""    
+    #print query
+    val=Connections.exec_sql('KGR',query,schema = False)    
+    return val[0][0] if len(val) == 1 else val
   
 #------------------------------------------------------------------------------
 # e
@@ -438,6 +496,11 @@ def local_tz_from(**kwargs):
 #        end    
     
     
+if __name__ == "__main__":
+    print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110, exchgid='SEPA'))
+    print "security_id(%s)->SECID=%s"% (110, convert_symbol(source = 'security_id', dest = 'SECID', value = 110, exchgid='SEPA'))
+    print "security_id(%s)->ISIN=%s"% (110, convert_symbol(source = 'security_id', dest = 'ISIN', value = 110, exchgid='SEPA'))
+    print "security_id(%s)->bloomberg=%s"% (110, convert_symbol(source = 'security_id', dest = 'bloomberg', value = 110, exchgid='SEPA'))
     
     
     

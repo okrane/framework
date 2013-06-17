@@ -45,9 +45,9 @@ def export_level1_market_data(filename, security_id, date):
         fix_message += '270=%f|' % data.ix[i]['price']
         fix_message += '15=EUR|'
         fix_message += '271=%d|' % data.ix[i]['volume']
+        fix_message += '272=%s|' % data.index[i].strftime("%Y%m%d")
         fix_message += '273=%s|' % data.index[i].strftime("%H:%M:%S")
         fix_message += '110=1|'
         fix_message += '290=1|'
         
         
-    

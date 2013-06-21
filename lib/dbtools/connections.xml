@@ -164,7 +164,8 @@
             </connections>
             <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
                 <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
-				<SERVER NAME="KGR">172.29.100.64:1433|KGR|python_ro|python4ever!!</SERVER>				
+				<SERVER NAME="KGR">172.29.100.64:1433|KGR|python_ro|python4ever!!</SERVER>		
+				<SERVER NAME="MARKET_DATA">172.29.100.64:1433|Market_data|batch_quant|051ed87c3a</SERVER>		
             </connections>
 			<bases>
                 <base key="quant" name="quant"/>

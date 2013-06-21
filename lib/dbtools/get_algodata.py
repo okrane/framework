@@ -11,7 +11,7 @@ import datetime as dt
 import numpy as np
 import lib.dbtools.read_dataset as read_dataset
 import lib.data.matlabutils as matlabutils
-#from lib.dbtools.connections import Connections
+from lib.dbtools.connections import Connections
 
 #--------------------------------------------------------------------------
 # sequence_info
@@ -27,7 +27,8 @@ def sequence_info(**kwargs):
     #### CONNECTIONS and DB 
     db_name="DB_test"
     order_cname="AlgoOrders"
-    client = MongoClient(connect_info)
+    #client = MongoClient(connect_info)
+    client = Connections.getClient('HPP')
     occ_db = client[db_name][order_cname]
     
     #### Build the request
@@ -65,7 +66,7 @@ def sequence_info(**kwargs):
         return data
     data=pd.DataFrame.from_records(documents, columns=columns,index='SendingTime')
     #data=pd.DataFrame.from_records(documents, columns=columns)
-    data=data.tz_localize('GMT')
+    #data=data.tz_localize('GMT')
     data=data.sort_index()
         
     #### CONNECTIONS
@@ -183,13 +184,13 @@ def occurence_info(**kwargs):
     
     #### HANDLING COLNAMES
     needed_colnames=[ # - id/order infos
-    u'_id',u'occ_ID', u'ClOrdID',u'OrigClOrdID',
+    u'_id',u'occ_ID',
     # - user/client infos
-    u'ClientID',u'TargetSubID',u'Account', u'MsgType',
+    u'ClientID',u'TargetSubID',u'Account',
     #- security symbol
-    u'Symbol',u'cheuvreux_secid',u'TickerHisto',u'SecurityID',u'ExDestination',u'SecurityType',u'Currency',
+    u'Symbol',u'cheuvreux_secid',u'TickerHisto',u'SecurityID',u'ExDestination',u'Currency',
     #- info at occurence level
-    u'occ_nb_replace']
+    u'Side',u'occ_nb_replace']
     
     # - drop colnames
     for x in data.columns.tolist():
@@ -199,7 +200,34 @@ def occurence_info(**kwargs):
     for x in needed_colnames:
         if x not in data.columns.tolist():
             data[x]=np.NaN 
+            
+    #### Transform the data        
+    if ('Side' in data.columns.tolist()):
+        tmp=np.array([np.NaN]*data.shape[0])
+        tmp[np.nonzero([x in [1,3] for x in data['Side']])[0]]=1
+        tmp[np.nonzero([x in [2,4] for x in data['Side']])[0]]=-1
+        if np.any(np.isnan(tmp)):
+            raise NameError('get_algodata:occurence_info - Side : strange values')
+        data['Side']=tmp   
+
+    #### add rate2euro info
+    rate2euro=np.array([np.nan]*data.shape[0])
+    uni_curr=np.unique(data['Currency'].values)
+    uni_curr=uni_curr[np.nonzero(map(lambda x : (not isinstance(x,float)) or (not np.isnan(x)),uni_curr))[0]]
     
+    if uni_curr.shape[0]:
+        data_curr=read_dataset.histocurrencypair(currency=uni_curr,
+                                         start_date=dt.datetime.strftime(data.index.min().to_datetime(),'%d/%m/%Y'),
+                                         end_date=dt.datetime.strftime(data.index.max().to_datetime(),'%d/%m/%Y'))
+        if data_curr.shape[0]>0:
+            dates_curr=[x.date() for x in data_curr.index]
+            for i in range(0,data.shape[0]):
+                idx_tmp=np.nonzero((map(lambda x,y: (x==data.index[i].date()) and (y==data.ix[i]['Currency']),dates_curr,data_curr['ccy'].values)))[0]
+                if idx_tmp.shape[0]==1:
+                    rate2euro[i]=data_curr.ix[idx_tmp[0]]['rate']
+                    
+    data['rate2euro']=rate2euro
+     
     return data
       
     
@@ -251,7 +279,6 @@ def deal(**kwargs):
     "ExecID","ClOrdID",
      # - deal infos
     "Side","Symbol","LastPx","LastShares","LastMkt","ExecType","Currency"]
-    
     # - drop colnames
     for x in data.columns.tolist():
         if x not in needed_colnames:
@@ -261,6 +288,15 @@ def deal(**kwargs):
         if x not in data.columns.tolist():
             data[x]=np.NaN 
     
+    #### Transform the data
+    if ('Side' in data.columns.tolist()):
+        tmp=np.array([np.NaN]*data.shape[0])
+        tmp[np.nonzero([x in [1,3] for x in data['Side']])[0]]=1
+        tmp[np.nonzero([x in [2,4] for x in data['Side']])[0]]=-1
+        if np.any(np.isnan(tmp)):
+            raise NameError('get_algodata:deal - Side : strange values')
+        data['Side']=tmp
+        
     return data
 
 #--------------------------------------------------------------------------

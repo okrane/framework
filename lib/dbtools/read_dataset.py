@@ -158,7 +158,8 @@ def histocurrencypair(**kwargs):
         str_curr="("+"".join(["'"+x+"'," for x in curr])
         str_curr=str_curr[:-1]+")" 
     else:
-        curr=[] 
+        curr=[]
+        str_curr=[]
     
     ##############################################################
     # request and format
@@ -176,7 +177,8 @@ def histocurrencypair(**kwargs):
             " and SOURCEID=1 "
             " and ATTRIBUTEID=43 "
             " and CCYREF in %s ") % (pref_,from_newf,to_newf,str_curr_ref)
-    if curr is not []:
+    
+    if not curr==[]:
         req=req+((" and CCY in %s ") % (str_curr))
     
     #### EXECUTE REQUEST 

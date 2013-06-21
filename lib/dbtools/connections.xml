@@ -2,7 +2,7 @@
 <configuration>
     <target_connections>
         <target name="dev">
-            <connections driver="Sybase">
+            <connections driver="SQL Server">
                 <SERVER NAME="BSIRIUS">10.157.70.134:9360|temp_works|batch_tick|batick</SERVER>
                 <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
                 <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>

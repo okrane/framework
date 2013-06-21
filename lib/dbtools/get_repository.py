@@ -22,7 +22,7 @@ def convert_symbol(**kwargs):
         a. a key < value > containing the value to convert
         b. a key < source > with the type of the element in the above list
             with the value equal to the requested value to convert
-        c. a key < dest > containing the target key to convert to always from the above list.
+        c. a key < dest > containing the target key to convert from the above list.
         d. optionally pass the EXCHGID for disambiguation purposes
         
         @return the requested symbol in a string format (empty string if not found)

@@ -61,6 +61,20 @@ def upload_mapping_table(filename, field):
     
     collection.insert(d)
 
+def download_to_csv(filename):
+    pass
+
+def bloom_code():
+    import win32com.client
+
+    # Get Dispatch interface from blpdatax.dll
+    w = win32com.client.Dispatch('Bloomberg.Data.1')
+    
+    # Use BlpSubscribe method to request price
+    px_last =  w.BLPSubscribe('AAL LN Equity','PX_LAST')
+
+    print px_last
+
 
 if __name__ == "__main__":
     upload_file('C:\st_sim\projects\FixedIncomeReferential\Datas.xlsx')

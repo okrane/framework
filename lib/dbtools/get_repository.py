@@ -31,6 +31,8 @@ def convert_symbol(**kwargs):
     # input handling: allowed keys
     ##############################################################
     fields = {'security_id': 'SYMBOL6',
+              'security_name': "SECNAME",
+              'SECNAME': 'SECNAME',
               'sec_id': 'SECID',
               'SECID': 'SECID',
               'SYMBOL6': 'SYMBOL6',

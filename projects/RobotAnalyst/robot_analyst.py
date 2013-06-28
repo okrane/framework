@@ -7,7 +7,6 @@ Created on Fri Jun 21 15:55:13 2013
 import numpy
 import scipy.stats.mstats as stats
 import matplotlib.pyplot as plt
-from lib.plots.color_schemes import color_grayscale
 import math
 
 class robot_analyst:
@@ -18,15 +17,12 @@ class robot_analyst:
         self.name = name
         # the work list (a dictionary) that the robot will try to accomplish
         self.target = target
-        # robot analyst will express his opinions in this list
+        # robot analyst will express his conclusions in this list
         self.conclusion = []
     def work(self, data):
         # robot will use his knowledge base to do his works
-        target_list = self.target.keys()
-        target_parameters = self.target.values()
-        for i_target in range(len(target_list)):
-            self.solve(data, target_list[i_target],target_parameters)
-        
+        for i_target in self.target.keys():
+            self.solve(data, i_target, self.target[i_target])
         for i in range(len(self.conclusion)):
             print self.conclusion[i]
     def think(self, data, targetname, targetpara):
@@ -46,7 +42,7 @@ class robot_analyst_statistics(robot_analyst):
         robot_analyst.__init__(self, name, kbase, target)
     def solve(self, data, targetname, targetpara):
         if targetname == 'Test_Uniform_Discrete':
-            # example test ti see if aggregated by some discrete value, the number of sequence follows an uniform distritbution
+            # example test to see if aggregated by some discrete value, the number of sequence follows an uniform distritbution
             nb_study = len(targetpara)
             for i_study in range(nb_study):
                 var_study = data[targetpara[i_study]]
@@ -285,6 +281,71 @@ class robot_analyst_statistics(robot_analyst):
         plt.xticks(ind + width/2.0, list_principal)
         plt.yticks(numpy.arange(0,max(cum_var_agg_principal),0.05))
         plt.show()
+        
+class robot_analyst_evolution(robot_analyst):
+    # a robot specialised at statistical analysis
+    def __init__(self, name, kbase, target):
+        robot_analyst.__init__(self, name, kbase, target)
+    def think(self, data, targetname, targetpara):
+        # robot will search the data, try to correct/enrich his knowledge base
+        self.search(data, targetname, targetpara)
+    def solve(self, data, targetname, targetpara):
+        nb_study = len(targetpara)
+        date_idx = data.index
+        if targetname == 'Daily_Number_Evolution':
+            date_value = numpy.array([date_idx[i].to_datetime().date() for i in range(len(date_idx))])
+            date_list = numpy.unique(date_value)
+            date_list.sort()
+            for i_study in range(nb_study):
+                var_study = data[targetpara[i_study]]
+                value_list = numpy.unique(var_study)
+                value_list.sort()
+                var_nb = numpy.empty(len(value_list))
+                for i_value in range(len(value_list)):
+                    var_nb[i_value] = sum(var_study == value_list[i_value])
+                test_chi2 = stats.chisquare(var_nb)
+                if test_chi2[1] > 0.005:
+                    self.conclusion.append(targetpara[i_study] + ' follows approximately a discrete uniform distribution on: \n       '
+                    + str(value_list.values) + '.')
+                else:
+                    self.conclusion.append(targetpara[i_study] + ' does not follow a discrete uniform distribution on: \n       '
+                    + str(value_list.values) + '.')
+        elif targetname == 'Weekly_Number_Evolution':
+            for i_study in range(nb_study):
+                var_study = data[targetpara[i_study]]
+                value_list = numpy.unique(var_study)
+                value_list.sort()
+                var_nb = numpy.empty(len(value_list))
+                for i_value in range(len(value_list)):
+                    var_nb[i_value] = sum(var_study == value_list[i_value])
+                test_chi2 = stats.chisquare(var_nb)
+                if test_chi2[1] > 0.005:
+                    self.conclusion.append(targetpara[i_study] + ' follows approximately a discrete uniform distribution on: \n       '
+                    + str(value_list.values) + '.')
+                else:
+                    self.conclusion.append(targetpara[i_study] + ' does not follow a discrete uniform distribution on: \n       '
+                    + str(value_list.values) + '.')
+        elif targetname == 'Monthly_Number_Evolution':
+            for i_study in range(nb_study):
+                var_study = data[targetpara[i_study]]
+                value_list = numpy.unique(var_study)
+                value_list.sort()
+                var_nb = numpy.empty(len(value_list))
+                for i_value in range(len(value_list)):
+                    var_nb[i_value] = sum(var_study == value_list[i_value])
+                test_chi2 = stats.chisquare(var_nb)
+                if test_chi2[1] > 0.005:
+                    self.conclusion.append(targetpara[i_study] + ' follows approximately a discrete uniform distribution on: \n       '
+                    + str(value_list.values) + '.')
+                else:
+                    self.conclusion.append(targetpara[i_study] + ' does not follow a discrete uniform distribution on: \n       '
+                    + str(value_list.values) + '.')
+                    
+        return   
+    def search(self, data, targetname, targetpara):
+        return
+    def answer(self, data, question):
+        return
         
 
                                     

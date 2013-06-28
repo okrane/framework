@@ -14,7 +14,7 @@ import lib.dbtools.read_dataset as read_dataset
 import lib.dbtools.get_repository as get_repository
 import lib.tca.compute_stats as compute_stats
 import lib.tca.mapping as mapping
-
+import lib.tca.tools as tools
     
 #--------------------------------------------------------------------------
 # GLOBAL needed
@@ -77,50 +77,48 @@ def sequence_info(**kwargs):
         idx_2compute=idx_valid[np.nonzero(map(lambda x : x==i,idx_in_uni_vals))[0]]
         
         for idx in idx_2compute:
-            tmp_add=pd.DataFrame()
+            ##########
+            # default
+            ##########            
+            tmp_add=pd.DataFrame([data.ix[idx][['ClOrdID','occ_ID']].to_dict()])
             
             ##########
-            # needed
+            # needed information
             ##########
             excl_auction=mapping.ExcludeAuction(data.ix[idx]['ExcludeAuction'])
-            strategy_name=mapping.StrategyName(data.ix[idx]['StrategyName'],data.ix[idx]['SweepLit'])
+            # strategy_name=mapping.StrategyName(data.ix[idx]['StrategyName'],data.ix[idx]['SweepLit'])
+            lastick_datetime=None
+            if datatick.shape[0]>0:
+                lastick_datetime=datatick.index[-1].to_datetime()
+            
             # bench start 
-            bench_starttime=data.index[idx].to_datetime()
-#            if isinstance(data.ix[idx]['StartTime'],datetime):
-#                bench_starttime=max(bench_starttime,utc.localize(data.ix[idx]['StartTime']))
-            # bench end time   
-            bench_endtime=data.ix[idx]['eff_endtime']
-#            if isinstance(bench_endtime,datetime):
-#                bench_endtime=utc.localize(bench_endtime)
-            if ((strategy_name=="VWAP") and 
-            (data.ix[idx]['exec_qty']==(data.ix[idx]['OrderQty']-data.ix[idx]['occ_prev_exec_qty']))):
-                # fullfiled vwap end time is the one set by the client if it is set or the end of trading
-                if isinstance(data.ix[idx]['EndTime'],datetime):
-                    bench_endtime=max(bench_endtime,utc.localize(data.ix[idx]['EndTime']))
-                elif datatick.shape[0]>0:
-                    bench_endtime=max(bench_endtime,datatick.index[-1].to_datetime())
-                    
+            bench_starttime,bench_endtime=tools.extract_benchtime(data=data.ix[idx],lasttick_datetime=lastick_datetime)
+            
             ##########
             # extract sequence deals
             ##########
-            # TODO: extract deals data
+            data_deal=get_algodata.deal(sequence_id=data.ix[idx]['ClOrdID'])
+            # TODO: renormalize auction deals/referential information
+            
+            ##########
+            # compute AGG market stats
+            ##########
+            if isinstance(bench_endtime,datetime) and isinstance(bench_starttime,datetime):
+                tmp_=compute_stats.aggmarket(data=datatick,exchange_id_main=exchange_id_main,
+                              start_datetime=bench_starttime,end_datetime=bench_endtime,
+                              exclude_auction=excl_auction,exclude_dark=True,
+                              limit_price=data.ix[idx]['Price'],side=data.ix[idx]['Side'],
+                              out_datetime=False,renorm_datetime=True)
+                # tmp_add=tmp_add.join(pd.DataFrame([data.ix[idx][['ClOrdID','occ_ID']].to_dict()]))  
+                tmp_add=tmp_add.join(tmp_)
+               
             
             ##########
             # compute AGG execution stats
             ##########
             # TODO: exec stats
-                    
-            ##########
-            # compute AGG market stats
-            ##########
-            tmp_add=pd.DataFrame()
-            if (not isinstance(bench_endtime,float)) and (not isinstance(bench_starttime,float)):
-                tmp_add=compute_stats.aggmarket(data=datatick,exchange_id_main=exchange_id_main,
-                              start_datetime=bench_starttime,end_datetime=bench_endtime,
-                              exclude_auction=excl_auction,exclude_dark=True,
-                              limit_price=data.ix[idx]['Price'],side=data.ix[idx]['Side'],
-                              out_datetime=False,renorm_datetime=True)
-                tmp_add=tmp_add.join(pd.DataFrame([data.ix[idx][['ClOrdID','occ_ID']].to_dict()]))  
+            tmp_=compute_stats.aggexec(data_order=tmp_add,data_deal=data_deal)
+            tmp_add=tmp_add.merge(tmp_, how="left",on=['ClOrdID','occ_ID'])
             
             ##########
             # joint

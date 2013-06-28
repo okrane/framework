@@ -79,7 +79,6 @@ class robot_analyst_statistics(robot_analyst):
             reply = self.answer_whether(data, agg_method, column, aggregator, value_at_question, assertion)
         return reply
     def answer_whether(self, data, agg_method, column, aggregator, value_at_question, assertion):
-        print 'enter answer whether ----------------------'
         aggregator_value = data[aggregator].values
         agg_list = numpy.unique(aggregator_value)
         agg_list.sort()
@@ -108,6 +107,7 @@ class robot_analyst_statistics(robot_analyst):
             reply = self.test_big_value(var_agg, id_at_question, nb_observation)
         elif assertion == 'small' and (agg_method == 'avg' or agg_method == 'avg_turnover'): 
             reply = self.test_small_value(var_agg, id_at_question, nb_observation)
+        print reply['comment']
         return reply
     def answer_why(self, data, agg_method, column, aggregator, value_at_question, assertion):  
         knowledge_key_det = 'det+' + agg_method + '+' + column + '+' + aggregator

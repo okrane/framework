@@ -8,6 +8,7 @@ Created on Wed May 15 10:07:05 2013
 from pymongo import *
 import pandas as pd
 import datetime as dt
+import time as time
 import numpy as np
 import lib.dbtools.read_dataset as read_dataset
 import lib.data.matlabutils as matlabutils
@@ -18,9 +19,6 @@ from lib.dbtools.connections import Connections
 #--------------------------------------------------------------------------
 def sequence_info(**kwargs):
      
-    #### CONFIG and CONNECT
-    connect_info="mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test"
-    
     #### DEFAULT OUTPUT    
     data=[]
     
@@ -32,26 +30,30 @@ def sequence_info(**kwargs):
     occ_db = client[db_name][order_cname]
     
     #### Build the request
+    t0=time.clock()
+    
     # get all the sequences from sequence ids
     if "sequence_id" in kwargs.keys():
         ids=kwargs["sequence_id"]
-        if isinstance(ids,str):
+        if isinstance(ids,basestring):
             ids=[ids] 
         req_=occ_db.find({"ClOrdID": {"$in" : ids}})
     # get all the sequences from occurence ids
     elif "occurence_id" in kwargs.keys():  
         ids=kwargs["occurence_id"]
-        if isinstance(ids,str):
+        if isinstance(ids,basestring):
             ids=[ids]
         req_=occ_db.find({"occ_ID": {"$in" : ids}})
     # get all the sequences from date start end
     elif all(x in ["start_date","end_date"] for x in kwargs.keys()):
-        sday=dt.datetime.strptime(kwargs["start_date"], '%d/%m/%Y')
-        eday=dt.datetime.strptime(kwargs["end_date"], '%d/%m/%Y')+dt.timedelta(days=1)
-        req_=occ_db.find({"SendingTime": {"$gte":sday },"SendingTime": {"$lt":eday }})  
+        sday=dt.datetime.strptime(kwargs["start_date"]+'-00:00:01', '%d/%m/%Y-%H:%M:%S')
+        eday=dt.datetime.strptime(kwargs["end_date"]+'-23:59:59', '%d/%m/%Y-%H:%M:%S')
+        req_=occ_db.find({"SendingTime": {"$gte":sday , "$lt":eday }})  
     else:
         client.close();
         raise NameError('get_algodata:sequence_info - Bad input data')
+        
+    print 'Mongo request time <%3.2f> secs ' %(time.clock()-t0)
     
     #### Create the data
     documents=[]
@@ -60,17 +62,18 @@ def sequence_info(**kwargs):
             documents.append(v)
             columns.extend(v.keys())
             columns=list(set(columns))
-            
+    
+    #### CONNECTIONS
+    client.close();
+    
     if not documents:
-        client.close();
         return data
+    
     data=pd.DataFrame.from_records(documents, columns=columns,index='SendingTime')
     #data=pd.DataFrame.from_records(documents, columns=columns)
     #data=data.tz_localize('GMT')
-    data=data.sort_index()
-        
-    #### CONNECTIONS
-    client.close();
+    data=data.sort_index()  
+
     
     #### HANDLING COLNAMES
     needed_colnames=[ # - id/order infos
@@ -78,7 +81,7 @@ def sequence_info(**kwargs):
     # - user/client infos
     u'ClientID',u'TargetSubID',u'Account', u'MsgType',
     #- security symbol
-    u'Symbol',u'cheuvreux_secid',u'TickerHisto',u'SecurityID',u'ExDestination',u'SecurityType',u'Currency',
+    u'Symbol',u'cheuvreux_secid',u'TickerHisto',u'SecurityID',u'ExDestination',u'SecurityType',u'Currency',u'rate_to_euro',
     #- info at occurence level
     u'occ_prev_exec_qty',u'occ_prev_turnover',   
     #- exec info
@@ -116,23 +119,23 @@ def sequence_info(**kwargs):
             raise NameError('get_algodata:sequence_info - Side : strange values')
         data['Side']=tmp
         
-    #### add rate2euro info
-    rate2euro=np.array([np.nan]*data.shape[0])
-    uni_curr=np.unique(data['Currency'].values)
-    uni_curr=uni_curr[np.nonzero(map(lambda x : (not isinstance(x,float)) or (not np.isnan(x)),uni_curr))[0]]
-    
-    if uni_curr.shape[0]:
-        data_curr=read_dataset.histocurrencypair(currency=uni_curr,
-                                         start_date=dt.datetime.strftime(data.index.min().to_datetime(),'%d/%m/%Y'),
-                                         end_date=dt.datetime.strftime(data.index.max().to_datetime(),'%d/%m/%Y'))
-        if data_curr.shape[0]>0:
-            dates_curr=[x.date() for x in data_curr.index]
-            for i in range(0,data.shape[0]):
-                idx_tmp=np.nonzero((map(lambda x,y: (x==data.index[i].date()) and (y==data.ix[i]['Currency']),dates_curr,data_curr['ccy'].values)))[0]
-                if idx_tmp.shape[0]==1:
-                    rate2euro[i]=data_curr.ix[idx_tmp[0]]['rate']
-                    
-    data['rate2euro']=rate2euro
+#    #### add rate2euro info
+#    rate2euro=np.array([np.nan]*data.shape[0])
+#    uni_curr=np.unique(data['Currency'].values)
+#    uni_curr=uni_curr[np.nonzero(map(lambda x : (not isinstance(x,float)) or (not np.isnan(x)),uni_curr))[0]]
+#    
+#    if uni_curr.shape[0]:
+#        data_curr=read_dataset.histocurrencypair(currency=uni_curr,
+#                                         start_date=dt.datetime.strftime(data.index.min().to_datetime(),'%d/%m/%Y'),
+#                                         end_date=dt.datetime.strftime(data.index.max().to_datetime(),'%d/%m/%Y'))
+#        if data_curr.shape[0]>0:
+#            dates_curr=[x.date() for x in data_curr.index]
+#            for i in range(0,data.shape[0]):
+#                idx_tmp=np.nonzero((map(lambda x,y: (x==data.index[i].date()) and (y==data.ix[i]['Currency']),dates_curr,data_curr['ccy'].values)))[0]
+#                if idx_tmp.shape[0]==1:
+#                    rate2euro[i]=data_curr.ix[idx_tmp[0]]['rate']
+#                    
+#    data['rate2euro']=rate2euro
 
     return data
 
@@ -141,31 +144,33 @@ def sequence_info(**kwargs):
 #--------------------------------------------------------------------------        
 def occurence_info(**kwargs): 
     
-    #### CONFIG and CONNECT
-    connect_info="mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test"
-    
     #### DEFAULT OUTPUT    
     data=[]
     
     #### CONNECTIONS and DB
     db_name="DB_test"
     order_cname="AlgoOrders"
-    client = MongoClient(connect_info)
+    #client = MongoClient(connect_info)
+    client = Connections.getClient('HPP')
     occ_db = client[db_name][order_cname]
     
     #### Build the request
     # if list of sequence_id then        
     if "occurence_id" in kwargs.keys():  
         ids=kwargs["occurence_id"]
-        if isinstance(ids,str):
+        if isinstance(ids,basestring):
             ids=[ids] 
         req_=occ_db.find({"MsgType":"D","occ_ID": {"$in" : ids}})
     elif all(x in ["start_date","end_date"] for x in kwargs.keys()):
-        sday=dt.datetime.strptime(kwargs["start_date"], '%d/%m/%Y')
-        eday=dt.datetime.strptime(kwargs["end_date"], '%d/%m/%Y')+dt.timedelta(days=1)
-        req_=occ_db.find({"MsgType":"D","SendingTime": {"$gte":sday},"SendingTime": {"$lt":eday}})  
+        sday=dt.datetime.strptime(kwargs["start_date"]+'-00:00:01', '%d/%m/%Y-%H:%M:%S')
+        eday=dt.datetime.strptime(kwargs["end_date"]+'-23:59:59', '%d/%m/%Y-%H:%M:%S')
+        req_=occ_db.find({"SendingTime": {"$gte":sday , "$lt":eday }})  
+        req_=occ_db.find({"MsgType":"D","SendingTime": {"$gte":sday , "$lt":eday}})  
     else:
         raise NameError('get_algodata:occurence_info - Bad input data')
+    
+    #### CONNECTIONS
+    client.close();
     
     #### Create the data
     documents=[]
@@ -179,16 +184,13 @@ def occurence_info(**kwargs):
     data=pd.DataFrame.from_records(documents, columns=columns,index='SendingTime')
     data=data.tz_localize('GMT')
     
-    #### CONNECTIONS
-    client.close();
-    
     #### HANDLING COLNAMES
     needed_colnames=[ # - id/order infos
     u'_id',u'occ_ID',
     # - user/client infos
     u'ClientID',u'TargetSubID',u'Account',
     #- security symbol
-    u'Symbol',u'cheuvreux_secid',u'TickerHisto',u'SecurityID',u'ExDestination',u'Currency',
+    u'Symbol',u'cheuvreux_secid',u'TickerHisto',u'SecurityID',u'ExDestination',u'Currency',u'rate_to_euro',
     #- info at occurence level
     u'Side',u'occ_nb_replace']
     
@@ -210,23 +212,23 @@ def occurence_info(**kwargs):
             raise NameError('get_algodata:occurence_info - Side : strange values')
         data['Side']=tmp   
 
-    #### add rate2euro info
-    rate2euro=np.array([np.nan]*data.shape[0])
-    uni_curr=np.unique(data['Currency'].values)
-    uni_curr=uni_curr[np.nonzero(map(lambda x : (not isinstance(x,float)) or (not np.isnan(x)),uni_curr))[0]]
-    
-    if uni_curr.shape[0]:
-        data_curr=read_dataset.histocurrencypair(currency=uni_curr,
-                                         start_date=dt.datetime.strftime(data.index.min().to_datetime(),'%d/%m/%Y'),
-                                         end_date=dt.datetime.strftime(data.index.max().to_datetime(),'%d/%m/%Y'))
-        if data_curr.shape[0]>0:
-            dates_curr=[x.date() for x in data_curr.index]
-            for i in range(0,data.shape[0]):
-                idx_tmp=np.nonzero((map(lambda x,y: (x==data.index[i].date()) and (y==data.ix[i]['Currency']),dates_curr,data_curr['ccy'].values)))[0]
-                if idx_tmp.shape[0]==1:
-                    rate2euro[i]=data_curr.ix[idx_tmp[0]]['rate']
-                    
-    data['rate2euro']=rate2euro
+#    #### add rate2euro info
+#    rate2euro=np.array([np.nan]*data.shape[0])
+#    uni_curr=np.unique(data['Currency'].values)
+#    uni_curr=uni_curr[np.nonzero(map(lambda x : (not isinstance(x,float)) or (not np.isnan(x)),uni_curr))[0]]
+#    
+#    if uni_curr.shape[0]:
+#        data_curr=read_dataset.histocurrencypair(currency=uni_curr,
+#                                         start_date=dt.datetime.strftime(data.index.min().to_datetime(),'%d/%m/%Y'),
+#                                         end_date=dt.datetime.strftime(data.index.max().to_datetime(),'%d/%m/%Y'))
+#        if data_curr.shape[0]>0:
+#            dates_curr=[x.date() for x in data_curr.index]
+#            for i in range(0,data.shape[0]):
+#                idx_tmp=np.nonzero((map(lambda x,y: (x==data.index[i].date()) and (y==data.ix[i]['Currency']),dates_curr,data_curr['ccy'].values)))[0]
+#                if idx_tmp.shape[0]==1:
+#                    rate2euro[i]=data_curr.ix[idx_tmp[0]]['rate']
+#                    
+#    data['rate2euro']=rate2euro
      
     return data
       
@@ -236,28 +238,29 @@ def occurence_info(**kwargs):
 #--------------------------------------------------------------------------        
 def deal(**kwargs): 
     
-    #### CONFIG and CONNECT
-    connect_info="mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test"
-    
     #### DEFAULT OUTPUT    
     data=[]
     
     #### CONNECTIONS and DB
     db_name="DB_test"
     deal_cname="OrderDeals"
-    client = MongoClient(connect_info)
+    # client = MongoClient(connect_info)
+    client = Connections.getClient('HPP')
     deal_db = client[db_name][deal_cname]            
         
     #### Build the request
     # if list of sequence_id then        
     if "sequence_id" in kwargs.keys():  
         ids=kwargs["sequence_id"]
-        if isinstance(ids,str):
+        if isinstance(ids,basestring):
             ids=[ids] 
         req_=deal_db.find({"ClOrdID": {"$in" : ids}})
     else:
-        raise NameError('get_algodata:deal - Bad input data')            
-                    
+        raise NameError('get_algodata:deal - Bad input data')  
+          
+    #### CONNECTIONS
+    client.close();
+               
     #### Create the data
     documents=[]
     columns=[]
@@ -269,11 +272,8 @@ def deal(**kwargs):
     if not documents:
         return data
     data=pd.DataFrame.from_records(documents, columns=columns,index='TransactTime')
-    data=data.tz_localize('GMT')
     
-    #### CONNECTIONS
-    client.close();
-    
+
     #### HANDLING COLNAMES
     needed_colnames=[ # - id/order infos
     "ExecID","ClOrdID",
@@ -291,8 +291,8 @@ def deal(**kwargs):
     #### Transform the data
     if ('Side' in data.columns.tolist()):
         tmp=np.array([np.NaN]*data.shape[0])
-        tmp[np.nonzero([x in [1,3] for x in data['Side']])[0]]=1
-        tmp[np.nonzero([x in [2,4] for x in data['Side']])[0]]=-1
+        tmp[np.nonzero([int(x) in [1,3] for x in data['Side']])[0]]=1
+        tmp[np.nonzero([int(x) in [2,4] for x in data['Side'].values])[0]]=-1
         if np.any(np.isnan(tmp)):
             raise NameError('get_algodata:deal - Side : strange values')
         data['Side']=tmp
@@ -304,13 +304,11 @@ def deal(**kwargs):
 #--------------------------------------------------------------------------        
 def fieldList(cname=None):
     
-    #### CONFIG and CONNECT
-    connect_info="mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test"
-    
     #### CONNECTIONS and DB
     db_name="DB_test"
     map_name="field_map"
-    client = MongoClient(connect_info)
+    #client = MongoClient(connect_info)
+    client = Connections.getClient('HPP')
     req_=client[db_name][map_name].find({"collection_name":cname},{"list_columns":1,"_id":0}) 
     
     #### Create the data

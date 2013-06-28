@@ -245,6 +245,88 @@ class robot_analyst_statistics(robot_analyst):
                 for i_reasons in range(len(reasons)):
                     print 'A ' + assertion + ' numbers of orders of ' + str(var_related) + ' ' + reasons[i_reasons] + ' are sent at ' + aggregator + ' ' + str(value_at_question)
             return reply
+        elif agg_method == 'turnover' and assertion == 'big':
+            turnover = data['turnover_euro']
+            for i_value_related in range(len(var_related_list)):
+                aggregator_value_filtered = aggregator_value[var_related_value == var_related_list[i_value_related]]
+                aggregator_value_filtered_without = aggregator_value[var_related_value != var_related_list[i_value_related]]
+                nb_observation_filtered = len(aggregator_value_filtered)
+                nb_observation_filtered_without = len(aggregator_value_filtered_without)
+                for i_value_agg in range(len(agg_list)):               
+                    var_agg_filtered[i_value_agg] = sum(turnover[aggregator_value_filtered == agg_list[i_value_agg]])
+                    var_agg_filtered_without[i_value_agg] = sum(turnover[aggregator_value_filtered_without == agg_list[i_value_agg]])
+                reply_filter_tmp = self.test_big_distribution(var_agg_filtered, id_at_question, 
+                                                              nb_observation_filtered)
+                reply_filter_without_tmp = self.test_big_distribution(var_agg_filtered_without, 
+                                                                      id_at_question, nb_observation_filtered_without)
+                if reply_filter_tmp['answer'] and not reply_filter_without_tmp['answer']:
+                    if reply['main_reasons'] == '':
+                        reply['main_reasons'] = str(var_related_list[i_value_related])
+                    else:
+                        reply['main_reasons'] = reply['main_reasons'] + '+' + str(var_related_list[i_value_related])
+                elif reply_filter_tmp['answer']:
+                    if reply['reasons'] == '':
+                        reply['reasons'] = str(var_related_list[i_value_related])
+                    else:
+                        reply['reasons'] = reply['reasons'] + '+' + str(var_related_list[i_value_related])
+            main_reasons = reply['main_reasons'].split('+')
+            reasons = reply['reasons'].split('+')
+            if main_reasons[0] == '' and reasons[0] == '':
+                print 'Variable: ' + str(var_related) + ' is not related to this question. ' 
+                return {}
+            if main_reasons[0]!= '': 
+                print '----------------------- Mains Reasons, by ' + str(var_related) + ': --------------------------'
+                for i_main_reasons in range(len(main_reasons)):
+                    print_str =  'A ' + assertion + ' turnover of orders of ' + str(var_related) + ' ' + main_reasons[i_main_reasons] + ' are sent at ' + aggregator + ' ' + str(value_at_question) + ', '
+                    print_str = print_str +  'if we do not include these ordres, the turnover of orders sent at ' + aggregator + ' ' + str(value_at_question) + ' becomes not sigifincantly ' + assertion + '. '
+                    print print_str
+                self.bar_discrete_number(data, aggregator, var_related)
+            if reasons[0]!= '':
+                print '----------------------- Possible Explanations, by ' + str(var_related) + ': --------------------------'
+                for i_reasons in range(len(reasons)):
+                    print 'A ' + assertion + ' turnover of orders of ' + str(var_related) + ' ' + reasons[i_reasons] + ' are sent at ' + aggregator + ' ' + str(value_at_question) 
+            return reply
+        elif agg_method == 'turnover' and assertion == 'small':
+            turnover = data['turnover_euro']
+            for i_value_related in range(len(var_related_list)):
+                aggregator_value_filtered = aggregator_value[var_related_value == var_related_list[i_value_related]]
+                aggregator_value_filtered_without = aggregator_value[var_related_value != var_related_list[i_value_related]]
+                nb_observation_filtered = len(aggregator_value_filtered)
+                nb_observation_filtered_without = len(aggregator_value_filtered_without)
+                for i_value_agg in range(len(agg_list)):               
+                    var_agg_filtered[i_value_agg] = sum(turnover[aggregator_value_filtered == agg_list[i_value_agg]])
+                    var_agg_filtered_without[i_value_agg] = sum(turnover[aggregator_value_filtered_without == agg_list[i_value_agg]])
+                reply_filter_tmp = self.test_small_distribution(var_agg_filtered, id_at_question, 
+                                                              nb_observation_filtered)
+                reply_filter_without_tmp = self.test_small_distribution(var_agg_filtered_without, 
+                                                                      id_at_question, nb_observation_filtered_without)
+                if reply_filter_tmp['answer'] and not reply_filter_without_tmp['answer']:
+                    if reply['main_reasons'] == '':
+                        reply['main_reasons'] = str(var_related_list[i_value_related])
+                    else:
+                        reply['main_reasons'] = reply['main_reasons'] + '+' + str(var_related_list[i_value_related])
+                elif reply_filter_tmp['answer']:
+                    if reply['reasons'] == '':
+                        reply['reasons'] = str(var_related_list[i_value_related])
+                    else:
+                        reply['reasons'] = reply['reasons'] + '+' + str(var_related_list[i_value_related])
+            main_reasons = reply['main_reasons'].split('+')
+            reasons = reply['reasons'].split('+')
+            if main_reasons[0] == '' and reasons[0] == '':
+                print 'Variable: ' + str(var_related) + ' is not related to this question. ' 
+                return {}
+            if main_reasons[0]!= '': 
+                print '----------------------- Main Explanations, by ' + str(var_related) + ': --------------------------'
+                for i_main_reasons in range(len(main_reasons)):
+                    print_str =  'A ' + assertion + ' turnover of orders of ' + str(var_related) + ' ' + main_reasons[i_main_reasons] + ' are sent at ' + aggregator + ' ' + str(value_at_question) + ', '
+                    print_str = print_str +  'if we do not include these ordres, the turnover of orders sent at ' + aggregator + ' ' + str(value_at_question) + ' becomes not sigifincantly ' + assertion + '. '
+                    print print_str
+                self.bar_discrete_number(data, aggregator, var_related)
+            if reasons[0]!= '':
+                print '----------------------- Possible Explanations, by ' + str(var_related) + ': --------------------------'
+                for i_reasons in range(len(reasons)):
+                    print 'A ' + assertion + ' turnover of orders of ' + str(var_related) + ' ' + reasons[i_reasons] + ' are sent at ' + aggregator + ' ' + str(value_at_question)
+            return reply
         return reply
     def bar_discrete_number(self, data, principal_var, secondary_var):
         var_principal = data[principal_var].values

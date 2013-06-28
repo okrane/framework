@@ -193,17 +193,17 @@ class robot_analyst_statistics(robot_analyst):
             if main_reasons[0] == '' and reasons[0] == '':
                 print 'Variable: ' + str(var_related) + ' is not related to this question. ' 
                 return {}
-            elif main_reasons[0]!= '': 
+            if main_reasons[0]!= '': 
                 print '----------------------- Mains Reasons, by ' + str(var_related) + ': --------------------------'
                 for i_main_reasons in range(len(main_reasons)):
                     print_str =  'A ' + assertion + ' numbers of orders of ' + str(var_related) + ' ' + main_reasons[i_main_reasons] + ' are sent at ' + aggregator + ' ' + str(value_at_question) + ', '
                     print_str = print_str +  'if we do not include these ordres, the number of orders sent at ' + aggregator + ' ' + str(value_at_question) + ' becomes not sigifincantly ' + assertion + '. '
                     print print_str
                 self.bar_discrete_number(data, aggregator, var_related)
-            else:
-                print '----------------------- Reasons, by ' + str(var_related) + ': --------------------------'
+            if reasons[0]!= '':
+                print '----------------------- Possible Explanations, by ' + str(var_related) + ': --------------------------'
                 for i_reasons in range(len(reasons)):
-                    print 'A ' + assertion + ' numbers of orders of ' + str(var_related) + ' ' + reasons[i_reasons] + ' are sent at ' + aggregator + ' ' + str(value_at_question)
+                    print 'A ' + assertion + ' numbers of orders of ' + str(var_related) + ' ' + reasons[i_reasons] + ' are sent at ' + aggregator + ' ' + str(value_at_question) 
             return reply
         elif agg_method == 'number' and assertion == 'small':
             for i_value_related in range(len(var_related_list)):
@@ -233,14 +233,14 @@ class robot_analyst_statistics(robot_analyst):
             if main_reasons[0] == '' and reasons[0] == '':
                 print 'Variable: ' + str(var_related) + ' is not related to this question. ' 
                 return {}
-            elif main_reasons[0]!= '': 
+            if main_reasons[0]!= '': 
                 print '----------------------- Main Explanations, by ' + str(var_related) + ': --------------------------'
                 for i_main_reasons in range(len(main_reasons)):
                     print_str =  'A ' + assertion + ' numbers of orders of ' + str(var_related) + ' ' + main_reasons[i_main_reasons] + ' are sent at ' + aggregator + ' ' + str(value_at_question) + ', '
                     print_str = print_str +  'if we do not include these ordres, the number of orders sent at ' + aggregator + ' ' + str(value_at_question) + ' becomes not sigifincantly ' + assertion + '. '
                     print print_str
                 self.bar_discrete_number(data, aggregator, var_related)
-            else:
+            if reasons[0]!= '':
                 print '----------------------- Possible Explanations, by ' + str(var_related) + ': --------------------------'
                 for i_reasons in range(len(reasons)):
                     print 'A ' + assertion + ' numbers of orders of ' + str(var_related) + ' ' + reasons[i_reasons] + ' are sent at ' + aggregator + ' ' + str(value_at_question)
@@ -259,7 +259,7 @@ class robot_analyst_statistics(robot_analyst):
         width = 0.4
         i_color = 0
         legend_add = []
-        plt.figure()
+        plt.figure(None, figsize=(20,8))
         for i_value_secondary in list_secondary:
             var_principal_filtered = var_principal[var_secondary == i_value_secondary]
             for i_principal in range(len(list_principal)):
@@ -282,72 +282,6 @@ class robot_analyst_statistics(robot_analyst):
         plt.yticks(numpy.arange(0,max(cum_var_agg_principal),0.05))
         plt.show()
         
-class robot_analyst_evolution(robot_analyst):
-    # a robot specialised at statistical analysis
-    def __init__(self, name, kbase, target):
-        robot_analyst.__init__(self, name, kbase, target)
-    def think(self, data, targetname, targetpara):
-        # robot will search the data, try to correct/enrich his knowledge base
-        self.search(data, targetname, targetpara)
-    def solve(self, data, targetname, targetpara):
-        nb_study = len(targetpara)
-        date_idx = data.index
-        if targetname == 'Daily_Number_Evolution':
-            date_value = numpy.array([date_idx[i].to_datetime().date() for i in range(len(date_idx))])
-            date_list = numpy.unique(date_value)
-            date_list.sort()
-            for i_study in range(nb_study):
-                var_study = data[targetpara[i_study]]
-                value_list = numpy.unique(var_study)
-                value_list.sort()
-                var_nb = numpy.empty(len(value_list))
-                for i_value in range(len(value_list)):
-                    var_nb[i_value] = sum(var_study == value_list[i_value])
-                test_chi2 = stats.chisquare(var_nb)
-                if test_chi2[1] > 0.005:
-                    self.conclusion.append(targetpara[i_study] + ' follows approximately a discrete uniform distribution on: \n       '
-                    + str(value_list.values) + '.')
-                else:
-                    self.conclusion.append(targetpara[i_study] + ' does not follow a discrete uniform distribution on: \n       '
-                    + str(value_list.values) + '.')
-        elif targetname == 'Weekly_Number_Evolution':
-            for i_study in range(nb_study):
-                var_study = data[targetpara[i_study]]
-                value_list = numpy.unique(var_study)
-                value_list.sort()
-                var_nb = numpy.empty(len(value_list))
-                for i_value in range(len(value_list)):
-                    var_nb[i_value] = sum(var_study == value_list[i_value])
-                test_chi2 = stats.chisquare(var_nb)
-                if test_chi2[1] > 0.005:
-                    self.conclusion.append(targetpara[i_study] + ' follows approximately a discrete uniform distribution on: \n       '
-                    + str(value_list.values) + '.')
-                else:
-                    self.conclusion.append(targetpara[i_study] + ' does not follow a discrete uniform distribution on: \n       '
-                    + str(value_list.values) + '.')
-        elif targetname == 'Monthly_Number_Evolution':
-            for i_study in range(nb_study):
-                var_study = data[targetpara[i_study]]
-                value_list = numpy.unique(var_study)
-                value_list.sort()
-                var_nb = numpy.empty(len(value_list))
-                for i_value in range(len(value_list)):
-                    var_nb[i_value] = sum(var_study == value_list[i_value])
-                test_chi2 = stats.chisquare(var_nb)
-                if test_chi2[1] > 0.005:
-                    self.conclusion.append(targetpara[i_study] + ' follows approximately a discrete uniform distribution on: \n       '
-                    + str(value_list.values) + '.')
-                else:
-                    self.conclusion.append(targetpara[i_study] + ' does not follow a discrete uniform distribution on: \n       '
-                    + str(value_list.values) + '.')
-                    
-        return   
-    def search(self, data, targetname, targetpara):
-        return
-    def answer(self, data, question):
-        return
-        
-
                                     
                 
                 

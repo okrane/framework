@@ -2,19 +2,19 @@
 <configuration>
     <target_connections>
         <target name="dev">
-            <connections driver="SQL Server">
-                <SERVER NAME="BSIRIUS">10.157.70.134:9360|temp_works|batch_tick|batick</SERVER>
-                <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
-                <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
-                <SERVER NAME="QUANT">pasyb005:9160|temp_works|sa_interest|interest_dev<!--d_dancr|dan2cr--></SERVER>
-                <SERVER NAME="VEGA">bksyb003:9580|temp_works|batch|delphi</SERVER>
-                <SERVER NAME="BILBO">pasyb016:9240|temp_works|bret|bret90</SERVER>
-                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+            <connections driver="Adaptive Server Enterprise">
+                <SERVER NAME="BSIRIUS">10.157.70.134:9250|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="GANDALF">10.157.11.5:9160|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="GANDALF:tick_db">10.157.11.5:9160|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="QUANT">10.157.11.5:9160|temp_works|sa_interest|interest_dev<!--d_dancr|dan2cr--></SERVER>
+                <SERVER NAME="VEGA">10.157.7.135:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="BILBO">10.157.11.3:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="LEIA">10.157.7.133:9240|temp_works|bret|bret90</SERVER>
                 <SERVER NAME="BSIRIUSperch">bksyb019:9360|temp_works|batch|delphi</SERVER>
                 <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
                 <SERVER NAME="EM_GUEST">pasyb016:9240|temp_works|sa_middle|middle_dev</SERVER>
                 <SERVER NAME="DELTAHC">pasyb043:9550|temp_works|sa_interest|interest_dev</SERVER>
-                <SERVER NAME="INFOCENTRE">bksyb003:9580|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="INFOCENTRE">10.157.7.135:9580|temp_works|batch|delphi</SERVER>
                 <SERVER NAME="STREETEVENT">ASE-SIRIUS:9250|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
                 <SERVER NAME="TICK_DEV">PREPA15:5010|temp_works|batch_tick|batick</SERVER>
                 <!--<SERVER NAME="CAL_EVENT">pasyb005:9160|temp_works|bret|bret90</SERVER>-->
@@ -22,7 +22,7 @@
             </connections>
             <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
                 <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
-				<SERVER NAME="KGR">172.29.0.24:1433|LUIDBC01_KGR|python_ro|python4ever!!</SERVER>
+				<SERVER NAME="KGR">172.29.0.24:1433|LUIDBC01_KGR|python_ro|python4ever!!</SERVER>				
 			</connections>
 			<connections driver="Mongo"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
 				<SERVER NAME="PARFLTLAB02">172.29.0.31:27017|||</SERVER>
@@ -148,19 +148,19 @@
             </tables>
         </target>
         <target name="production">
-            <connections driver="Sybase">
-                <SERVER NAME="BSIRIUS">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
-                <SERVER NAME="GANDALF">pasyb005:9160|temp_works|bret|bret90</SERVER>
-                <SERVER NAME="GANDALF:tick_db">pasyb005:9160|temp_works|batch_tick|batick</SERVER>
-                <SERVER NAME="QUANT">ASE-SIRIUS:9250|temp_works|batch_quant|bt23ch</SERVER>
-                <SERVER NAME="VEGA">vega:9110|temp_works|batch|delphi</SERVER>
+            <connections driver="Adaptive Server Enterprise">
+                <SERVER NAME="BSIRIUS">10.157.70.134:9250|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="GANDALF">10.157.11.5:9160|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="GANDALF:tick_db">10.157.11.5:9160|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="QUANT">10.157.70.134:9250|temp_works|batch_quant|bt23ch</SERVER>
+                <SERVER NAME="VEGA">10.157.7.135:9110|temp_works|batch|delphi</SERVER>
                 <SERVER NAME="BILBO">pasyb016:9240|temp_works|bret|bret90</SERVER>
-                <SERVER NAME="LEIA">pasyb016:9240|temp_works|bret|bret90</SERVER>
+                <SERVER NAME="LEIA">10.157.7.133:9240|temp_works|bret|bret90</SERVER>
                 <SERVER NAME="BSIRIUSperch">bksyb019:9360|temp_works|batch|delphi</SERVER>
                 <SERVER NAME="EURO_MIDDLE">pasyb016:9240|temp_works|em_adm|em_adm0</SERVER>
-                <SERVER NAME="INFOCENTRE">vega:9110|temp_works|batch|delphi</SERVER>
-                <SERVER NAME="STREETEVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
-                <SERVER NAME="CAL_EVENT">BSIRIUS:9360|temp_works|batch_tick|batick</SERVER>
+                <SERVER NAME="INFOCENTRE">10.157.7.135:9110|temp_works|batch|delphi</SERVER>
+                <SERVER NAME="STREETEVENT">10.157.70.134:9250|temp_works|batch_tick|batick</SERVER><!--la base actualis@e mais avec seuelement les 120 derniers jours ouvr@s-->
+                <SERVER NAME="CAL_EVENT">10.157.70.134:9250|temp_works|batch_tick|batick</SERVER>
             </connections>
             <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
                 <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>

@@ -127,7 +127,7 @@ class robot_analyst_statistics(robot_analyst):
         prob_id_at_question = var_agg[id_at_question] / sum(var_agg)
         delta_value = prob_id_at_question*(1-prob_id_at_question)/math.sqrt(nb_observation)*3   
         reply = {}        
-        if prob_id_at_question - delta_value > 1.5/len(var_agg):
+        if prob_id_at_question - delta_value > 1.25/len(var_agg):
             reply['answer'] = True
             reply['comment'] = 'Yes, it is significantly bigger than an uniformly distributed random variable. '
             return reply
@@ -139,7 +139,7 @@ class robot_analyst_statistics(robot_analyst):
         prob_id_at_question = var_agg[id_at_question] / sum(var_agg)
         delta_value = prob_id_at_question*(1-prob_id_at_question)/math.sqrt(nb_observation)*3    
         reply = {}                
-        if prob_id_at_question + delta_value < 0.5/len(var_agg):
+        if prob_id_at_question + delta_value < 0.75/len(var_agg):
             reply['answer'] = True
             reply['comment'] = 'Yes, it is significantly smaller than an uniformly distributed random variable. '
             return reply

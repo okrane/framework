@@ -49,7 +49,7 @@ class ConversionRate:
         
         # Add dates if needed   
         for d in dates:
-            if d not in dates:
+            if d not in ConversionRate.dates:
                 ConversionRate.dates.append(d)
                 do_get_all = True
                 
@@ -72,6 +72,8 @@ class ConversionRate:
                 rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].ix[d.strftime("%Y-%m-%d")]["rate"]
             except Exception, e:
                 rate = -1
+                import traceback
+                logging.error(traceback.extract_tb())
                 logging.error(e)
                 logging.error("Impossible to get the currency: " + str(curr) + " at the date: " + str(d))
                 logging.error("The required rate has been set to -1")
@@ -898,12 +900,15 @@ if __name__ == '__main__':
         print "python2.7 import_FIX.py HPP WATFLT01 preprod I CLNT1"
         print "python2.7 import_FIX.py HPP WATFLT01 preprod O CLNT1"
         
-        database    = 'TEST'
+        database    = 'HPP'
         server_flex = 'WATFLT01'
         environment = 'preprod'
         io          = 'I'
         source      = 'CLNT1'
-        date        = '20130619'
+        dates        = ['20130603','20130604','20130605','20130606','20130607',
+                        '20130610','20130611','20130612','20130613','20130614',
+                        '20130617','20130618','20130619','20130620','20130621',
+                        '20130624','20130625','20130626','20130627']
         
     else:
         database    = sys.argv[1]
@@ -913,6 +918,6 @@ if __name__ == '__main__':
         source      = sys.argv[5]
         date        = sys.argv[6]
         
-    export(database, server_flex, environment, io, source, [date])
+    export(database, server_flex, environment, io, source, dates)
     
     

@@ -182,83 +182,85 @@ import pytz
 # for order in res[0]:
 #     print order
 
-universe_file = '../projects/DMAlgo/cfg/KC_universe.xml'
-dico_FIX = "../projects/DMAlgo/cfg/FIX42.xml"
-
-conf = fix.get_conf('prod', universe_file)
-
-l_server = ['LUIFLT01', 'WATFLT01']
-day = '20130625'
-outfile = open("./Parent_%s.txt" %day,'w')
-portfolio = 'BLCLNT1_122'
-
-# ER_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sI.fix' %(day, day)
-# SEND_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sO.fix' %(day, day)
-
-ER_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sO.fix' %(day, day)
-SEND_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
-
-
-colnames = ['ID', 'Ticker', 'Side', 'Qty', 'ExecQty', 'lastExecPx', 'NbExec']
-line = ''
-for name in colnames:
-    line = '%s%s;' %(line, name)
-
-line = "%s\n" %line
-
-outfile.write(line)
-
-for server_name in l_server:
-    print 'Start loading orders for server : %s' %server_name
-    
-    server = conf[server_name]
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(server['ip_addr'], username=server['list_users']['flexapp']['username'], password=server['list_users']['flexapp']['passwd'])
-    cmd = "prt_fxlog %s 3 | egrep '35=D'" %(SEND_file)
-    (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-    
-    print cmd
-    
-    dico_tags = {}
-    ignore_tags= []
-    
-    NOS_dico = {}
-    
-    for line in stdout_grep:
-        line = line.replace('|\n','')
-        res_trans = fix.line_translator(line, dico_FIX, dico_tags, ignore_tags)
-        dico_tags = res_trans[1]
-        raw_order = res_trans[0]
-        order = {'ID':raw_order['ClOrdID'], 'Ticker':raw_order['Symbol'], 'Side':raw_order['Side'], 'Qty':raw_order['OrderQty'], 'ExecQty':0, 'lastExecPx':0, 'NbExec':0}
-        
-        NOS_dico[order['ID']] = order
-        
-    cmd = "prt_fxlog %s 3 | egrep '35=8.*150=(1|2)'" %(ER_file)
-    (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-    
-    for line in stdout_grep:
-        line = line.replace('|\n','')
-        res_trans = fix.line_translator(line, dico_FIX, dico_tags, ignore_tags)
-        dico_tags = res_trans[1]
-        er = res_trans[0]
-        
-        if er['ClOrdID'] in NOS_dico.keys():
-            org_order = NOS_dico[er['ClOrdID']]
-            org_order['ExecQty'] = org_order['ExecQty'] + er['LastShares']
-            org_order['lastExecPx'] = er['LastPx']
-            org_order['NbExec'] += 1
-            
-            NOS_dico[er['ClOrdID']] = org_order
-    
-    # - Writting
-    print "Start Wrting results..."
-    outfile.write("Order ON %s\n" %server_name)
-    for u, v in NOS_dico.iteritems():
-        line = "%s;%s;%s;%s;%s;%s;%s;\n" %(v['ID'], v['Ticker'], str(v['Side']), str(v['Qty']), str(v['ExecQty']), str(v['lastExecPx']), str(v['NbExec']))
-        outfile.write(line)
-    
-    
-outfile.close()
+# universe_file = '../projects/DMAlgo/cfg/KC_universe.xml'
+# dico_FIX = "../projects/DMAlgo/cfg/FIX42.xml"
+# 
+# conf = fix.get_conf('prod', universe_file)
+# 
+# l_server = ['LUIFLT01', 'WATFLT01']
+# day = '20130625'
+# outfile = open("./Parent_%s.txt" %day,'w')
+# portfolio = 'BLCLNT1_122'
+# 
+# # ER_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sI.fix' %(day, day)
+# # SEND_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sO.fix' %(day, day)
+# 
+# ER_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sO.fix' %(day, day)
+# SEND_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
+# 
+# 
+# colnames = ['ID', 'Ticker', 'Side', 'Qty', 'ExecQty', 'lastExecPx', 'NbExec']
+# line = ''
+# for name in colnames:
+#     line = '%s%s;' %(line, name)
+# 
+# line = "%s\n" %line
+# 
+# outfile.write(line)
+# 
+# for server_name in l_server:
+#     print 'Start loading orders for server : %s' %server_name
+#     
+#     server = conf[server_name]
+#     ssh = paramiko.SSHClient()
+#     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+#     ssh.connect(server['ip_addr'], username=server['list_users']['flexapp']['username'], password=server['list_users']['flexapp']['passwd'])
+#     cmd = "prt_fxlog %s 3 | egrep '35=D'" %(SEND_file)
+#     (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+#     
+#     print cmd
+#     
+#     dico_tags = {}
+#     ignore_tags= []
+#     
+#     NOS_dico = {}
+#
 
 
+#     for line in stdout_grep:
+#         line = line.replace('|\n','')
+#         res_trans = fix.line_translator(line, dico_FIX, dico_tags, ignore_tags)
+#         dico_tags = res_trans[1]
+#         raw_order = res_trans[0]
+#         order = {'ID':raw_order['ClOrdID'], 'Ticker':raw_order['Symbol'], 'Side':raw_order['Side'], 'Qty':raw_order['OrderQty'], 'ExecQty':0, 'lastExecPx':0, 'NbExec':0}
+#         
+#         NOS_dico[order['ID']] = order
+#         
+#     cmd = "prt_fxlog %s 3 | egrep '35=8.*150=(1|2)'" %(ER_file)
+#     (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+#     
+#     for line in stdout_grep:
+#         line = line.replace('|\n','')
+#         res_trans = fix.line_translator(line, dico_FIX, dico_tags, ignore_tags)
+#         dico_tags = res_trans[1]
+#         er = res_trans[0]
+#         
+#         if er['ClOrdID'] in NOS_dico.keys():
+#             org_order = NOS_dico[er['ClOrdID']]
+#             org_order['ExecQty'] = org_order['ExecQty'] + er['LastShares']
+#             org_order['lastExecPx'] = er['LastPx']
+#             org_order['NbExec'] += 1
+#             
+#             NOS_dico[er['ClOrdID']] = org_order
+#     
+#     # - Writting
+#     print "Start Wrting results..."
+#     outfile.write("Order ON %s\n" %server_name)
+#     for u, v in NOS_dico.iteritems():
+#         line = "%s;%s;%s;%s;%s;%s;%s;\n" %(v['ID'], v['Ticker'], str(v['Side']), str(v['Qty']), str(v['ExecQty']), str(v['lastExecPx']), str(v['NbExec']))
+#         outfile.write(line)
+#     
+#     
+# outfile.close()
+
+print datetime.datetime.today().strftime('%Y%m%d')

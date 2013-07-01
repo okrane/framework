@@ -32,23 +32,12 @@ import pytz
 
 # - Open MONGODB connection
 # Client = mongo.MongoClient('172.29.0.32', 27017)
-Client1 = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test",tz_aware=True)
+# Client1 = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.1.32:27017/DB_test",tz_aware=True)
+# Client1 = mongo.MongoClient("172.29.100.27", 27017)
 #"mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test"
 
 
-db = Client1['DB_test']
-collec = db['map_tagFIX']
-docs = collec.find()
-
-print docs.count()
-
-Client2 = mongo.MongoClient('172.29.100.27', 27017, tz_aware=True)
-db = Client2['Mars']
-collec = db['TagFIX']
-collec.save(docs)
-
-Client1.close()
-Client2.close()
+# db = Client1['Mars']
 
 
 # job_ids = ['AO20130521','AO20130522','AO20130523','AO20130524','AO20130527','AO20130528','AO20130529','AO20130530', 'AO20130531','AO20130603']
@@ -175,4 +164,101 @@ Client2.close()
 # 
 # for line in stdout_grep:
 #     print line
+
+ 
+# day = '20130614'
+# order = {'HandlInst': 1, 'AggreggatedStyle': 'yes', 'IDSource': 2, 'OrderQty': 10000, 'OnBehalfOfSubID': 'ALGO', 'OrdType': 2, 'StrategyName': 9, 'TargetSubID': 'ON1', 'SweepLit': 'CF', 'ExDestination': 'LN', 'Symbol': 'COLTl.AG', 'ClientID': 'PMUR', 'BeginString': 'FIX.4.2', 'TransactTime': datetime.datetime(2013, 6, 14, 10, 18, 6), 'SecurityID': 'B138NB9', 'ClOrdID': 'FY00000138083ESLO1', 'Rule80A': 'P', 'WouldDark': 'no', 'BodyLength': 335, 'SenderCompID': 'CLNT1', 'TargetCompID': 'FLINKI', 'MinSize': 1, 'MsgSeqNum': 1319, 'TickerHisto': 'COLT.LN', 'MsgType': 'D', 'ExcludeAuction': 1, 'Side': 2, 'CheckSum': 69, 'TimeInForce': 0, 'Currency': 'GBX', 'OnBehalfOfCompID': 'PMUR', 'SendingTime': datetime.datetime(2013, 6, 14, 10, 18, 6), 'Price': 102}
+# dico_trader = {}
+# dico_tags = {}
+# ignore_tags = []
+# dico_fix = '../projects/DMAlgo/cfg/FIX42.xml'    
+# environment = 'prod'
+# universe_file = '../projects/DMAlgo/cfg/KC_universe.xml'
+# 
+# conf = fix.get_conf(environment, universe_file)
+# res = fix.OrderLife(order, dico_fix, day, ignore_tags, dico_tags, conf['LUIFLT01'], dico_trader, source="CLNT1", import_type='Client')
+# 
+# 
+# for order in res[0]:
+#     print order
+
+universe_file = '../projects/DMAlgo/cfg/KC_universe.xml'
+dico_FIX = "../projects/DMAlgo/cfg/FIX42.xml"
+
+conf = fix.get_conf('prod', universe_file)
+
+l_server = ['LUIFLT01', 'WATFLT01']
+day = '20130625'
+outfile = open("./Parent_%s.txt" %day,'w')
+portfolio = 'BLCLNT1_122'
+
+# ER_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sI.fix' %(day, day)
+# SEND_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sO.fix' %(day, day)
+
+ER_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sO.fix' %(day, day)
+SEND_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
+
+
+colnames = ['ID', 'Ticker', 'Side', 'Qty', 'ExecQty', 'lastExecPx', 'NbExec']
+line = ''
+for name in colnames:
+    line = '%s%s;' %(line, name)
+
+line = "%s\n" %line
+
+outfile.write(line)
+
+for server_name in l_server:
+    print 'Start loading orders for server : %s' %server_name
+    
+    server = conf[server_name]
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(server['ip_addr'], username=server['list_users']['flexapp']['username'], password=server['list_users']['flexapp']['passwd'])
+    cmd = "prt_fxlog %s 3 | egrep '35=D'" %(SEND_file)
+    (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+    
+    print cmd
+    
+    dico_tags = {}
+    ignore_tags= []
+    
+    NOS_dico = {}
+    
+    for line in stdout_grep:
+        line = line.replace('|\n','')
+        res_trans = fix.line_translator(line, dico_FIX, dico_tags, ignore_tags)
+        dico_tags = res_trans[1]
+        raw_order = res_trans[0]
+        order = {'ID':raw_order['ClOrdID'], 'Ticker':raw_order['Symbol'], 'Side':raw_order['Side'], 'Qty':raw_order['OrderQty'], 'ExecQty':0, 'lastExecPx':0, 'NbExec':0}
+        
+        NOS_dico[order['ID']] = order
+        
+    cmd = "prt_fxlog %s 3 | egrep '35=8.*150=(1|2)'" %(ER_file)
+    (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+    
+    for line in stdout_grep:
+        line = line.replace('|\n','')
+        res_trans = fix.line_translator(line, dico_FIX, dico_tags, ignore_tags)
+        dico_tags = res_trans[1]
+        er = res_trans[0]
+        
+        if er['ClOrdID'] in NOS_dico.keys():
+            org_order = NOS_dico[er['ClOrdID']]
+            org_order['ExecQty'] = org_order['ExecQty'] + er['LastShares']
+            org_order['lastExecPx'] = er['LastPx']
+            org_order['NbExec'] += 1
+            
+            NOS_dico[er['ClOrdID']] = org_order
+    
+    # - Writting
+    print "Start Wrting results..."
+    outfile.write("Order ON %s\n" %server_name)
+    for u, v in NOS_dico.iteritems():
+        line = "%s;%s;%s;%s;%s;%s;%s;\n" %(v['ID'], v['Ticker'], str(v['Side']), str(v['Qty']), str(v['ExecQty']), str(v['lastExecPx']), str(v['NbExec']))
+        outfile.write(line)
+    
+    
+outfile.close()
+
 

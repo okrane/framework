@@ -182,7 +182,7 @@ def occurence_info(**kwargs):
     if not documents:
         return data
     data=pd.DataFrame.from_records(documents, columns=columns,index='SendingTime')
-    data=data.tz_localize('GMT')
+    # data=data.tz_localize('GMT')
     
     #### HANDLING COLNAMES
     needed_colnames=[ # - id/order infos

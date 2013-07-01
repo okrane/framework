@@ -19,8 +19,45 @@ import lib.stats.formula as formula
 
 
 
+###------------------<------------------------------------------------------------
+### agg exec
+###-----------------------------------------------------------------------------
+## the call should be made after aggmarket !
+def aggexec(# order information
+        data_order=pd.DataFrame(),data_deal=pd.DataFrame()
+        ):
+    
+    ##############################################################
+    # check input 
+    ##############################################################
+    if not ( (isinstance(data_order,pd.Series)) or (isinstance(data_order,pd.DataFrame) and data_order.shape[0]==1)):
+        raise NameError('aggexec:Input - Bad input for data_order')            
+            
+    ##############################################################
+    # default
+    ############################################################## 
+    default_indicators={'exec_quantity':0,
+                        'exec_nb_trades':0,
+                        'exec_turnover':0}       
+    if isinstance(data_order,pd.Series):               
+        out=pd.DataFrame([data_order[['ClOrdID','occ_ID']].to_dict()])
+    else:              
+        out=pd.DataFrame([data_order.ix[0][['ClOrdID','occ_ID']].to_dict()])
+                  
+    ##############################################################
+    # compute stats ON PERIOD
+    ##############################################################
+    if data_deal.shape[0]>0:
+        indicators={'exec_quantity':np.sum(map(lambda x : float(x),data_deal['LastShares'])),
+                    'exec_nb_trades': np.size(data_deal['LastShares']),
+                    'exec_turnover': np.sum(map(lambda x,y : float(x)*float(y),data_deal['LastShares'],data_deal['LastPx']))}
+        out=out.join(pd.DataFrame([indicators])) 
+    else:
+        out=out.join(pd.DataFrame([default_indicators])) 
+    
+    return out
 
-#------------------------------------------------------------------------------
+#------------------<------------------------------------------------------------
 # agg market
 #------------------------------------------------------------------------------
 # renorm_datetime : is for handling times for occurence and algo sequence
@@ -111,9 +148,9 @@ def aggmarket(# market information
         idx_period_lit_main_constr=idx_period_lit_main
         idx_period_dark_constr=idx_period_dark
         if limit_price>0:
-            idx_period_lit_constr=np.array(list(set(idx_period_lit_constr) & set(np.nonzero(data['price']*side>limit_price*side)[0])))
-            idx_period_lit_main_constr=np.array(list(set(idx_period_lit_main_constr) & set(np.nonzero(data['price']*side>limit_price*side)[0])))
-            idx_period_dark_constr=np.array(list(set(idx_period_dark_constr) & set(np.nonzero(data['price']*side>limit_price*side)[0])))
+            idx_period_lit_constr=np.array(list(set(idx_period_lit_constr) & set(np.nonzero(data['price']*side<=limit_price*side)[0])))
+            idx_period_lit_main_constr=np.array(list(set(idx_period_lit_main_constr) & set(np.nonzero(data['price']*side<=limit_price*side)[0])))
+            idx_period_dark_constr=np.array(list(set(idx_period_dark_constr) & set(np.nonzero(data['price']*side<=limit_price*side)[0])))
         
         #--------------------------
         # -- compute

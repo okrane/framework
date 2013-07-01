@@ -14,6 +14,86 @@ from lib.dbtools import connections
 from pandas import *
 from lib.data.pyData import convertStr
 import pytz
+import lib.dbtools.read_dataset as read_dataset
+from lib.logger import *
+from bson.json_util import default
+
+logging.getLogger("paramiko").setLevel(logging.WARNING)
+
+class ConversionRate:
+    data = None
+    default_currencies = ['GBX', 'EUR', 'GBP', 'SEK', 'CHF', 'DKK', 'NOK', 'USD']
+    dates = []
+    @staticmethod        
+    def _get_first_time(dates):
+        dates_datetime = ConversionRate.date_to_datetime(dates)
+        ConversionRate.dates.extend(dates)
+        if ConversionRate.data is None:
+            ConversionRate._get_all(dates_datetime)  
+             
+    @staticmethod        
+    def date_to_datetime(dates):
+        dates_datetime = []
+        for d in dates:
+            dates_datetime.append(datetime.strptime(d, '%Y%m%d'))
+        dates_datetime = sorted(dates_datetime)
+        return dates_datetime
+    
+    @staticmethod    
+    def getRates(curr, dates):
+        do_get_all = False
+        # Initialize if needed
+        if ConversionRate.data is None:
+            ConversionRate._get_first_time(dates)
+            do_get_all = True
+        
+        # Add dates if needed   
+        for d in dates:
+            if d not in ConversionRate.dates:
+                ConversionRate.dates.append(d)
+                do_get_all = True
+                
+        # Add a currency if needed
+        if curr not in ConversionRate.default_currencies:
+            ConversionRate.default_currencies.append(curr)
+            do_get_all = True
+        
+        # Convert dates from string to datetime
+        dates_datetime = ConversionRate.date_to_datetime(dates)
+        
+        # If needed do a get_all
+        if do_get_all:
+            ConversionRate._get_all(dates_datetime) 
+                   
+        rates = []
+
+        for d in dates_datetime:
+            try:
+                rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].ix[d.strftime("%Y-%m-%d")]["rate"]
+            except Exception, e:
+                rate = -1
+                import traceback
+                logging.error(traceback.extract_tb())
+                logging.error(e)
+                logging.error("Impossible to get the currency: " + str(curr) + " at the date: " + str(d))
+                logging.error("The required rate has been set to -1")
+                
+            rates.append(rate)
+        return rates
+    
+    @staticmethod
+    def getRate(curr, date):
+        logging.debug("The rate of " + curr + "at date: " + date + " is: "+ str( ConversionRate.getRates(curr, [date])[0] ))
+        return ConversionRate.getRates(curr, [date])[0]
+    
+    @staticmethod  
+    def _get_all(dates_datetime):
+        connections.Connections.change_connections('production')
+        ConversionRate.data = read_dataset.histocurrencypair(start_date = dates_datetime[0].strftime("%d/%m/%Y"),
+                                                             end_date   = dates_datetime[len(dates_datetime) - 1].strftime("%d/%m/%Y"),
+                                                             currency   = ConversionRate.default_currencies)
+        connections.Connections.change_connections('dev')
+        logging.info(str(ConversionRate.data))
 
 def get_last_seq(order, l_orders):
     
@@ -65,7 +145,7 @@ def update_colmap(l_field, client, collection):
         map_coll.insert({'collection_name':collection, 'list_columns':l_field})
         
     else:
-        print '##### Conflict while updating map collection : 2 rows for same collection !! #####'
+        logging.warning( '##### Conflict while updating map collection : 2 rows for same collection !! #####')
         
     return 0
     
@@ -111,7 +191,7 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
         if type != '':
             
             if type not in ['D', 'G', 'F']:
-                print "error no valid type order ! (only D, G or F are allowed)"
+                logging.warning( "error no valid type order ! (only D, G or F are allowed)" )
             else:
                 if trader =='':
                     cmd = 'prt_fxlog %s 3 | grep 35=%s' %(path, type)
@@ -125,7 +205,11 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
                     dico_tags = res_trans[1]
                     
-                    if res_trans[0] != {} and len(res_trans[0]) > 1:
+                    is_DMA = False
+                    if "OnBehalfOfSubID" in res_trans[0].keys() :
+                        is_DMA = (res_trans[0]['OnBehalfOfSubID'] == "DMA")
+                    
+                    if res_trans[0] != {} and len(res_trans[0]) > 1 and not is_DMA:
                         l_orders.append(res_trans[0])
         else:
             l_FIXtype = ['D', 'G', 'F']
@@ -141,14 +225,17 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     line = line.replace('|\n','')
                     res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
                     dico_tags = res_trans[1]
+                    is_DMA = False
+                    if "OnBehalfOfSubID" in res_trans[0].keys() :
+                        is_DMA = (res_trans[0]['OnBehalfOfSubID'] == "DMA")
                     
-                    if res_trans[0] != {} and len(res_trans[0]) > 1:
+                    if res_trans[0] != {} and len(res_trans[0]) > 1 and not is_DMA:
                         l_orders.append(res_trans[0])
     elif IO == 'O':
         if str(type) != '':
             
             if str(type) not in ['1', '2'] :
-                print "error no valid type ! (only 1 or 2 are allowed)"
+                logging.warning( "error no valid type ! (only 1 or 2 are allowed)")
             else:
                 if trader =='':
                     cmd = "prt_fxlog %s 3 | egrep '35=8.*150=%s'" %(path, str(type))
@@ -161,7 +248,6 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     line = line.replace('|\n','')
                     res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
                     dico_tags = res_trans[1]
-                    l_orders.append(res_trans[0])
                     
                     if res_trans[0] != {} and len(res_trans[0]) > 1:
                         l_orders.append(res_trans[0])
@@ -183,7 +269,7 @@ def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', igno
                     if res_trans[0] != {} and len(res_trans[0]) > 1:
                         l_orders.append(res_trans[0])
     else:
-        print "wrong connection IO only 'I' or 'O' accepted !"
+        logging.warning( "wrong connection IO only 'I' or 'O' accepted !")
     
     return [l_orders, dico_tags]
 
@@ -216,18 +302,15 @@ def storeDB(l_orders, Collection, client, jobID, mode='insert'):
     collection = database[Collection]
     
     if mode == 'insert':
-        print "insert %s Orders into database" %str(len(l_orders))
+        logging.info("insert %s Orders into database" %str(len(l_orders)) )
     
     for order in l_orders:
-        
+        order.update({'job_id': jobID})
         if mode == 'insert':    
-            order.update({'job_id': jobID})
             collection.insert(order, manipulate=False)
         elif mode == 'update':
             collection.save(order)
-            
-        list_columns = order.keys()
-        update_colmap(list_columns, client, Collection)
+    logging.info("End Of insertion to the database")
 
 def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, import_type='Client'):
     
@@ -235,7 +318,7 @@ def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, impo
     reason = ''
     
     OrigOrderID = d_msg['ClOrdID']
-    print "Looking for other reason for order : %s" %OrigOrderID
+    logging.warning("Looking for other reason for order : %s" %OrigOrderID)
     
     if import_type == 'Client':
         IN_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
@@ -277,7 +360,7 @@ def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, impo
                 
     return [reason, done]
 
-def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader, source="CLNT1", import_type='Client'):
+def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader, ssh, source="CLNT1", import_type='Client'):
     
     # - Open SSH connection 
     ssh = paramiko.SSHClient()
@@ -588,20 +671,65 @@ def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader,
         order_life.append(order)
         
     else:
-        print 'invalid order type : only NewOrderSingle (D) are allowed !'
+        logging.warning( 'invalid order type : only NewOrderSingle (D) are allowed !')
     
     ssh.close()
     return [order_life, dico_tags]
+
+def update_security_ids(l_kep_secids):
+    logging.info( "UPDATE CHEUVREUX SECURITY IDS AND MARKET DATA")
+    query = "select SYMBOL3, SYMBOL6 from SECURITY where SYMBOL3 in ('%s')" % "','".join(map(str,l_kep_secids))
+    
+    result = connections.Connections.exec_sql('KGR', query, as_dict = True)
+    dict_secs = {}
+    for sec in result:
+        dict_secs[str(sec['SYMBOL3'])] = str(sec['SYMBOL6'])
+    return dict_secs
+
+def get_dico_header(server_flex, day, conf ):
+    
+    mkt_data_fields = ['EXEC_SHARES' ,'ORDER_PERC','INMKT_VOLUME','INMKT_TURNOVER',
+                       'PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','IN_VWAS','ARRIVAL_PRICE',
+                       'FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
+    
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect(conf[server_flex]['ip_addr'], 
+                username = conf[server_flex]['list_users']['flexapp']['username'], 
+                password = conf[server_flex]['list_users']['flexapp']['passwd'])
+    
+    cmd = 'grep SYM /home/flexapp/ushare/exportprodAV1%s' %day
+    
+    (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+    
+    header = ""
+    for line in stdout_grep:
+        header = line
+    
+    dico_header = {}
+    f_mkt_data = False
+    if header != "":
+        header = header[:-1]
+        header  = header.rsplit(',')
+        f_mkt_data = True
+            
+        for col in mkt_data_fields:
+            if col in header:
+                dico_header[col.lower()] = header.index(col)
+    result = {}
+    result["f_mkt_data"]  = f_mkt_data
+    result["dico_header"] = dico_header
+    return result
 
 
 def export(database, server_flex, environment, io, source, dates):
     import os
     full_path = os.path.realpath(__file__)    
     path, f = os.path.split(full_path)        
-    from lib.dbtools.connections import Connections
     
-    # - Parameters
-        
+    
+    
+    # - Parameters    
     universe_file = path +'/../cfg/KC_universe.xml'
     dico_FIX = path + '/../cfg/FIX42.xml'    
     conf = get_conf(environment, universe_file)
@@ -613,33 +741,30 @@ def export(database, server_flex, environment, io, source, dates):
     dico_tags = {}
     
     # - Open MONGODB connection
-    #Client = mongo.MongoClient("mongodb://python_script:pythonpass@172.29.0.32:27017/DB_test")
-    print database
     Client = connections.Connections.getClient(database)
+    logging.info("Connected to database: " + database)
+    
     
     # - Trader dico generation for matching alias
     if IO == 'I':
-        print 'Generating dico for Trader matching'
+        logging.debug('Generating dico for Trader matching')
         temp_dico_trader = Client['DB_test']['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':conf[server_flex]['ip_addr']})
         dico_trader = {}
         for trd in temp_dico_trader:
             dico_trader[trd['tag_value']] = trd['trader_name']
             
-    mkt_data_fields = ['EXEC_SHARES' ,'ORDER_PERC','INMKT_VOLUME','INMKT_TURNOVER','PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','IN_VWAS','ARRIVAL_PRICE','FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
-    
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(conf[server_flex]['ip_addr'], username=conf[server_flex]['list_users']['flexapp']['username'], password=conf[server_flex]['list_users']['flexapp']['passwd'])
+
     
     for day in dates:
-        print "-----> Start import for : %s" %day
-        
+        logging.info("-----> Start import for : %s" %day)
+        l_docs = []
         if IO == 'O':
             
             job_id = 'OD%s' %day
             
             Client['DB_test']['OrderDeals'].remove({'job_id':job_id})
             
+            # IMPORT LES LOGS FIX
             type = ''
             res_import = import_FIXmsg(dico_FIX, conf[server_flex], day, type, IO, dico_tags, trader, ignore_tags, source)
             c_orders = res_import[0]
@@ -650,6 +775,7 @@ def export(database, server_flex, environment, io, source, dates):
         elif IO == 'I':
             
             type = 'D'
+            # IMPORT LES LOGS FIX
             # - Single Day import
             res_import = import_FIXmsg(dico_FIX, conf[server_flex], day, type, IO, dico_tags, trader, ignore_tags, source)
             d_orders = res_import[0]
@@ -658,76 +784,85 @@ def export(database, server_flex, environment, io, source, dates):
             l_kep_secids = []
             job_id = 'AO%s' %day
             
+            logging.info("Remove the documents where this job_id is present " + str(job_id))
             Client['DB_test']['AlgoOrders'].remove({'job_id':job_id})
             
-            for order in d_orders:
-                print 'Order ID : %s' %order['ClOrdID']
-                l_events = OrderLife(order, dico_FIX, day, ignore_tags, dico_tags, conf[server_flex], dico_trader, source)
-                u_order = l_events[0]
-                dico_tags = l_events[1]
-                storeDB(u_order, 'AlgoOrders', Client, job_id)
-             
-                if 'SecurityID' in u_order[0].keys():
-                    l_kep_secids.append(u_order[0]['SecurityID'])  
+            logging.info('Get ' + str(len(d_orders)) + ' orders to add !')
+            u_orders = []
             
-            l_kec_secids = set(l_kep_secids)
-             
-            # - UPDATE CHEUVREUX SECURITY IDS
-            print "UPDATE CHEUVREUX SECURITY IDS AND MARKET DATA"
-            query = "select SYMBOL3, SYMBOL6 from SECURITY where SYMBOL3 in ('%s')" % "','".join(map(str,l_kep_secids))
-            
-            result = connections.Connections.exec_sql('KGR', query, as_dict = True)
-            dict_secs = {}
-            for sec in result:
-                dict_secs[str(sec['SYMBOL3'])] = str(sec['SYMBOL6'])
-            
-            s_date = datetime.strptime('%s-00:01:00'%day, '%Y%m%d-%H:%M:%S')
-            e_date = datetime.strptime('%s-23:59:00'%day, '%Y%m%d-%H:%M:%S')
-            
-            new_docs = Client['DB_test']['AlgoOrders'].find({"SendingTime": {"$gte":s_date, "$lt":e_date}})
-            
-            # - GET COLUMN NUMBER IN MKT
             ssh = paramiko.SSHClient()
             ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(conf[server_flex]['ip_addr'], username=conf[server_flex]['list_users']['flexapp']['username'], password=conf[server_flex]['list_users']['flexapp']['passwd'])
-            cmd = 'grep SYM /home/flexapp/ushare/exportprodAV1%s' %day
-            (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-            
-            header = ""
-            for line in stdout_grep:
-                header = line
-            
-            dico_header = {}
-            f_mkt_data = False
-            if header != "":
-                header = header[:-1]
-                header  = header.rsplit(',')
-                f_mkt_data = True
-                    
-                for col in mkt_data_fields:
-                    if col in header:
-                        dico_header[col.lower()] = header.index(col)
-            
-            l_docs = []
-            for doc in new_docs:
-                l_docs.append(doc)
+            ssh.connect(conf[server_flex]['ip_addr'],
+                        username = conf[server_flex]['list_users']['flexapp']['username'], 
+                        password = conf[server_flex]['list_users']['flexapp']['passwd'])
+            for order in d_orders:
+                logging.info('Order ID : %s' %order['ClOrdID'])
                 
-            for order in l_docs:
+                l_events = OrderLife(order = order, dico_fix = dico_FIX, day= day, 
+                                     ignore_tags = ignore_tags, dico_tags = dico_tags,
+                                     server = conf[server_flex], dico_trader = dico_trader, 
+                                     ssh = ssh, source = source)
+                u_order = l_events[0]
+                dico_tags = l_events[1]
+                u_orders.extend(u_order)
+                #storeDB(u_order, 'AlgoOrders', Client, job_id)
+                
+                if 'SecurityID' in u_order[0].keys():
+                    l_kep_secids.append(u_order[0]['SecurityID'])
+              
+            
+#             import lib.io.serialize as serialize
+#             import simplejson
+#             u_orders = serialize.DateTimeJSONEncoder().encode(u_orders)
+#             l_kep_secids = simplejson.dumps(l_kep_secids, separators=(',',':'))
+#             
+#             f = open('orders', 'w')
+#             f.writelines(u_orders.splitlines())
+#             f.close()
+#             f = open('secids', 'w')
+#             f.writelines(l_kep_secids.splitlines())
+#             f.close()
+#             
+#             f = open('orders', 'r')
+#             u_orders = simplejson.loads(f.read(), object_hook = serialize.as_datetime)
+#             f.close()
+#             
+#             f = open('secids', 'r')
+#             l_kep_secids = simplejson.loads(f.read())
+#             f.close()
+            
+            
+            dict_secs = update_security_ids(set(l_kep_secids))
+            
+            # GET WHETHER THERE IS DATA FROM ALGO
+            # - GET COLUMN NUMBER IN MKT
+            result      = get_dico_header(server_flex, day, conf)
+            dico_header = result["dico_header"]
+            f_mkt_data  = result["f_mkt_data"]
+            
+
+            logging.info('Add information from prod to ' + str(len(u_orders)) + ' orders !')   
+            for order in u_orders:
                 # Enrichment Market Data 
                 if order['MsgType'] == 'D' and f_mkt_data:
                     last_seq = get_last_seq(order, l_docs)
                     Trader_code = last_seq['TargetSubID']
                      
                      
-                    ClOrdID = '%sCLNT1' %last_seq['ClOrdID']
+                    ClOrdID = '%sCLNT' %last_seq['ClOrdID']
                     Ticker = order['Symbol']
-                     
-                    cmd = "egrep '%s.*%s' /home/flexapp/ushare/exportprod%s%s" %(Ticker, ClOrdID, Trader_code,day)
+                    
+                    cmd = "egrep '%s.*%s' /home/flexapp/ushare/exportprod%s%s" %(Ticker, ClOrdID, Trader_code, day)
                      
                     (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-                     
+                    
                     mkt_data = None
-                    mkt_data = stdout_grep.readlines()[0]
+                    try:
+                        mkt_data = stdout_grep.readlines()[0]
+                    except Exception,e :
+                        logging.info("Cannot get data from algos for the following strategy: " +  str(order["StrategyName"]))
+                        logging.warning("This order could not been processed: " + str(order) )
+                        mkt_data = None  
                     
                     if mkt_data is not None:
                         mkt_data = mkt_data[:-1]
@@ -736,22 +871,27 @@ def export(database, server_flex, environment, io, source, dates):
                         for u, v in dico_header.iteritems():
                             if mkt_data[v] != '':
                                 order['occ_fe_%s'%u] = convertStr(mkt_data[v])
-                            
+                # - UPDATE CHEUVREUX SECURITY IDS            
                 if "SecurityID" in order.keys() and str(order['SecurityID']) in dict_secs.keys():
                     order['cheuvreux_secid'] = dict_secs[str(order['SecurityID'])]
-        
-                storeDB([order], 'AlgoOrders', Client, '','update')
+                    
+                order['rate_to_euro'] = ConversionRate.getRate(order['Currency'], day )
+                l_docs.append(order)
+            ssh.close()
+            logging.info('Store all the orders')
+            logging.info(ConversionRate.default_currencies)       
+            storeDB(l_docs, 'AlgoOrders', Client, job_id,'insert')
         else:
-            print "wrong type of FIX connection : only 'I' or 'O' accepted !"
+            logging.warning( "wrong type of FIX connection : only 'I' or 'O' accepted !")
             
-        print "----> END OF IMPORT FOR : %s" %day
+        logging.info( "----> END OF IMPORT FOR : %s" %day)
     
     if Client.alive():
         Client.close()
 
 if __name__ == '__main__':
     import sys    
-    if len(sys.argv) == 1:
+    if len(sys.argv) <= 6:
         print "Usage Examples: "
         print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev I"
         print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev O"
@@ -765,10 +905,12 @@ if __name__ == '__main__':
         environment = 'preprod'
         io          = 'I'
         source      = 'CLNT1'
-        date        = '20130604'
+        dates        = ['20130603','20130604','20130605','20130606','20130607',
+                        '20130610','20130611','20130612','20130613','20130614',
+                        '20130617','20130618','20130619','20130620','20130621',
+                        '20130624','20130625','20130626','20130627']
         
     else:
-    
         database    = sys.argv[1]
         server_flex = sys.argv[2]
         environment = sys.argv[3]
@@ -776,6 +918,6 @@ if __name__ == '__main__':
         source      = sys.argv[5]
         date        = sys.argv[6]
         
-    export(database, server_flex, environment, io, source, [date])
+    export(database, server_flex, environment, io, source, dates)
     
     

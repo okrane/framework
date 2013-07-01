@@ -14,8 +14,13 @@ import lib.dbtools.read_dataset as read_dataset
 import lib.dbtools.get_repository as get_repository
 import lib.tca.compute_stats as compute_stats
 import lib.tca.mapping as mapping
-
+import lib.tca.tools as tools
     
+#--------------------------------------------------------------------------
+# GLOBAL needed
+#--------------------------------------------------------------------------    
+utc=pytz.UTC
+
 #--------------------------------------------------------------------------
 # sequence_info
 #--------------------------------------------------------------------------
@@ -52,37 +57,76 @@ def sequence_info(**kwargs):
     for i in range(0,len(uni_vals)):  
         
         #-----------------
-        # extract TICK MARKET DATA  + security info 
+        # extract security info 
         #-----------------    
         sec_id=int(uni_vals[i][0])
         datestr=uni_vals[i][1]
+        exchange_id_main=get_repository.exchangeidmain(security_id=sec_id)[0]
+        # thours=get_repository.tradingtime(security_id=sec_id,date=datestr)
+        
+        #-----------------
+        # extract TICK MARKET DATA 
+        #-----------------            
         datatick=pd.DataFrame()
         if sec_id>0:
-            datatick=read_dataset.ftickdb(security_id=sec_id,date=datestr)
-        exchange_id_main=get_repository.exchangeidmain(security_id=sec_id)[0]
-          
+            datatick=read_dataset.ftickdb(security_id=sec_id,date=datestr)        
+        
         #-----------------
         # Compute stats for each sequence
         #-----------------  
         idx_2compute=idx_valid[np.nonzero(map(lambda x : x==i,idx_in_uni_vals))[0]]
         
         for idx in idx_2compute:
-            #-- needed
-            starttime=data.index[idx].to_datetime()
-            endtime=data.ix[idx]['eff_endtime']
-            if isinstance(endtime,datetime):
-                endtime=endtime.replace(tzinfo=pytz.UTC)
-            excl_auction=mapping.ExcludeAuction(data.ix[idx]['ExcludeAuction'])
+            ##########
+            # default
+            ##########            
+            tmp_add=pd.DataFrame([data.ix[idx][['ClOrdID','occ_ID']].to_dict()])
             
-            #-- compute
-            if (not isinstance(endtime,float)) and (not isinstance(starttime,float)):
-                tmp=compute_stats.aggmarket(data=datatick,exchange_id_main=exchange_id_main,
-                              start_datetime=starttime,end_datetime=endtime,
+            ##########
+            # needed information
+            ##########
+            excl_auction=mapping.ExcludeAuction(data.ix[idx]['ExcludeAuction'])
+            # strategy_name=mapping.StrategyName(data.ix[idx]['StrategyName'],data.ix[idx]['SweepLit'])
+            lastick_datetime=None
+            if datatick.shape[0]>0:
+                lastick_datetime=datatick.index[-1].to_datetime()
+            
+            # bench start 
+            bench_starttime,bench_endtime=tools.extract_benchtime(data=data.ix[idx],lasttick_datetime=lastick_datetime)
+            
+            ##########
+            # extract sequence deals
+            ##########
+            data_deal=get_algodata.deal(sequence_id=data.ix[idx]['ClOrdID'])
+            # TODO: renormalize auction deals/referential information
+            
+            ##########
+            # compute AGG market stats
+            ##########
+            if isinstance(bench_endtime,datetime) and isinstance(bench_starttime,datetime):
+                tmp_=compute_stats.aggmarket(data=datatick,exchange_id_main=exchange_id_main,
+                              start_datetime=bench_starttime,end_datetime=bench_endtime,
                               exclude_auction=excl_auction,exclude_dark=True,
                               limit_price=data.ix[idx]['Price'],side=data.ix[idx]['Side'],
-                              out_datetime=False)
-                tmp=tmp.join(pd.DataFrame([data.ix[idx][['ClOrdID','occ_ID']].to_dict()]))                 
-                dataggseq=dataggseq.append(tmp)           
+                              out_datetime=False,renorm_datetime=True)
+                # tmp_add=tmp_add.join(pd.DataFrame([data.ix[idx][['ClOrdID','occ_ID']].to_dict()]))  
+                tmp_add=tmp_add.join(tmp_)
+               
+            
+            ##########
+            # compute AGG execution stats
+            ##########
+            # TODO: exec stats
+            tmp_=compute_stats.aggexec(data_order=tmp_add,data_deal=data_deal)
+            tmp_add=tmp_add.merge(tmp_, how="left",on=['ClOrdID','occ_ID'])
+            
+            ##########
+            # joint
+            ##########
+            tmp_add['bench_starttime']=bench_starttime
+            tmp_add['bench_endtime']=bench_endtime
+            dataggseq=dataggseq.append(tmp_add)  
+            
     
     data=data.reset_index().merge(dataggseq, how="left",on=['ClOrdID','occ_ID']).set_index('SendingTime')
     

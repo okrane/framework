@@ -1,0 +1,13 @@
+Value;Mapped Value
+#N/A Invalid Security;
+Basic Materials;BM
+Communications;Com
+Consumer, Cyclical;Cyclical Goods
+Consumer, Non-cyclical;Non Cyclical Goods
+Diversified;Divers
+Energy;Energy
+Financial;Financial
+Government;Government
+Industrial;Industrial
+Technology;Technology
+Utilities;Utilities

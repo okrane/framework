@@ -6,19 +6,23 @@ Created on Mon May 20 13:52:46 2013
 """
 
 import pandas as pd
-import datetime as dt
+from datetime import *
+import pytz
 import numpy as np
 from lib.data.matlabutils import *
 from lib.dbtools.connections import Connections
 
 
+#------------------------------------------------------------------------------
+# convert_symbol
+#------------------------------------------------------------------------------
 def convert_symbol(**kwargs):
     """ Converts between:  (security_id, ric, glid, bloomberg, sedol, SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6)
         the keys to be passed are :
         a. a key < value > containing the value to convert
         b. a key < source > with the type of the element in the above list
             with the value equal to the requested value to convert
-        c. a key < dest > containing the target key to convert to always from the above list.
+        c. a key < dest > containing the target key to convert from the above list.
         d. optionally pass the EXCHGID for disambiguation purposes
         
         @return the requested symbol in a string format (empty string if not found)
@@ -27,6 +31,8 @@ def convert_symbol(**kwargs):
     # input handling: allowed keys
     ##############################################################
     fields = {'security_id': 'SYMBOL6',
+              'security_name': "SECNAME",
+              'SECNAME': 'SECNAME',
               'sec_id': 'SECID',
               'SECID': 'SECID',
               'SYMBOL6': 'SYMBOL6',
@@ -73,7 +79,7 @@ def convert_symbol(**kwargs):
     return val[0][0] if len(val) == 1 else val
   
 #------------------------------------------------------------------------------
-# e
+# exchangeidmain
 #------------------------------------------------------------------------------
 def exchangeidmain(**kwargs):
     ##############################################################
@@ -99,7 +105,74 @@ def exchangeidmain(**kwargs):
         for i in range(0,data.shape[0]):
             out[np.nonzero(lids==data['security_id'].values[i])[0]]=data['EXCHANGE'].values[i]
     return out
+
+#------------------------------------------------------------------------------
+# tradingtime
+#------------------------------------------------------------------------------
+def tradingtime(**kwargs):
     
+    ##############################################################
+    # input handling
+    ##############################################################
+    #---- security_id
+    if "security_id" in kwargs.keys():
+        lids=kwargs["security_id"]
+    else:
+        raise NameError('get_repository:exchangeidmain - Bad input : security_id is missing')
+    #---- date
+    if "date" in kwargs.keys():
+        date=kwargs["date"]
+    else:
+        date=[]
+        
+    out=pd.DataFrame()
+    
+    ##############################################################
+    # request data
+    ##############################################################
+    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
+    data=exchangeinfo(security_id=lids)
+    if (data.shape[0]==0) or (not np.any(data['EXCHANGETYPE']=='M')):
+        return out
+    data=data[data['EXCHANGETYPE']=='M']
+        
+    req=("SELECT * "
+    " FROM %sKGR..trading_hours_master " 
+    " WHERE trading_destination_id = %d "
+    " AND context_id is null "
+    " AND quotation_group = '%s'") % (pref_,data['EXCHANGE'].values[0],data['quotation_group'].values[0]) 
+    
+    vals=Connections.exec_sql('KGR',req,schema = True)
+    
+    if not vals[0]:
+        req=('SELECT * '
+            ' FROM %sKGR..trading_hours_master ' 
+            ' WHERE trading_destination_id = %d '
+            ' AND context_id is null '
+            ' AND quotation_group is null') % (pref_,data['EXCHANGE'])
+        vals=Connections.exec_sql('KGR',req,schema = True)
+        if not vals[0]:
+            raise NameError('get_repository:tradingtime - No trading hours/ exchange: '+str(data['EXCHANGE'].values[0])+' / quotation_group: '+data['quotation_group'].values[0])
+    
+    ##############################################################
+    # transform data
+    ##############################################################  
+    out=pd.DataFrame.from_records(vals[0],columns=vals[1])
+    out['security_id']=lids
+    colnumns_date=['opening_auction','opening_fixing','opening','intraday_stop_auction','intraday_stop_fixing','intraday_stop','intraday_resumption_auction',
+                 'intraday_resumption_fixing','intraday_resumption','closing_auction','closing_fixing','closing','post_opening','post_closing',
+                 'trading_at_last_opening','trading_at_last_closing','trading_after_hours_opening','trading_after_hours_closing']
+    # timezone
+    for cols in colnumns_date:
+        if (out[cols].values[0] is not None):
+            tz=pytz.timezone(data['TIMEZONE'].values[0])
+            out[cols]=tz.localize(datetime.combine(datetime(2000,1,1).date(),datetime.strptime(out[cols].values[0][0:8],'%H:%M:%S').time())).timetz()
+            if not (date==[]):
+                # if date, the output will be in datetime whether in time format
+                out[cols]=datetime.combine(datetime.strptime(date, '%d/%m/%Y').date(),out[cols].values[0])
+    
+    return out
+
 #------------------------------------------------------------------------------
 # exchangeinfo
 #------------------------------------------------------------------------------

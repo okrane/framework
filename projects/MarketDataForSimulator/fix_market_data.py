@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 
 def export_level1_market_data(filename, security_id, date):
     datestr = date.strftime('%d/%m/%Y') if isinstance(date, datetime) else date
-    symbol = 
+    symbol = convert_symbol(value = security_id, source = 'security_id', dest = 'glid', exchgid='SEPA') 
     data = ftickdb(security_id = security_id, date = datestr)
     f = open(filename, 'w')
     for i in range(len(data.index)):
@@ -18,8 +18,8 @@ def export_level1_market_data(filename, security_id, date):
         fix_message += '49=FIXMD_SRC|'
         fix_message += '56=FIXMD_DEST|'
         fix_message += '52=%s|' % data.index[i].strftime("%Y%m%d-%H:%M:%S")
-        fix_message += '55=TRU|'
-        fix_message += '207=JSE|'
+        fix_message += '55=%s|' % symbol
+        fix_message += '207=SEPA|'
         fix_message += '262=28875920180194|'        
         
         # dynamic fields

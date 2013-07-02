@@ -74,7 +74,7 @@ def convert_symbol(**kwargs):
     # ----------------  
     query = "SELECT %s from SECURITY where %s = '%s'" % (fields[kwargs['dest']], fields[kwargs['source']], kwargs['value'])
     query += " and EXCHGID = '%s'" % kwargs['exchgid'] if kwargs.has_key('exchgid') else ""    
-    #print query
+    print query
     val=Connections.exec_sql('KGR',query,schema = False)    
     return val[0][0] if len(val) == 1 else val
   
@@ -570,7 +570,7 @@ def local_tz_from(**kwargs):
     
     
 if __name__ == "__main__":
-    print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110, exchgid='SEPA'))
+    print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110))
     print "security_id(%s)->SECID=%s"% (110, convert_symbol(source = 'security_id', dest = 'SECID', value = 110, exchgid='SEPA'))
     print "security_id(%s)->ISIN=%s"% (110, convert_symbol(source = 'security_id', dest = 'ISIN', value = 110, exchgid='SEPA'))
     print "security_id(%s)->bloomberg=%s"% (110, convert_symbol(source = 'security_id', dest = 'bloomberg', value = 110, exchgid='SEPA'))

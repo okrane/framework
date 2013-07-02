@@ -426,7 +426,7 @@ class Orchestrator(Application):
                     if mode == 'switch':
                         print "waiting for the modified strategy to begin ..."
                         log(log_file, "waiting for the modified strategy to begin ...")
-                        time.sleep(5)
+                        time.sleep(10)
                     
                     self.CancelAlgo(first_order, day)
                     first  = 1
@@ -434,7 +434,7 @@ class Orchestrator(Application):
                     if mode == 'switch':
                         print "waiting for the initial strategy to begin ..."
                         log(log_file, "waiting for the modified strategy to begin ...")
-                        time.sleep(5)
+                        time.sleep(10)
                     
                     self.ModifyAlgo(v, day)
                     
@@ -471,8 +471,8 @@ if __name__ == '__main__':
     logfile_name = './logs/basket_test_%s.log' %day
     LOG_FILE = logfile_name
     
-#     mode = 'submit'
-    mode = 'switch'
+    mode = 'submit'
+#     mode = 'switch'
     
     duration = 1000
     

@@ -210,7 +210,7 @@ class Orchestrator(Application):
         
         return
         
-    def SendAlgo(self, param_line, day):
+    def SendAlgo(self, param_line, day, user):
         
         global STATUS
         global LASTClORDERID
@@ -239,7 +239,7 @@ class Orchestrator(Application):
         message.setField(115, 'PWARE')
         message.setField(fix.TransactTime(calendar.timegm(time.gmtime())))
         message.setField(fix.TimeInForce(fix.TimeInForce_DAY))
-        message.setField(9049, 'TU4')
+        message.setField(9049, user)
         
         #param
         for u, v in param_line.items():
@@ -262,7 +262,7 @@ class Orchestrator(Application):
         print "[Order Sent : AAA%03d] : %s" %(long(ClOrderID), message.__str__())
         log(LOG_FILE, "[Order Sent : AAA%03d] : %s" %(long(ClOrderID), message.__str__()))
     
-    def ModifyAlgo(self, new_params, day):
+    def ModifyAlgo(self, new_params, day, user):
         
         global STATUS
         global LASTClORDERID
@@ -296,7 +296,7 @@ class Orchestrator(Application):
         message.setField(47, 'A')
 #         message.setField(50, 'pws08fctuser006')
         message.setField(115, 'PWARE')
-        message.setField(9049, 'TU4')
+        message.setField(9049, user)
         
         #soumission de la nouvelle valeur du parametre de l'ordre
         for u, v in new_params.items():
@@ -317,7 +317,7 @@ class Orchestrator(Application):
         print "[Order Modify: " + ClOrderID + "] : " + message.__str__()
         STATUS = 'WAIT'
     
-    def CancelAlgo(self, param_line, day):
+    def CancelAlgo(self, param_line, day, user):
         
         global STATUS
         global LASTClORDERID
@@ -347,7 +347,7 @@ class Orchestrator(Application):
         message.setField(47, 'A')
 #         message.setField(50, 'pws08fctuser006')
         message.setField(115, 'PWARE')
-        message.setField(9049, 'TU4')
+        message.setField(9049, user)
         
         #soumission de la nouvelle valeur du parametre de l'ordre
         for u, v in param_line.items():
@@ -406,7 +406,7 @@ class Orchestrator(Application):
         
         return ListParams
     
-    def OrchBasket(self, listParams, day, mode, log_file):
+    def OrchBasket(self, listParams, day, mode, log_file, user):
         
         first_order = listParams[1]
         
@@ -415,7 +415,7 @@ class Orchestrator(Application):
             if first == 1:
                 print "Sending next order : ..."
                 #time.sleep(10)
-                self.SendAlgo(v, day)
+                self.SendAlgo(v, day, user)
                 
                 if mode != 'submit':
                     first = 0
@@ -428,7 +428,7 @@ class Orchestrator(Application):
                         log(log_file, "waiting for the modified strategy to begin ...")
                         time.sleep(10)
                     
-                    self.CancelAlgo(first_order, day)
+                    self.CancelAlgo(first_order, day, user)
                     first  = 1
                 else:
                     if mode == 'switch':
@@ -436,7 +436,7 @@ class Orchestrator(Application):
                         log(log_file, "waiting for the modified strategy to begin ...")
                         time.sleep(10)
                     
-                    self.ModifyAlgo(v, day)
+                    self.ModifyAlgo(v, day, user)
                     
             count = 0
             while STATUS == 'WAIT' and count < 10:
@@ -465,6 +465,7 @@ if __name__ == '__main__':
     storeFile = './cfg/store.txt'
 #     OrchesFile = './inputs/basket_REtest.txt'
 #     OrchesFile = './inputs/basket_switch_strategies.txt'
+    user = 'ON3'
     OrchesFile = './inputs/basket-test.txt'
 #     OrchesFile = './inputs/basket_test_VWAP.txt'
     
@@ -492,5 +493,5 @@ if __name__ == '__main__':
     
     l_params = OrchesModif.iter_param_file()
     
-    OrchesModif.OrchBasket(l_params, day, mode, logfile_name)
+    OrchesModif.OrchBasket(l_params, day, mode, logfile_name, user)
     

@@ -1,5 +1,2 @@
-StrategyName|ExDestination|Symbol|SecurityID|Side|Currency|OrderQty|Price|MaxPctVolume|ExecutionStyle|AuctionPct|AggregatedStyle|
-8|XPAR|FTE|FR0000133308|1|EUR|10|100|20|3|30|yes|
-8|XPAR|FTE|FR0000133308|1|EUR|200000|100|20|3|30|yes|
-8|LN|ATAD|US6708312052|1|USD|10|100|20|3|30|yes|
-8|LN|ATAD|US6708312052|1|USD|100000|100|20|3|30|yes|
+StrategyName|ExDestination|Symbol|SecurityID|Side|Currency|OrderQty|Price|StartTime|EndTime|MinSize|AggregatedStyle|
+9|XPAR|FP|FR0000120271|EUR|10|10|11:00|13:00|1|yes|

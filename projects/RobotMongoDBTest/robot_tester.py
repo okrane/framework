@@ -42,7 +42,7 @@ class robot_tester:
         return('test passed')
     def test_typestr(self, data, var_name):
         for i_dic in data:
-            assert not var_name in i_dic.keys() or type(i_dic[var_name]) == str\
+            assert not var_name in i_dic.keys() or type(i_dic[var_name]) == str or type(i_dic[var_name]) == unicode\
             , 'non string found! ' + str(i_dic[var_name]) + '\n' + str(i_dic)
         return('test passed')
     def test_typenum(self, data, var_name):

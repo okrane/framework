@@ -4,6 +4,7 @@ Created on Fri Jun 21 15:55:13 2013
 
 @author: whuang
 """
+import datetime
 
 class robot_tester:
     def __init__(self, name, test_list):
@@ -49,6 +50,11 @@ class robot_tester:
         for i_dic in data:
             assert not var_name in i_dic.keys() or type(i_dic[var_name]) == int or type(i_dic[var_name]) == float\
             , 'non number value found: '+ str(i_dic[var_name]) + '\n' + str(i_dic)
+        return('test passed')
+    def test_typedatetime(self, data, var_name):
+        for i_dic in data:
+            assert not var_name in i_dic.keys() or type(i_dic[var_name]) == datetime.datetime\
+            , 'non datetime value found: '+ str(i_dic[var_name]) + '\n' + str(i_dic)
         return('test passed')
     def test_notempty(self, data, var_name):
         for i_dic in data:

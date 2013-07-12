@@ -1,6 +1,0 @@
-# ORDERBOOK INITIALIZATION
-Order.Buy , 09.9, 200, Order.Limit, Order.DAY
-Order.Sell, 10.1, 200, Order.Limit, Order.DAY
-# CONTINUOUS AUCTION
-# END
-

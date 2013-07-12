@@ -32,6 +32,10 @@
 		</server>
 	</env >
 	<env name='prod'>
+		<server name='WATFLT01' ip_addr='172.25.152.73' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
 		<server name='LUIFLT01' ip_addr='81.255.55.50' >
 			<user username='flexsys' passwd='flexsys1' />
 			<user username='flexapp' passwd='flexapp1' />

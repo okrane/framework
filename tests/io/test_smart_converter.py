@@ -20,7 +20,7 @@ def test_converter():
 
     list_map = simplejson.loads(input)["fix"]["fields"]["field"]
     
-    file = open('enrichment_types.json', 'r')
+    file = open(script_dir + 'enrichment_types.json', 'r')
     input = file.read()
     file.close()
     

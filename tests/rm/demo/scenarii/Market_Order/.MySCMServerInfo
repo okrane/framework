@@ -1,0 +1,8 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/tests/demo/scenarii/Market_Order
+test_01_demo_MKT_orders_Simple_LOB_TIF=DAY.py;3947858547;1;1340872947;
+test_01_demo_MKT_orders_simple_LOB_TIF=DAY.txt;3373427983;1;1340872947;
+test_01_demo_MKT_orders_Simple_LOB_TIF=FOK.py;1537897704;1;1340872947;
+test_01_demo_MKT_orders_simple_LOB_TIF=FOK.txt;2776197346;1;1340872947;
+test_01_demo_MKT_orders_Simple_LOB_TIF=IOC.py;328712491;1;1340872947;
+test_01_demo_MKT_orders_simple_LOB_TIF=IOC.txt;982920868;1;1340872947;

@@ -1,0 +1,38 @@
+# ORDERBOOK INITIALIZATION
+Order.Buy , 09.9, 1000, Order.Limit, Order.DAY
+Order.Sell, 10.1, 1000, Order.Limit, Order.DAY
+# CONTINUOUS AUCTION
+# LIMIT BUY ORDERS IOC , QTY AVAIALABLE > QTY ORDER, LIMIT >= BBO
+Order.Buy , 10.1, 100, Order.Market, Order.IOC 
+# RESTORE ORDERBOOK
+Order.Sell, 10.1, 100, Order.Limit, Order.DAY
+# LIMIT SELL ORDERS IOC , QTY AVAIALABLE > QTY ORDER, LIMIT >= BBO
+Order.Sell , 9.9, 100, Order.Market, Order.IOC 
+# RESTORE ORDERBOOK
+Order.Buy , 09.9, 100, Order.Limit, Order.DAY
+# LIMIT BUY ORDERS IOC , QTY AVAILABLE < QTY ORDER, LIMIT >= BBO
+Order.Buy , 10.1, 2000, Order.Market, Order.IOC
+# RESTORE ORDERBOOK
+Order.Sell, 10.1, 1000, Order.Limit, Order.DAY
+# LIMIT SELL ORDERS IOC , QTY AVAILABLE < QTY ORDER, LIMIT >= BBO
+Order.Sell, 9.9, 2000, Order.Market, Order.IOC
+# RESTORE ORDERBOOK
+Order.Buy, 9.9, 1000, Order.Limit, Order.DAY
+# LIMIT BUY  ORDERS IOC , QTY AVAILABLE > QTY ORDER, LIMIT < BBO
+Order.Buy, 10, 200, Order.Market, Order.IOC
+# RESTORE ORDERBOOK
+Order.Sell , 10.1, 200, Order.Limit, Order.DAY
+# LIMIT SELL ORDERS IOC , QTY AVAILABLE > QTY ORDER, LIMIT < BBO
+Order.Sell, 10, 200, Order.Market, Order.IOC
+# RESTORE ORDERBOOK
+Order.Buy , 9.9, 200, Order.Limit, Order.DAY
+# LIMIT BUY  ORDERS IOC , QTY AVAILABLE < QTY ORDER, LIMIT < BBO
+Order.Buy, 10, 2000, Order.Market, Order.IOC
+# RESTORE ORDERBOOK
+Order.Sell, 10.1, 1000, Order.Limit, Order.DAY
+# LIMIT SELL ORDERS IOC , QTY AVAILABLE < QTY ORDER, LIMIT < BBO
+Order.Sell, 10, 2000, Order.Market, Order.IOC
+# RESTORE ORDERBOOK
+Order.Buy , 9.9, 1000, Order.Limit, Order.DAY
+# END
+

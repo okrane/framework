@@ -1,0 +1,39 @@
+# ORDERBOOK INITIALIZATION
+Order.Buy , 09.9, 350, Order.Limit, Order.DAY
+Order.Sell, 10.1, 350, Order.Limit, Order.DAY
+Order.Buy , 09.8, 650, Order.Limit, Order.DAY
+Order.Sell, 10.2, 650, Order.Limit, Order.DAY
+Order.Buy , 09.7, 800, Order.Limit, Order.DAY
+Order.Sell, 10.3, 800, Order.Limit, Order.DAY
+Order.Buy , 09.6, 900, Order.Limit, Order.DAY
+Order.Sell, 10.4, 900, Order.Limit, Order.DAY
+Order.Buy , 09.5, 900, Order.Limit, Order.DAY
+Order.Sell, 10.5, 900, Order.Limit, Order.DAY
+Order.Buy , 09.4, 900, Order.Limit, Order.DAY
+Order.Sell, 10.6, 900, Order.Limit, Order.DAY
+Order.Buy , 09.3, 900, Order.Limit, Order.DAY
+Order.Sell, 10.7, 900, Order.Limit, Order.DAY
+# CONTINUOUS AUCTION
+# MARKET2LIMIT ORDERS DAY
+Order.Buy ,  0.0, 100, Order.MarketToLimit, Order.DAY
+Order.Buy ,  0.0, 110, Order.MarketToLimit, Order.DAY
+Order.Sell,  0.0, 100, Order.MarketToLimit, Order.DAY
+Order.Sell,  0.0, 110, Order.MarketToLimit, Order.DAY
+Order.Buy ,  0.0, 940, Order.MarketToLimit, Order.DAY
+Order.Sell,  0.0, 940, Order.MarketToLimit, Order.DAY
+# RESTORE ORDERBOOK
+Order.Buy , 09.9, 210, Order.Limit        , Order.DAY
+Order.Sell, 10.1, 210, Order.Limit        , Order.DAY
+# MARKET2LIMIT ORDERS FOK
+Order.Buy ,  0.0, 550, Order.MarketToLimit, Order.FOK
+Order.Sell,  0.0, 550, Order.MarketToLimit, Order.FOK
+Order.Buy ,  0.0, 230, Order.MarketToLimit, Order.FOK
+Order.Sell,  0.0, 230, Order.MarketToLimit, Order.FOK
+# RESTORE ORDERBOOK
+Order.Sell, 10.1, 230, Order.Limit        , Order.DAY
+Order.Buy , 09.9, 230, Order.Limit        , Order.DAY
+# MARKET2LIMIT ORDERS IOC
+Order.Buy ,  0.0, 450, Order.MarketToLimit, Order.IOC
+Order.Sell,  0.0, 450, Order.MarketToLimit, Order.IOC
+# RESTORE ORDERBOOK
+# END

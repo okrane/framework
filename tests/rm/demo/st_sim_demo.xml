@@ -1,0 +1,112 @@
+<?xml version="1.0" ?><simep_scenario>
+	<config name="current">
+		<param name="st_repository_dir">C:/st_sim/simep/projects/databases</param>
+		<param name="sybase_connection_file">C:/st_sim/simep/projects/databases/repository</param>
+		<param name="st_sim_xml_file">C:/st_sim/dev/tests/demo/st_sim_demo.xml</param>
+		<param name="st_sim_dir">C:/st_sim</param>
+		<param name="histo_files_dir">C:/st_sim/dev/tests/demo/data</param>
+		<param name="tbt2_files_dir">Q:/tick_ged</param>
+		<param name="histo_file_example">C:/st_sim/dev/tests/demo/data/lobTrade_2_4_20100520.binary</param>
+		<param name="database">sqlite</param>
+		<param name="output_formats">XLS;MAT</param>
+		<param name="py_log_file">C:/st_sim/simep/Log</param>
+	</config>
+	<agents_types config="current">
+		<model_types>
+			<model type="ROBModel">
+				<context>
+					<param label="Real Stock" name="real_stock">True</param>
+					<param label="Ric" name="ric">ACCPpa.CHI</param>
+					<param label="Security ID" name="security_id">2</param>
+					<param label="Trading Destination ID" name="trading_destination_id">4</param>
+					<param label="Trading Destination Name" name="trading_destination_name">ENPA</param>
+					<param label="Date" name="date">20100520</param>
+					<param label="Input File Name" name="input_file_name">C:/st_sim/dev/tests/demo/data/lobTrade_2_4_20100520.binary</param>
+				</context>
+				<setup>
+					<param label="Name" name="name">ROBModel001</param>
+					<param label="Login" name="login">a_lambda_guy</param>
+					<param label="Engine Type" name="engine_type">light</param>
+				</setup>
+				<parameters>
+					<param label="Number Of BT" name="number_of_bt">10</param>
+					<param label="Full Engine" name="full">False</param>
+				</parameters>
+				<module value="simep.robmodel"/>
+			</model>
+			<model type="ZIMModel">
+				<context>
+					<param label="Real Stock" name="real_stock">False</param>
+					<param label="Ric" name="ric">ZIM</param>
+					<param label="Security ID" name="security_id">0</param>
+					<param label="Trading Destination ID" name="trading_destination_id">0</param>
+					<param label="Trading Destination Name" name="trading_destination_name">ZIM</param>
+					<param label="Date" name="date">20100520</param>
+					<param label="Input File Name" name="input_file_name">None</param>
+				</context>
+				<setup>
+					<param label="Name" name="name">ZIMModel001</param>
+					<param label="Login" name="login">a_lambda_guy</param>
+					<param label="Engine Type" name="engine_type">normal</param>
+				</setup>
+				<parameters>
+					<param label="Start Time" name="start_time">07:00:00</param>
+					<param label="End Time" name="end_time">15:30:00</param>
+					<param label="Delta Time Mean" name="mu_delta_time">00:00:08:000</param>
+					<param label="Delta Time STD" name="std_delta_time">00:00:02:000</param>
+					<param label="Reference Price" name="reference_price">10.0</param>
+					<param label="Price STD" name="std_price">1.0</param>
+					<param label="Price Mean" name="mu_price">0.5</param>
+					<param label="Order Quantity STD" name="std_order_qty">0.5</param>
+					<param label="Order Quantity Mean" name="mu_order_qty">6.215</param>
+					<param label="Half Spread" name="half_spread">1.0</param>
+					<param label="Tick Size" name="tick_size">0.01</param>
+					<param label="Number of Orders/Event" name="number_of_orders">1</param>
+				</parameters>
+				<module value="simep.zimmodel"/>
+				<model type="OrdersReader">
+				<context>
+					<param label="Real Stock" name="real_stock">False</param>
+					<param label="Ric" name="ric">MY_ORDERS</param>
+					<param label="Security ID" name="security_id">0</param>
+					<param label="Trading Destination ID" name="trading_destination_id">0</param>
+					<param label="Trading Destination Name" name="trading_destination_name">MY_ORDERS</param>
+					<param label="Date" name="date">20100520</param>
+					<param label="Input File Name" name="input_file_name">None</param>
+				</context>
+				<setup>
+					<param label="Name" name="name">OrdersReader001</param>
+					<param label="Engine Type" name="engine_type">normal</param>
+				</setup>
+				<parameters>
+					<param label="Start Time" name="start_time">07:00:00</param>
+					<param label="Delta Time" name="delta_time">00:12:00:000</param>
+					<param label="Log Filename" name="log_filename">None</param>
+					<param label="Orders Filename" name="orders_filename">C:/st_sim/dev/tests/demo/scenarii/test_01_demo_LMT_orders.txt</param>
+					<param label="Print Orberbook and Comments" name="print">True</param>
+				</parameters>
+				<module value="dev.tests.demo.agents.orders_reader"/>
+			</model>
+			</model>
+		</model_types>
+		<trader_types>
+			<trader type="StockObserver">
+				<context>
+					<param label="Ric" name="ric">ACCP.PA</param>
+					<param label="Security ID" name="security_id">2</param>
+					<param label="Trading Destination ID" name="trading_destination_id">4</param>
+					<param label="Date" name="date">20100520</param>
+				</context>
+				<setup>
+					<param label="Name" name="name">StockObserver001</param>
+					<param label="Indicators" name="indicators">avg_exec_time;avg_spread_60;avg_trade_size_300;garman_klass_15</param>
+				</setup>
+				<parameters>
+					<param label="Plot Mode" name="plot_mode">2</param>
+					<param label="Save into an XLF File" name="save_into_file">False</param>
+				</parameters>
+				<module value="simep.agents.stockobserver"/>
+			</trader>
+		</trader_types>
+	</agents_types>
+</simep_scenario>

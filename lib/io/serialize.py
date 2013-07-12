@@ -1,8 +1,10 @@
 import simplejson
 import datetime
+import dateutil.parser
 class DateTimeJSONEncoder(simplejson.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
+            print obj
             return obj.isoformat() #.strftime("%y/%m/%d %H:%M:%S")
         else:
             return super(DateTimeJSONEncoder, self).default(obj)
@@ -11,8 +13,9 @@ import dateutil.parser
 def as_datetime(dct):
     for el in dct:
         try:
-            d = dateutil.parser.parse(dct[el])
-            dct[el] = d
+            if len(dct[el]) > 7 :
+                d = dateutil.parser.parse(dct[el])
+                dct[el] = d
         except:
             pass
     return dct

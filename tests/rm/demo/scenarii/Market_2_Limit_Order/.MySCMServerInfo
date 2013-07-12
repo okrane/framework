@@ -1,0 +1,8 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/tests/demo/scenarii/Market_2_Limit_Order
+test_01_demo_M2L_orders_Simple_LOB_TIF=DAY.py;2878269739;1;1340872946;
+test_01_demo_M2L_orders_simple_LOB_TIF=DAY.txt;1148109118;1;1340872947;
+test_01_demo_M2L_orders_Simple_LOB_TIF=FOK.py;3964592064;1;1340872947;
+test_01_demo_M2L_orders_simple_LOB_TIF=FOK.txt;2340030663;1;1340872947;
+test_01_demo_M2L_orders_Simple_LOB_TIF=IOC.py;978908602;1;1340872947;
+test_01_demo_M2L_orders_simple_LOB_TIF=IOC.txt;2256424485;1;1340872947;

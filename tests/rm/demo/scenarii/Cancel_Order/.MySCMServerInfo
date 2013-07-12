@@ -1,0 +1,4 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/tests/demo/scenarii/Cancel_Order
+test_01_demo_CANCEL_orders_Simple_LOB_TIF=DAY.py;31831361;1;1340872945;
+test_01_demo_CANCEL_orders_Simple_LOB_TIF=DAY.txt;3844777590;1;1340872945;

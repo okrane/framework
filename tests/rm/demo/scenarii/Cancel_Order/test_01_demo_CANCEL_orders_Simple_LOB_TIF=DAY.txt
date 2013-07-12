@@ -1,0 +1,12 @@
+# ORDERBOOK INITIALIZATION
+Order.Buy , 09.9, 1000, Order.Limit, Order.DAY
+Order.Buy , 09.8, 1000, Order.Limit, Order.DAY
+Order.Sell, 10.1, 1000, Order.Limit, Order.DAY
+Order.Sell, 10.2, 1000, Order.Limit, Order.DAY
+# CONTINUOUS AUCTION
+# LIMIT BUY ORDERS DAY , @9.5
+Order.Buy , 09.5, 1000, Order.Limit, Order.DAY, order_id = '000123'
+# SEND CANCEL ON ORDER '000123'
+-C '000123'
+# ORDER HAS BEEN CANCELED
+# END

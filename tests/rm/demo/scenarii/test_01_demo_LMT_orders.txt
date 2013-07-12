@@ -1,0 +1,56 @@
+# ORDERBOOK INITIALIZATION
+Order.Buy , 09.9, 350, Order.Limit, Order.DAY
+Order.Sell, 10.1, 350, Order.Limit, Order.DAY
+Order.Buy , 09.8, 650, Order.Limit, Order.DAY
+Order.Sell, 10.2, 650, Order.Limit, Order.DAY
+Order.Buy , 09.7, 800, Order.Limit, Order.DAY
+Order.Sell, 10.3, 800, Order.Limit, Order.DAY
+Order.Buy , 09.6, 900, Order.Limit, Order.DAY
+Order.Sell, 10.4, 900, Order.Limit, Order.DAY
+Order.Buy , 09.5, 900, Order.Limit, Order.DAY
+Order.Sell, 10.5, 900, Order.Limit, Order.DAY
+Order.Buy , 09.4, 900, Order.Limit, Order.DAY
+Order.Sell, 10.6, 900, Order.Limit, Order.DAY
+Order.Buy , 09.3, 900, Order.Limit, Order.DAY
+Order.Sell, 10.7, 900, Order.Limit, Order.DAY
+# CONTINUOUS AUCTION
+# LIMIT ORDERS DAY
+Order.Buy , 10.1, 100, Order.Limit, Order.DAY
+Order.Buy , 10.1, 110, Order.Limit, Order.DAY
+Order.Sell, 09.9, 100, Order.Limit, Order.DAY
+Order.Sell, 09.9, 110, Order.Limit, Order.DAY
+Order.Buy , 10.3, 940, Order.Limit, Order.DAY
+Order.Sell, 09.7, 940, Order.Limit, Order.DAY
+# RESTORE ORDERBOOK
+Order.Buy , 09.9, 350, Order.Limit, Order.DAY
+Order.Sell, 10.1, 350, Order.Limit, Order.DAY
+Order.Buy , 09.8, 650, Order.Limit, Order.DAY
+Order.Sell, 10.2, 650, Order.Limit, Order.DAY
+Order.Buy , 09.7, 150, Order.Limit, Order.DAY
+Order.Sell, 10.3, 150, Order.Limit, Order.DAY
+# LIMIT ORDERS FOK
+Order.Buy , 10.1, 550, Order.Limit, Order.FOK
+Order.Sell, 10.1, 150, Order.Limit, Order.DAY
+Order.Buy , 10.1, 550, Order.Limit, Order.FOK
+Order.Sell, 10.1, 250, Order.Limit, Order.DAY
+Order.Buy , 10.1, 550, Order.Limit, Order.FOK
+Order.Sell, 09.9, 550, Order.Limit, Order.FOK
+Order.Buy , 09.9, 150, Order.Limit, Order.DAY
+Order.Sell, 09.9, 550, Order.Limit, Order.FOK
+Order.Buy , 09.9, 250, Order.Limit, Order.DAY
+Order.Sell, 09.9, 550, Order.Limit, Order.FOK
+# RESTORE ORDERBOOK
+Order.Buy , 09.9, 150, Order.Limit, Order.DAY
+Order.Sell, 10.1, 150, Order.Limit, Order.DAY
+# LIMIT ORDERS IOC
+Order.Buy , 10.1, 450, Order.Limit, Order.IOC
+Order.Sell, 10.1, 450, Order.Limit, Order.DAY
+Order.Buy , 10.2, 450, Order.Limit, Order.IOC
+Order.Sell, 10.1, 350, Order.Limit, Order.DAY
+Order.Sell, 10.2, 100, Order.Limit, Order.DAY
+Order.Sell, 09.9, 450, Order.Limit, Order.IOC
+Order.Buy , 09.9, 450, Order.Limit, Order.DAY
+Order.Sell, 09.8, 450, Order.Limit, Order.IOC
+Order.Buy , 09.9, 350, Order.Limit, Order.DAY
+Order.Buy , 09.8, 100, Order.Limit, Order.DAY
+# END

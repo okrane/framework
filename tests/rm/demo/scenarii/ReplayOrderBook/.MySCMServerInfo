@@ -1,0 +1,4 @@
+SCMBranch=QuantitativeResearch
+SCMRepository=QuantitativeResearch/st_sim/usr/tests/demo/scenarii/ReplayOrderBook
+test_12_demo_ROB_simulation.py;2869150935;1;1340872947;
+test_13_demo_ROB+OBS_simulation.py;925244710;1;1340872947;

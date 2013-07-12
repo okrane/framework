@@ -3,9 +3,8 @@ if __name__ == '__main__':
     from datetime import datetime
     from src.import_FIX import DatabasePlug
     
-    dates       = ["20130701"]
     
-    database_server     = 'TEST'
+    database_server     = 'HPP'
     database            = 'Mars'
     environment         = 'prod'
     source              = 'CLNT1'

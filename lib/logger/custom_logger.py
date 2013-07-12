@@ -15,7 +15,7 @@ class Logger:
     logging = None
     def __init__(self):
         if not Logger.__done:
-            level           = 1
+            level           = 5
             to_file         = False
             capture_stdout  = False
             capture_stderr  = True
@@ -34,7 +34,7 @@ class Logger:
             
             self.set(level, to_file, capture_stdout, capture_stderr)
             
-    def set(self, level = 5, to_file = False, capture_stdout = False, capture_stderr = False):
+    def set(self, level, to_file = False, capture_stdout = False, capture_stderr = False):
         if level == 4:
             lev = logging.INFO
         elif level == 3:

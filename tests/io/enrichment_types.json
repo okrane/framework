@@ -1,0 +1,23 @@
+[
+	{"name":"volume_at_would", 		"type" : "INT"			},
+	{"name":"eff_endtime", 			"type" : "UTCTIMESTAMP"	},
+	{"name":"duration", 			"type" : "INT"			},
+	{"name":"strategy_name_mapped", "type" : "STRING",		"required":false },
+	{"name":"rate_to_euro", 		"type" : "FLOAT",		"required":true	 },
+	{"name":"nb_replace", 			"type" : "INT"			},
+	{"name":"occ_ID", 				"type" : "STRING"		},
+	{"name":"occ_prev_exec_qty", 	"type" : "INT"			},
+	{"name":"cheuvreux_secid", 		"type" : "INT",			"required":true },
+	{"name":"occ_prev_turnover", 	"type" : "FLOAT"		},
+	{"name":"reason", 				"type" : "STRING"		},
+	{"name":"nb_exec", 				"type" : "INT"			},
+	{"name":"exec_qty", 			"type" : "INT"			},
+	{"name":"turnover", 			"type" : "FLOAT"		},
+	{"name":"eff_starttime", 		"type" : "UTCTIMESTAMP"	},
+	{"name":"occ_nb_replace", 		"type" : "INT"			},
+	{"name":"occ_duration" , 		"type" : "FLOAT"		},
+	{"name":"exec_vwap", 			"type" : "FLOAT"		},
+	{"name":"occ_prev_exec_vwap", 	"type" : "FLOAT"		},
+	{"name":"first_deal_time", 		"type" : "UTCTIMESTAMP"	},
+	{"name":"job_id", 				"type" : "STRING",		"required":true }
+]

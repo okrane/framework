@@ -16,9 +16,13 @@ from lib.data.pyData import convertStr
 import pytz
 import lib.dbtools.read_dataset as read_dataset
 from lib.logger import *
+from lib.io.toolkit import *
 from bson.json_util import default
-
+from lib.io.smart_converter import *
 logging.getLogger("paramiko").setLevel(logging.WARNING)
+
+    
+
 
 class ConversionRate:
     data = None
@@ -26,18 +30,10 @@ class ConversionRate:
     dates = []
     @staticmethod        
     def _get_first_time(dates):
-        dates_datetime = ConversionRate.date_to_datetime(dates)
+        dates_datetime = date_to_datetime(dates)
         ConversionRate.dates.extend(dates)
         if ConversionRate.data is None:
             ConversionRate._get_all(dates_datetime)  
-             
-    @staticmethod        
-    def date_to_datetime(dates):
-        dates_datetime = []
-        for d in dates:
-            dates_datetime.append(datetime.strptime(d, '%Y%m%d'))
-        dates_datetime = sorted(dates_datetime)
-        return dates_datetime
     
     @staticmethod    
     def getRates(curr, dates):
@@ -49,7 +45,7 @@ class ConversionRate:
         
         # Add dates if needed   
         for d in dates:
-            if d not in dates:
+            if d not in ConversionRate.dates:
                 ConversionRate.dates.append(d)
                 do_get_all = True
                 
@@ -59,7 +55,7 @@ class ConversionRate:
             do_get_all = True
         
         # Convert dates from string to datetime
-        dates_datetime = ConversionRate.date_to_datetime(dates)
+        dates_datetime = date_to_datetime(dates)
         
         # If needed do a get_all
         if do_get_all:
@@ -71,10 +67,15 @@ class ConversionRate:
             try:
                 rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].ix[d.strftime("%Y-%m-%d")]["rate"]
             except Exception, e:
-                rate = -1
+                rate = None
+                import traceback
+                import StringIO
+                fp = StringIO.StringIO()
+                traceback.print_exc(file = fp)
+                logging.error(fp.getvalue())
                 logging.error(e)
                 logging.error("Impossible to get the currency: " + str(curr) + " at the date: " + str(d))
-                logging.error("The required rate has been set to -1")
+                logging.error("The required rate has been set to None")
                 
             rates.append(rate)
         return rates
@@ -115,16 +116,6 @@ def match_trader(trader_name, dico_trader):
         return r_trader_name
     return trader_name
 
-def get_FIX(dico_fix, fix_number):
-    struct = ET.parse(dico_fix)
-    raw_data = struct.getroot()
-    i=1
-    for elt in raw_data.find('fields'):
-        if int(elt.get('number')) == fix_number:
-            return (elt.get('name'), elt.get('type'))
-    
-    return
-
 def update_colmap(l_field, client, collection):
     
     database = client['DB_test']
@@ -146,169 +137,7 @@ def update_colmap(l_field, client, collection):
         logging.warning( '##### Conflict while updating map collection : 2 rows for same collection !! #####')
         
     return 0
-    
-def get_conf(referential, dico_universe):
-    
-    conf ={}
-    
-    struct = ET.parse(dico_universe)
-    raw_data = struct.getroot()
-    
-    servs_dico = {}
-    for elt in raw_data.findall('env'):
-        if elt.get('name') == referential:
-            servs_dico = elt
-    
-    if servs_dico == {}:
-        pass
-    else:
-        for attr in servs_dico.findall('server'):
-            serv_name = attr.get('name')
-            dict_server = {'ip_addr': attr.get('ip_addr')}
-            l_users = {}
-            for u_attr in attr.findall('user'):
-                l_users[u_attr.get('username')] = u_attr.attrib
-            dict_server['list_users'] = l_users
-            conf[serv_name] = dict_server
-    return conf
 
-def import_FIXmsg(dico_FIX, server, day, type, IO, dico_tags={}, trader='', ignore_tags=[], source = "CLNT1"):
-    
-    # - IO :
-    #    I for parent order (incoming orders)
-    #    O for child(street) orders (outgoing orders from Execution Report)
-     
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(server['ip_addr'], username=server['list_users']['flexsys']['username'], password=server['list_users']['flexsys']['passwd'])
-    
-    path = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, source, day, IO)
-    l_orders = []
-    
-    if IO == 'I':
-        if type != '':
-            
-            if type not in ['D', 'G', 'F']:
-                logging.warning( "error no valid type order ! (only D, G or F are allowed)" )
-            else:
-                if trader =='':
-                    cmd = 'prt_fxlog %s 3 | grep 35=%s' %(path, type)
-                else:
-                    cmd = "prt_fxlog %s 3 | egrep '35=%s.*57=%s'" %(path, type, trader)
-            
-                (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-                
-                for line in stdout_grep:
-                    line = line.replace('|\n','')
-                    res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
-                    dico_tags = res_trans[1]
-                    
-                    is_DMA = False
-                    if "OnBehalfOfSubID" in res_trans[0].keys() :
-                        is_DMA = (res_trans[0]['OnBehalfOfSubID'] == "DMA")
-                    
-                    if res_trans[0] != {} and len(res_trans[0]) > 1 and not is_DMA:
-                        l_orders.append(res_trans[0])
-        else:
-            l_FIXtype = ['D', 'G', 'F']
-            for tp in l_FIXtype:
-                if trader == '':
-                    cmd = "prt_fxlog %s 3 | grep 35=%s" %(path, tp)
-                else:
-                    cmd = "prt_fxlog %s 3 | egrep '35=%s.*57=%s'" %(path, tp, trader)
-                
-                (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-            
-                for line in stdout_grep:
-                    line = line.replace('|\n','')
-                    res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
-                    dico_tags = res_trans[1]
-                    is_DMA = False
-                    if "OnBehalfOfSubID" in res_trans[0].keys() :
-                        is_DMA = (res_trans[0]['OnBehalfOfSubID'] == "DMA")
-                    
-                    if res_trans[0] != {} and len(res_trans[0]) > 1 and not is_DMA:
-                        l_orders.append(res_trans[0])
-    elif IO == 'O':
-        if str(type) != '':
-            
-            if str(type) not in ['1', '2'] :
-                logging.warning( "error no valid type ! (only 1 or 2 are allowed)")
-            else:
-                if trader =='':
-                    cmd = "prt_fxlog %s 3 | egrep '35=8.*150=%s'" %(path, str(type))
-                else:
-                    cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*150=%s'" %(path, trader, str(type))
-                
-                (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-                
-                for line in stdout_grep:
-                    line = line.replace('|\n','')
-                    res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
-                    dico_tags = res_trans[1]
-                    
-                    if res_trans[0] != {} and len(res_trans[0]) > 1:
-                        l_orders.append(res_trans[0])
-        else:
-            l_FIXtype = ['1', '2']
-            for tp in l_FIXtype:
-                if trader == '':
-                    cmd = "prt_fxlog %s 3 | egrep '35=8.*150=%s'" %(path, str(tp))
-                else:
-                    cmd = "prt_fxlog %s 3 | egrep '35=8.*57=%s.*150=%s'" %(path, trader, str(tp))
-                
-                (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-            
-                for line in stdout_grep:
-                    line = line.replace('|\n','')
-                    res_trans = line_translator(line, dico_FIX, dico_tags, ignore_tags)
-                    dico_tags = res_trans[1]
-                    
-                    if res_trans[0] != {} and len(res_trans[0]) > 1:
-                        l_orders.append(res_trans[0])
-    else:
-        logging.warning( "wrong connection IO only 'I' or 'O' accepted !")
-    
-    return [l_orders, dico_tags]
-
-
-def line_translator(line, dico_fix, dico_tags, ignore_tags):
-    line = line.rsplit('|')
-    dict_order = {}
-    
-    for item in line:
-        item = item.rsplit('=')
-        if len(item) == 2:
-            if item[1] != ' ' and item[1] != '':
-                if int(item[0]) not in ignore_tags:
-                    if int(item[0]) not in dico_tags.keys():
-                        dico_info = get_FIX(dico_fix, int(item[0]))
-                        dico_tags[int(item[0])] = dico_info
-                    
-                    name = dico_tags[int(item[0])][0]
-                    type = dico_tags[int(item[0])][1]
-                    if type != 'UTCTIMESTAMP':
-                        dict_order[name] = convertStr(item[1])
-                    else:
-                        data = datetime.strptime(item[1], '%Y%m%d-%H:%M:%S')
-                        dict_order[name] = data.replace(tzinfo=pytz.timezone('UTC'))
-    return (dict_order, dico_tags)
-
-def storeDB(l_orders, Collection, client, jobID, mode='insert'):
-    
-    database = client['DB_test']
-    collection = database[Collection]
-    
-    if mode == 'insert':
-        logging.info("insert %s Orders into database" %str(len(l_orders)) )
-    
-    for order in l_orders:
-        order.update({'job_id': jobID})
-        if mode == 'insert':    
-            collection.insert(order, manipulate=False)
-        elif mode == 'update':
-            collection.save(order)
-    logging.info("End Of insertion to the database")
 
 def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, import_type='Client'):
     
@@ -358,535 +187,877 @@ def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, impo
                 
     return [reason, done]
 
-def OrderLife(order, dico_fix, day, ignore_tags, dico_tags, server, dico_trader, ssh, source="CLNT1", import_type='Client'):
-    
-    # - Open SSH connection 
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(server['ip_addr'], username=server['list_users']['flexsys']['username'], password=server['list_users']['flexsys']['passwd'])
-    
-    ClOrdID = order['ClOrdID']
-    Trader = order['TargetSubID']
-    Type = order['MsgType']
-    
-    order_life = []
-    p_nb_exec = 0
-    nb_replace = 0
-    p_exec_qty = 0
-    p_real_duration = 0
-    global_duration = 0
-    p_reason = 'unknown'
-    p_eff_starttime = 'none'
-    
-    p_eff_endtime = 'none'
-    g_eff_endtime = 'none'
-    
-    prev_exec = 0
-    num_exec_vwap = 0
-    prev_num_exec_vwap = 0
-    p_num_exec_vwap = 0
-    p_volume_at_would = 0
-    
-    p_ClOrdID = ClOrdID
-    
-    if Type == 'D':
-        
-        # - Looking for Execution report sequence
-        if import_type == 'Client':
-            ER_file = './logs/trades/%s/FLINKI_%s%sO.fix' %(day, source, day)
-            IN_file = './logs/trades/%s/FLINKI_%s%sI.fix' %(day, source, day)
-            cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*%s'" %(ER_file, Trader, ClOrdID)
-        elif import_type == 'Street':
-            ER_file = './logs/trades/%s/FLEX_ULPROD%sI.fix' %(day, day)
-            IN_file = './logs/trades/%s/FLEX_ULPROD%sO.fix' %(day, day)
-            cmd = "prt_fxlog %s 3 | egrep '35=8.*%s'" %(ER_file, ClOrdID)
-        
-        
-        (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-        
-        done = False
-        replaced = False
-        
-        WouldLevel = 0
-        Side = 2 * (float(order['Side']) - 1.5)
-        
-        if "WouldLevel" in order.keys():
-            WouldLevel = order['WouldLevel']
-        
-        for str_msg in stdout_grep:
-            
-            str_msg = str_msg.replace('|\n','')
-            res_trans = line_translator(str_msg, dico_fix, dico_tags, ignore_tags)
-            
-            if res_trans[0] != {}:
-                p_msg = res_trans[0]
-            else:
-                continue
-            
-            dico_tags = res_trans[1]
-            
-            if 'ExecType' not in p_msg.keys():
-                continue
-            
-            if str(p_msg['ExecType']) == '0':
-                p_reason = 'new acked'
-                
-            elif str(p_msg['ExecType']) == '1':
-                p_exec_qty += int(p_msg['LastShares'])
-                num_exec_vwap += float(p_msg['LastShares']) * float(p_msg['LastPx'])
-                p_nb_exec += 1
-                if p_eff_starttime == "none":
-                    p_eff_starttime = p_msg['TransactTime']
-                
-                if Side * float(p_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
-                    p_volume_at_would += int(p_msg['LastShares'])
-                
-            elif str(p_msg['ExecType']) == '2':
-                p_nb_exec += 1
-                p_exec_qty += int(p_msg['LastShares'])
-                num_exec_vwap += float(p_msg['LastShares']) * float(p_msg['LastPx'])
-                
-                if Side * float(p_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
-                    p_volume_at_would += int(p_msg['LastShares'])
-                
-                p_reason = 'filled'
-                if p_eff_starttime == "none":
-                    p_eff_starttime = p_msg['TransactTime']
-                    
-                done = True
-                
-            elif str(p_msg['ExecType']) == '3':
-                p_reason = 'done for day'
-                done = True
-                
-            elif str(p_msg['ExecType']) == '4':
-                p_reason = 'cancelled'
-                done = True
-                
-            elif str(p_msg['ExecType']) == '5':
-                p_reason = 'replaced'
-                nb_replace += 1
-                replaced = True
-                
-            elif str(p_msg['ExecType']) == '8':
-                p_reason = 'rejected'
-                done = True
-                
-            elif str(p_msg['ExecType']) == 'A':
-                p_reason = 'pending new'
-                
-            elif str(p_msg['ExecType']) == 'E':
-                p_reason = 'pending replace'
-            
-            p_eff_endtime = p_msg['SendingTime']
-            g_eff_endtime = p_eff_endtime
-            
-        if not done and not replaced :
-            [p_reason, done] = check_EoL(order, p_reason, day, ssh, dico_fix, dico_tags, ignore_tags, import_type)
-            
-            if not done:
-                p_reason = 'Front End handling'
-            
-            
-        prev_exec += p_exec_qty
-        prev_num_exec_vwap +=  num_exec_vwap
-        p_num_exec_vwap = num_exec_vwap
-        
-        if p_eff_endtime != "none":
-            p_real_duration = time.mktime(p_eff_endtime.timetuple()) - time.mktime(order['SendingTime'].timetuple())
-        
-        if replaced:
-            
-            loop_count = 0
-            while not done and loop_count<100 and replaced == True:
-                
-                replaced = False
-                loop_count += 1
-                
-                cmd = "prt_fxlog %s 3 | egrep '35=G.*41=%s'" %(IN_file, ClOrdID)
-                (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-                
-                for str_msg in stdout_grep:
-                    str_msg = str_msg.replace('|\n','')
-                
-                res_trans = line_translator(str_msg, dico_fix, dico_tags, ignore_tags)
-                c_msg = res_trans[0]
-                dico_tags = res_trans[1]
-                
-                nb_exec = 0
-                exec_qty = 0
-                reason = 'unknown'
-                eff_starttime = "none"
-                real_duration = 0
-                num_exec_vwap = 0
-                volume_at_would = 0
-                
-                ClOrdID = c_msg['ClOrdID']
-                Trader = c_msg['TargetSubID']
-                
-                WouldLevel = 0
-                if "WouldLevel" in c_msg.keys():
-                    WouldLevel = c_msg['WouldLevel']
-                
-                if import_type == 'Client':
-                    cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*%s'" %(ER_file, Trader, ClOrdID)
-                elif import_type == 'Street':
-                    cmd = "prt_fxlog %s 3 | egrep '35=8.*%s'" %(ER_file, ClOrdID)
-    
-                (stdin, stdout_grep, stderr)= ssh.exec_command(cmd)
-                rpl_checked = False
-                
-                for str_msg in stdout_grep:
-                    str_msg = str_msg.replace('|\n','')
-                    res_trans = line_translator(str_msg, dico_fix, dico_tags, ignore_tags)
-                    
-                    if res_trans[0] != {}:
-                        cc_msg = res_trans[0]
-                    else:
-                        continue
-                    
-                    dico_tags = res_trans[1]
-                    
-                    if str(cc_msg['ExecType']) == '0':
-                        reason = 'new acked'
-                        
-                    elif str(cc_msg['ExecType']) == '1':
-                        exec_qty += int(cc_msg['LastShares'])
-                        num_exec_vwap += float(cc_msg['LastShares']) * float(cc_msg['LastPx'])
-                        nb_exec += 1
-                        
-                        if Side * float(cc_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
-                            volume_at_would += int(cc_msg['LastShares'])
-                        
-                        if eff_starttime == "none":
-                            eff_starttime = cc_msg['TransactTime']
-                        
-                    elif str(cc_msg['ExecType']) == '2':
-                        nb_exec += 1
-                        exec_qty += int(cc_msg['LastShares'])
-                        num_exec_vwap += float(cc_msg['LastShares']) * float(cc_msg['LastPx'])
-                        
-                        if Side * float(cc_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
-                            volume_at_would += int(cc_msg['LastShares'])
-                            
-                        reason = 'filled'
-                        done = True
-                        if eff_starttime == "none":
-                            eff_starttime = cc_msg['TransactTime']
-                        
-                    elif str(cc_msg['ExecType']) == '3':
-                        reason = 'done for day'
-                        done = True
-                        
-                    elif str(cc_msg['ExecType']) == '4':
-                        reason = 'cancelled'
-                        done = True
-                        
-                    elif str(cc_msg['ExecType']) == '5':
-                        if rpl_checked == False:
-                            rpl_checked =True
-                        else:
-                            reason = 'replaced'
-                            nb_replace += 1
-                            replaced = True
-                        
-                    elif str(cc_msg['ExecType']) == '8':
-                        reason = 'rejected'
-                        done = True
-                        
-                    elif str(cc_msg['ExecType']) == 'A':
-                        reason = 'pending new'
-                        
-                    elif str(cc_msg['ExecType']) == 'E':
-                        reason = 'pending replace'
-                
-                if not done and not replaced :
-                    [reason, done] = check_EoL(c_msg, reason, day, ssh, dico_fix, dico_tags, ignore_tags, import_type)
-                    
-                    if not done:
-                        reason = '%s Front End handling' %reason
-                
-                eff_endtime = cc_msg['SendingTime']
-                g_eff_endtime = eff_endtime
-                
-                if eff_endtime != 'none':
-                    real_duration = time.mktime(eff_endtime.timetuple()) - time.mktime(c_msg['SendingTime'].timetuple())
-                
-                vwap = 0
-                prev_vwap = 0
-                
-                if exec_qty != 0:
-                    vwap = num_exec_vwap / float(exec_qty)
-                
-                if prev_exec != 0:
-                    prev_vwap = prev_num_exec_vwap / float(prev_exec)
-                
-                if 'TraderName' in c_msg.keys():
-                    c_msg['TraderName'] = match_trader(c_msg['TraderName'], dico_trader)
-                
-                
-                enrichment = {'reason': reason, 'nb_exec' : nb_exec, 'exec_qty': exec_qty, 'duration': real_duration, 'occ_ID': p_ClOrdID, 'occ_prev_exec_qty': prev_exec, 'exec_vwap': vwap, 'occ_prev_exec_vwap': prev_vwap, 'turnover': num_exec_vwap, 'occ_prev_turnover': prev_num_exec_vwap, 'nb_replace': loop_count}
-                
-                if eff_starttime != 'none':
-                    enrichment.update({'first_deal_time': eff_starttime})
-                
-                if eff_endtime != 'none':
-                    enrichment.update({'eff_endtime': eff_endtime})
-                
-                if volume_at_would != 0:
-                    enrichment.update({'volume_at_would': volume_at_would})
-                    
-                c_msg.update(enrichment)
-                order_life.append(c_msg)
-                
-                prev_exec += exec_qty
-                prev_num_exec_vwap += num_exec_vwap
-                
-        if g_eff_endtime != 'none':
-            global_duration = time.mktime(g_eff_endtime.timetuple()) - time.mktime(order['SendingTime'].timetuple())
-        
-        p_vwap = 0
-        if p_exec_qty != 0:
-            p_vwap = p_num_exec_vwap / float(p_exec_qty)
-        
-        enrichment = {'reason': p_reason, 'nb_exec' : p_nb_exec, 'occ_nb_replace' : nb_replace, 'exec_qty': p_exec_qty, 'duration': p_real_duration, 'occ_duration': global_duration, 'occ_ID': p_ClOrdID, 'occ_prev_exec_qty': 0, 'exec_vwap': p_vwap, 'occ_prev_exec_vwap': 0, 'turnover': p_num_exec_vwap, 'occ_prev_turnover': 0}
-        
-        if p_eff_starttime != 'none':
-            enrichment.update({'first_deal_time': p_eff_starttime})
-        
-        if p_eff_endtime != 'none':
-            enrichment.update({'eff_endtime': p_eff_endtime})
-        
-        if p_volume_at_would != 0:
-            enrichment.update({'volume_at_would': p_volume_at_would})
-            
-        order.update(enrichment)
-        
-        # - append parent order to order_life list
-        if 'TraderName' in order.keys():
-            order['TraderName'] = match_trader(order['TraderName'], dico_trader)
-        
-        order_life.append(order)
-        
-    else:
-        logging.warning( 'invalid order type : only NewOrderSingle (D) are allowed !')
-    
-    ssh.close()
-    return [order_life, dico_tags]
-
 def update_security_ids(l_kep_secids):
     logging.info( "UPDATE CHEUVREUX SECURITY IDS AND MARKET DATA")
-    query = "select SYMBOL3, SYMBOL6 from SECURITY where SYMBOL3 in ('%s')" % "','".join(map(str,l_kep_secids))
-    
+    query = "select SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6 from SECURITY where STATUS = 'A'  and SYMBOL3 in ('%s')" % "','".join(map(str,l_kep_secids))
     result = connections.Connections.exec_sql('KGR', query, as_dict = True)
     dict_secs = {}
     for sec in result:
-        dict_secs[str(sec['SYMBOL3'])] = str(sec['SYMBOL6'])
+        temp = str(sec['SYMBOL3'])
+        dict_secs[temp] = {
+                              "gl_secid"            : sec['SYMBOL1'],
+                              "isin"                : sec['SYMBOL2'],
+                              "sedol_secid"         : sec['SYMBOL3'],
+                              "reuters_secid"       : sec['SYMBOL4'],
+                              "bloomberg_secid"     : sec['SYMBOL5'],
+                              "cheuvreux_secid"     : convert_str(sec['SYMBOL6'])
+                           }
+        
     return dict_secs
 
-def get_dico_header(server_flex, day, conf ):
+
+class DatabasePlug:
+    def __init__(self, database_server, database, environment, source, dates, mode = 'write'):
+        # Arguments
+        self.database_server    = database_server
+        self.database           = database
+        self.environment        = environment
+        self.source             = source
+        self.dates              = dates
+        self.dates_datetime     = date_to_datetime(dates)
+        self.mode               = mode
+        self.missing_ids        = []
+        self.strategy_name      = {}
+        self.dico_tags          = {}
+        
+        # Constants
+        self.ignore_tags            = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
+        self.missing_id_receivers   = ["alababidi@keplercheuvreux.com"]
+        self.missing_tags_receivers = ["alababidi@keplercheuvreux.com"]
+        
+        # Parameters
+        import os
+        full_path           = os.path.realpath(__file__)    
+        path, f             = os.path.split(full_path)        
+ 
+        self.universe_file  = path + '/../cfg/KC_universe.xml'
+        self.dico_FIX       = path + '/../cfg/FIX42.xml'    
+        self.conf           = self.get_conf(self.environment, self.universe_file)
+        
+        
+        
+        file = open(path + '/../cfg/fix_types.json', 'r')
+        input = file.read()
+        file.close()
     
-    mkt_data_fields = ['EXEC_SHARES' ,'ORDER_PERC','INMKT_VOLUME','INMKT_TURNOVER',
-                       'PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','IN_VWAS','ARRIVAL_PRICE',
-                       'FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
+        self.list_of_dict   = simplejson.loads(input)["fix"]["fields"]["field"]
+        
+        file = open(path + '/../cfg/enrichment_types.json', 'r')
+        input = file.read()
+        file.close()
+        
+        self.list_of_dict.extend(simplejson.loads(input))
+        self.checker        = Converter(self.list_of_dict)
+        # Open MONGODB connection
+        self.client = connections.Connections.getClient(self.database_server)
+        logging.info("Connected to database: " + self.database_server)
+       
+    def store_db(self, orders, collection_name, job_id, mode='insert'):
+        database = self.client[self.database]
+        collection = database[collection_name]
+        
+        if mode == 'insert':
+            logging.info("insert %s Orders into database" %str(len(orders)) )
+        
+        for order in orders:
+            order.update({'job_id': job_id})
+            if mode == 'insert':    
+                collection.insert(order, manipulate=False)
+            elif mode == 'update':
+                collection.save(order)
+        logging.info("End Of insertion to the database")
+
+    def get_dico_header(self, day):
+        
+        mkt_data_fields = ['EXEC_SHARES' ,'ORDER_PERC','INMKT_VOLUME','INMKT_TURNOVER',
+                           'PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','IN_VWAS','ARRIVAL_PRICE',
+                           'FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
+        
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(self.server['ip_addr'], 
+                    username = self.server['list_users']['flexapp']['username'], 
+                    password = self.server['list_users']['flexapp']['passwd'])
+        
+        cmd = 'grep SYM /home/flexapp/ushare/exportprodAV1%s' %day
+        
+        (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+        
+        header = ""
+        for line in stdout_grep:
+            header = line
+        
+        dico_header = {}
+        f_mkt_data = False
+        if header != "":
+            header = header[:-1]
+            header  = header.rsplit(',')
+            f_mkt_data = True
+                
+            for col in mkt_data_fields:
+                if col in header:
+                    dico_header[col.lower()] = header.index(col)
+        result = {}
+        result["f_mkt_data"]  = f_mkt_data
+        result["dico_header"] = dico_header
+        return result    
     
-    ssh = paramiko.SSHClient()
-    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.connect(conf[server_flex]['ip_addr'], 
-                username = conf[server_flex]['list_users']['flexapp']['username'], 
-                password = conf[server_flex]['list_users']['flexapp']['passwd'])
-    
-    cmd = 'grep SYM /home/flexapp/ushare/exportprodAV1%s' %day
-    
-    (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
-    
-    header = ""
-    for line in stdout_grep:
-        header = line
-    
-    dico_header = {}
-    f_mkt_data = False
-    if header != "":
-        header = header[:-1]
-        header  = header.rsplit(',')
-        f_mkt_data = True
+    def get_conf(self, referential, dico_universe):
+
+        conf        = {}
+        struct      = ET.parse(dico_universe)
+        raw_data    = struct.getroot()
+        servs_dico  = {}
+        
+        for elt in raw_data.findall('env'):
+            if elt.get('name') == referential:
+                servs_dico = elt
+                
+        if servs_dico != {}:
+            for attr in servs_dico.findall('server'):
+                serv_name   = attr.get('name')
+                dict_server = {'ip_addr': attr.get('ip_addr')}
+                l_users     = {}
+                
+                for u_attr in attr.findall('user'):
+                    l_users[u_attr.get('username')] = u_attr.attrib
+                    
+                dict_server['list_users']   = l_users
+                conf[serv_name]             = dict_server
+                
+        return conf
+    def line_translator(self, line, dico_tags):
+        line                = line.rsplit('|')
+        dict_order          = {}
+        last_correct_date   = None
+        for item in line:
+            item = item.rsplit('=')
+            if len(item) == 2:
+                if item[1] != ' ' and item[1] != '':
+                    if int(item[0]) not in self.ignore_tags:
+                        if int(item[0]) not in dico_tags.keys():
+                            dico_info = self.get_FIX(int(item[0]))
+                            dico_tags[int(item[0])] = dico_info
+                        
+                        nameD = dico_tags[int(item[0])][0]
+                        typeD = dico_tags[int(item[0])][1]
+                        if typeD != 'UTCTIMESTAMP':
+                            
+                            temp =convert_str(item[1])
+                            if temp is None:
+                                logging.warning("This variable is equal to None : "+ str(nameD))
+                            else:
+                                dict_order[nameD] = temp
+                        else:
+                            try:
+                                data = datetime.strptime(item[1], '%Y%m%d-%H:%M:%S')
+                                dict_order[nameD] = data.replace(tzinfo=pytz.timezone('UTC'))
+                                last_correct_date = data
+                            except ValueError, e:
+                                #sometimes instead of getting a date at this format, we get only the time : '%H:%M:%S'
+                               data = data = datetime.strptime(last_correct_date.strftime("%Y%m%d") + "-" +item[1], '%Y%m%d-%H:%M:%S')
+                               dict_order[nameD] = data.replace(tzinfo=pytz.timezone('UTC'))
+                               logging.warning("This datetime: "+str(item[1]) +"has been found to UTC ")
+                                
+        return (dict_order, dico_tags)          
+    def fill(self):
+        self.fill_algo_orders()
+#         self.fill_order_deals()
+    def fill_order_deals(self):
+        self.io     = "O"
+        type_order   = ''
+        dico_tags   = {}
+        for day in self.dates:
+            self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
+            job_id          = 'OD%s' %day
             
-        for col in mkt_data_fields:
-            if col in header:
-                dico_header[col.lower()] = header.index(col)
-    result = {}
-    result["f_mkt_data"]  = f_mkt_data
-    result["dico_header"] = dico_header
-    return result
+            
+            # IMPORT LES LOGS FIX
+            res_import  = self.import_FIXmsg(type_order, dico_tags, trader)
+            c_orders    = res_import[0]
+            dico_tags   = res_import[1]
+            
+            if self.mode == "write":
+                self.client[self.database]['OrderDeals'].remove({'job_id':job_id})
+                self.store_db(c_orders, 'OrderDeals', job_id)
+            
 
+    def fill_algo_orders(self):
+        to_return   = []
+        self.io     = "I"
+        for day in self.dates:
+            self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
+            orders          = []
+            for s in self.conf:
+                self.server = self.conf[s]
+                orders.extend(self.get_algo_orders(day))
+            
+            job_id          = 'AO%s' %day
+            for order in orders:
+                order["job_id"] = job_id
+            typed_orders    = self.checker.verify_all(orders)
+            to_return.append(typed_orders)
+            
+            if self.mode == "write":
+                job_id = 'AO%s' %day
+                self.client[self.database]['AlgoOrders'].remove({'job_id':job_id})
+                self.store_db(typed_orders, "AlgoOrders", job_id)
+        self.checker.add_json()
+        self.send_missing_ids() 
+        self.send_missing_tags()  
+        return to_return
+    def send_missing_tags(self):
+        if len(self.checker.missing) > 0:
+            
+            dict = {}
+            title = "<h2>Some tags are missing:</h2>\n"
+            m = "<table border='1' cellpadding='1' cellspacing='1' width='580'>\n"
+            m += "<TH>Missing tag(s)</TH><TH>ClOrdID</TH><TH>Files</TH>\n" 
+            for el in self.checker.missing:
+                for miss in el["MissedKey"]:
+                    if miss in dict.keys():
+                        dict[miss] += 1
+                    else:
+                        dict[miss]  = 1
+                m += "<tr>"
+                m += "<td width='30%'>" + ',\n'.join(el["MissedKey"]) + "</td>\n"
+                files = []
+                try:
+                    id = el["Dict"]["ClOrdID"]
+                    m += "<td width='10%'>" + str(id) + "</td>\n"
+                    day = el["Dict"]["SendingTime"].strftime("%Y%m%d")
+                    trader_code = el["Dict"]['TargetSubID']
+                    
+                    files.append("prt_fxlog /home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix 3" % (day, day) )
+                    files.append("/home/flexapp/ushare/exportprod%s%s" %(trader_code, day) )
 
-def export(database, server_flex, environment, io, source, dates):
-    import os
-    full_path = os.path.realpath(__file__)    
-    path, f = os.path.split(full_path)        
-    
-    
-    
-    # - Parameters    
-    universe_file = path +'/../cfg/KC_universe.xml'
-    dico_FIX = path + '/../cfg/FIX42.xml'    
-    conf = get_conf(environment, universe_file)
-    
-    ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
-    
-    trader = ''
-    IO = io
-    dico_tags = {}
-    
-    # - Open MONGODB connection
-    Client = connections.Connections.getClient(database)
-    logging.info("Connected to database: " + database)
-    
-    
-    # - Trader dico generation for matching alias
-    if IO == 'I':
+                    m += "<td width='60%'>" + str("\n".join(files)) + "</td>\n"
+                except Exception, e:
+                    print el["Dict"]
+                    get_traceback()
+                    m += "<td></td>\n"
+                    m += "<td>" + '\n'.join(map(str,el["Dict"].items())) + "</td>\n"
+                m += "</tr>"
+            m += "</table>"
+            
+            summary = "Summary :\n"
+            summary += "<ul>" 
+            for key, val in dict.iteritems():
+                summary += "<li>" + key + " \t=\t " + str(val) + "</li>\n"
+            summary += "</ul>"     
+            msg = title + summary + m
+            send_email(_to = self.missing_tags_receivers, _subject = "Missing tags", _message = msg)
+      
+    def send_missing_ids(self):
+        if len(self.missing_ids) > 0:
+            m = "<h2>Those sedol ids cannot be retrieved in KGR :</h2>\n"
+            m += "<ul>"
+            for el in set(self.missing_ids):
+                m += "<li>" + str(el) + "</li>\n"
+            m += "</ul>"
+            send_email(_to = self.missing_id_receivers, _subject = "Missing ids", _message = m)
+            
+    def get_algo_orders(self, day):
         logging.debug('Generating dico for Trader matching')
-        temp_dico_trader = Client['DB_test']['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':conf[server_flex]['ip_addr']})
+        temp_dico_trader = self.client[self.database]['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':self.server['ip_addr']})
+        
+        logging.info("Add default tagFIX to trader dict")
         dico_trader = {}
         for trd in temp_dico_trader:
             dico_trader[trd['tag_value']] = trd['trader_name']
-            
-
-    
-    for day in dates:
-        logging.info("-----> Start import for : %s" %day)
-        l_docs = []
-        if IO == 'O':
-            
-            job_id = 'OD%s' %day
-            
-            Client['DB_test']['OrderDeals'].remove({'job_id':job_id})
-            
-            # IMPORT LES LOGS FIX
-            type = ''
-            res_import = import_FIXmsg(dico_FIX, conf[server_flex], day, type, IO, dico_tags, trader, ignore_tags, source)
-            c_orders = res_import[0]
-            dico_tags = res_import[1]
-            
-            storeDB(c_orders, 'OrderDeals', Client, job_id)
-            
-        elif IO == 'I':
-            
-            type = 'D'
-            # IMPORT LES LOGS FIX
-            # - Single Day import
-            res_import = import_FIXmsg(dico_FIX, conf[server_flex], day, type, IO, dico_tags, trader, ignore_tags, source)
-            d_orders = res_import[0]
-            dico_tags = res_import[1]
-             
-            l_kep_secids = []
-            job_id = 'AO%s' %day
-            
+        
+        trader = ''
+        
+        type_order = 'D'
+        
+        # IMPORT LES LOGS FIX
+        # - Single Day import
+        res_import = self.import_FIXmsg(type_order, self.dico_tags, trader)
+        d_orders = res_import[0]
+        self.dico_tags = res_import[1]
+         
+        l_kep_secids = []
+        job_id = 'AO%s' %day
+        
+        if self.mode == "write":
             logging.info("Remove the documents where this job_id is present " + str(job_id))
-            Client['DB_test']['AlgoOrders'].remove({'job_id':job_id})
+            self.client[self.database]['AlgoOrders'].remove({'job_id':job_id})
             
-            logging.info('Get ' + str(len(d_orders)) + ' orders to add !')
-            u_orders = []
-            
-            ssh = paramiko.SSHClient()
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            ssh.connect(conf[server_flex]['ip_addr'],
-                        username = conf[server_flex]['list_users']['flexapp']['username'], 
-                        password = conf[server_flex]['list_users']['flexapp']['passwd'])
+        logging.info('Get ' + str(len(d_orders)) + ' orders to add !')
+        u_orders = []
+        
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(self.server['ip_addr'],
+                    username = self.server['list_users']['flexapp']['username'], 
+                    password = self.server['list_users']['flexapp']['passwd'])
+        
+        if self.mode != "write" :
+            import lib.io.serialize as serialize
+            import simplejson
+            u_orders = serialize.DateTimeJSONEncoder().encode(u_orders)
+            l_kep_secids = simplejson.dumps(l_kep_secids, separators=(',',':'))
+             
+            file_orders = open('orders.json', 'r')
+            u_orders = simplejson.loads(file_orders.read(), object_hook = serialize.as_datetime)
+            file_orders.close()
+             
+            file_ids = open('secids.json', 'r')
+            l_kep_secids = simplejson.loads(file_ids.read())
+            file_ids.close()
+        else:
+            i = 0
             for order in d_orders:
+                i+=1
+                
                 logging.info('Order ID : %s' %order['ClOrdID'])
                 
-                l_events = OrderLife(order = order, dico_fix = dico_FIX, day= day, 
-                                     ignore_tags = ignore_tags, dico_tags = dico_tags,
-                                     server = conf[server_flex], dico_trader = dico_trader, 
-                                     ssh = ssh, source = source)
-                u_order = l_events[0]
-                dico_tags = l_events[1]
-                u_orders.extend(u_order)
-                #storeDB(u_order, 'AlgoOrders', Client, job_id)
+                l_events = self.order_life(order          = order, 
+                                          day            = day, 
+                                          dico_tags      = self.dico_tags, 
+                                          dico_trader    = dico_trader, 
+                                          ssh            = ssh)
                 
+                u_order          = l_events[0]
+                self.dico_tags   = l_events[1]
+                u_orders.extend(u_order)
+                
+#                 for ord in u_order:
+#                     if ord["ClOrdID"] == "FY2BL2SUP00000L0007":
+#                         print ord
+#                         import lib.io.serialize as serialize
+#                         import simplejson
+#                         temp = serialize.DateTimeJSONEncoder().encode(ord)
+#                         print temp
                 if 'SecurityID' in u_order[0].keys():
                     l_kep_secids.append(u_order[0]['SecurityID'])
-              
-            
-#             import lib.io.serialize as serialize
-#             import simplejson
-#             u_orders = serialize.DateTimeJSONEncoder().encode(u_orders)
-#             l_kep_secids = simplejson.dumps(l_kep_secids, separators=(',',':'))
-#             
-#             f = open('orders', 'w')
-#             f.writelines(u_orders.splitlines())
-#             f.close()
-#             f = open('secids', 'w')
-#             f.writelines(l_kep_secids.splitlines())
-#             f.close()
-#             
-#             f = open('orders', 'r')
-#             u_orders = simplejson.loads(f.read(), object_hook = serialize.as_datetime)
-#             f.close()
-#             
-#             f = open('secids', 'r')
-#             l_kep_secids = simplejson.loads(f.read())
-#             f.close()
-            
-            
-            dict_secs = update_security_ids(set(l_kep_secids))
-            
-            # GET WHETHER THERE IS DATA FROM ALGO
-            # - GET COLUMN NUMBER IN MKT
-            result      = get_dico_header(server_flex, day, conf)
-            dico_header = result["dico_header"]
-            f_mkt_data  = result["f_mkt_data"]
-            
-
-            logging.info('Add information from prod to ' + str(len(u_orders)) + ' orders !')   
-            for order in u_orders:
-                # Enrichment Market Data 
-                if order['MsgType'] == 'D' and f_mkt_data:
-                    last_seq = get_last_seq(order, l_docs)
-                    Trader_code = last_seq['TargetSubID']
-                     
-                     
-                    ClOrdID = '%sCLNT' %last_seq['ClOrdID']
-                    Ticker = order['Symbol']
                     
-                    cmd = "egrep '%s.*%s' /home/flexapp/ushare/exportprod%s%s" %(Ticker, ClOrdID, Trader_code, day)
+            import lib.io.serialize as serialize
+            import simplejson
+            
+            j_orders = serialize.DateTimeJSONEncoder().encode(u_orders)
+            j_kep_secids = simplejson.dumps(l_kep_secids, separators=(',',':'))
+            
+            file_orders = open('orders.json', 'w')
+            file_orders.write(j_orders)
+            file_orders.close()
+            
+            file_ids = open('secids.json', 'w')
+            file_ids.write(j_kep_secids)
+            file_ids.close()
+        
+        dict_secs = update_security_ids(set(l_kep_secids))
+        if len(dict_secs) == 0:
+            logging.critical("IMPOSSIBLE TO GET DATA FROM KGR")
+            logging.critical("Shutdown")
+            import sys
+            sys.exit()
+        # GET WHETHER THERE IS DATA FROM ALGO
+        # - GET COLUMN NUMBER IN MKT
+        result      = self.get_dico_header(day)
+        dico_header = result["dico_header"]
+        f_mkt_data  = result["f_mkt_data"]
+        
+        l_docs = []
+        logging.info('Add information from prod to ' + str(len(u_orders)) + ' orders !')   
+        job_id          = 'AO%s' %day
+                
+        # Enrichment Market Data from PROD
+        for order in u_orders:
+            if order['MsgType'] == 'D' and f_mkt_data:
+                last_seq = get_last_seq(order, l_docs)
+                
+                Trader_code = last_seq['TargetSubID']
+                 
+                 
+                ClOrdID = '%sCLNT' %last_seq['ClOrdID']
+                Ticker = order['Symbol']
+                
+                # ------ To note
+                # Be careful, client order id has 29 caracters
+                client_order_id = ClOrdID[0:min(29,len(ClOrdID))]
+
+                cmd = "egrep '%s' /home/flexapp/ushare/exportprod%s%s" %(client_order_id, Trader_code, day)
+                 
+                (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+                
+                mkt_data = None
+                try:
+                    lines       = stdout_grep.readlines()
+                    if len(lines) > 1:
+                        logging.error("Several lines found for the folowing client order id: " + str(client_order_id))
+                    mkt_data    = lines[0]
+                except Exception,e :
+                    logging.error("Cannot get data from algos for the following strategy: " +  str(order["StrategyName"]))
+                    logging.error("This order could not been processed: " + str(order) )
+                    get_traceback()
+                    mkt_data = None  
+                
+                if mkt_data is not None:
+                    mkt_data = mkt_data[:-1]
+                    mkt_data = mkt_data.rsplit(',')
                      
+                    for u, v in dico_header.iteritems():
+                        if mkt_data[v] != '':
+                            temp = convert_str(mkt_data[v])
+                            if temp is None:
+                                logging.warning("This variable is not is equal to None : occ_fe_" + str(u))
+                            else:
+                                order['occ_fe_%s'%u] = temp
+                                
+            # Strategy Name mapping
+            if "StrategyName"  in order.keys():
+                order['strategy_name_mapped'] = self.get_strategy_name(order["StrategyName"])
+            else:
+                logging.error("StrategyName is unknown for this order: " + str(order) )                   
+            # Tag to add
+            order["job_id"] = job_id
+            
+            # Verifications
+            if "SecurityID" not in order.keys():
+                logging.error("The key SecurityID is not present in this order :" +str(order))           
+            
+            if str(order['SecurityID']) in dict_secs.keys():
+                order.update(dict_secs[str(order['SecurityID'])])
+            else:
+                self.missing_ids.append(str(order['SecurityID']))
+                logging.error("The general Ids could not be found for this SecurityID: " + str(order["SecurityID"]) + " and this order:" + str(order))
+            
+            if "cheuvreux_secid" in order.keys() and order["cheuvreux_secid"] is None:
+                if  order['SecurityID'] == 'B1QH830':
+                    pass
+                self.missing_ids.append(str(order['SecurityID']))
+                logging.error("The cheuvreux Sec Id could not be found: " + str(order))
+                
+            rate = ConversionRate.getRate(order['Currency'], day )
+            if rate is not None: 
+                order['rate_to_euro'] = ConversionRate.getRate(order['Currency'], day )
+            else:
+                logging.error("Could not get the rate for the currency " + str(order['Currency']))
+            
+            l_docs.append(order)
+        ssh.close()
+        logging.info('Store all the orders')
+        logging.info(ConversionRate.default_currencies)    
+        return l_docs  
+        
+    def get_strategy_name(self, num):
+        if num not in self.strategy_name.keys():
+            database = self.client["DB_test"]
+            collection = database["map_tagFIX"]
+            f = collection.find({"$and": [{"tag_name" : "StrategyName"},
+                                         {"tag_value"   : str(num)}
+                                        ]})
+            self.strategy_name[num] = list(f)[0]['strategy_name']
+        return self.strategy_name[num]
+    def import_FIXmsg(self, type_order, dico_tags={}, trader=''):
+        
+        # - io :
+        #    I for parent order (incoming orders)
+        #    O for child(street) orders (outgoing orders from Execution Report)
+         
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(self.server['ip_addr'], 
+                    username = self.server['list_users']['flexsys']['username'], 
+                    password = self.server['list_users']['flexsys']['passwd'])
+        
+        path = self.logPath
+        
+        orders = []
+        if self.io == 'I':
+            if type_order != '':
+                
+                if type_order not in ['D', 'G', 'F']:
+                    logging.warning( "error no valid type order ! (only D, G or F are allowed)" )
+                else:
+                    if trader =='':
+                        cmd = 'prt_fxlog %s 3 | grep 35=%s' %(path, type_order)
+                    else:
+                        cmd = "prt_fxlog %s 3 | egrep '35=%s.*57=%s'" %(path, type_order, trader)
+                    
+                    [orders, dico_tags] = self.run_and_append(orders, dico_tags, ssh, cmd)
+            else:
+                l_FIXtype = ['D', 'G', 'F']
+                for tp in l_FIXtype:
+                    if trader == '':
+                        cmd = "prt_fxlog %s 3 | grep 35=%s" %(path, tp)
+                    else:
+                        cmd = "prt_fxlog %s 3 | egrep '35=%s.*57=%s'" %(path, tp, trader)
+                        
+                    [orders, dico_tags] = self.run_and_append(orders, dico_tags, ssh, cmd)
+                    
+        elif self.io == 'O':
+            if str(type_order) != '':
+                
+                if str(type_order) not in ['1', '2'] :
+                    logging.warning( "error no valid type ! (only 1 or 2 are allowed)")
+                else:
+                    if trader =='':
+                        cmd = "prt_fxlog %s 3 | egrep '35=8.*150=%s'" %(path, str(type_order))
+                    else:
+                        cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*150=%s'" %(path, trader, str(type_order))
+                    
+                    [orders, dico_tags] = self.run_and_append(orders, dico_tags, ssh, cmd)
+            else:
+                l_FIXtype = ['1', '2']
+                for tp in l_FIXtype:
+                    if trader == '':
+                        cmd = "prt_fxlog %s 3 | egrep '35=8.*150=%s'" %(path, str(tp))
+                    else:
+                        cmd = "prt_fxlog %s 3 | egrep '35=8.*57=%s.*150=%s'" %(path, trader, str(tp))
+                    
+                    [orders, dico_tags] = self.run_and_append(orders, dico_tags, ssh, cmd) 
+        else:
+            logging.warning( "wrong connection IO only 'I' or 'O' accepted !")
+        
+        return [orders, dico_tags]
+    
+    def run_and_append(self, orders, dico_tags, ssh, cmd):
+        (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+        
+        for line in stdout_grep:
+            line        = line.replace('|\n','')
+            
+            res_trans   = self.line_translator(line, dico_tags)
+            
+            dico_tags   = res_trans[1]
+            
+            is_DMA      = False
+            if "OnBehalfOfSubID" in res_trans[0].keys() :
+                is_DMA = (res_trans[0]['OnBehalfOfSubID'] == "DMA")
+            
+            if res_trans[0] != {} and len(res_trans[0]) > 1 and not is_DMA:
+                orders.append(res_trans[0])
+                
+        return [orders, dico_tags]
+    def get_FIX(self, fix_number):
+        struct = ET.parse(self.dico_FIX)
+        raw_data = struct.getroot()
+        i=1
+        for elt in raw_data.find('fields'):
+            if int(elt.get('number')) == fix_number:
+                return (elt.get('name'), elt.get('type'))
+        
+        return
+    def order_life(self, order, day,  dico_tags, dico_trader, ssh, import_type='Client'):
+    
+        # - Open SSH connection 
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(self.server['ip_addr'], 
+                    username = self.server['list_users']['flexsys']['username'], 
+                    password = self.server['list_users']['flexsys']['passwd'])
+        
+        ClOrdID = order['ClOrdID']
+        Trader  = order['TargetSubID']
+        Type    = order['MsgType']
+        
+        order_life = []
+        p_nb_exec = 0
+        nb_replace = 0
+        p_exec_qty = 0
+        p_real_duration = 0
+        global_duration = 0
+        p_reason = 'unknown'
+        p_eff_starttime = 'none'
+        
+        p_eff_endtime = 'none'
+        g_eff_endtime = 'none'
+        
+        prev_exec = 0
+        num_exec_vwap = 0
+        prev_num_exec_vwap = 0
+        p_num_exec_vwap = 0
+        p_volume_at_would = 0
+        
+        p_ClOrdID = ClOrdID
+        
+        if Type == 'D':
+            
+            # - Looking for Execution report sequence
+            if import_type == 'Client':
+                ER_file = './logs/trades/%s/FLINKI_%s%sO.fix' %(day, self.source, day)
+                IN_file = './logs/trades/%s/FLINKI_%s%sI.fix' %(day, self.source, day)
+                cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*%s'" %(ER_file, Trader, ClOrdID)
+            elif import_type == 'Street':
+                ER_file = './logs/trades/%s/FLEX_ULPROD%sI.fix' %(day, day)
+                IN_file = './logs/trades/%s/FLEX_ULPROD%sO.fix' %(day, day)
+                cmd = "prt_fxlog %s 3 | egrep '35=8.*%s'" %(ER_file, ClOrdID)
+            
+            
+            (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+            
+            done = False
+            replaced = False
+            
+            WouldLevel = 0
+            Side = 2 * (float(order['Side']) - 1.5)
+            
+            if "WouldLevel" in order.keys():
+                WouldLevel = order['WouldLevel']
+            
+            for str_msg in stdout_grep:
+                
+                str_msg = str_msg.replace('|\n','')
+                res_trans = self.line_translator(str_msg,dico_tags)
+                
+                if res_trans[0] != {}:
+                    p_msg = res_trans[0]
+                else:
+                    continue
+                
+                dico_tags = res_trans[1]
+                
+                if 'ExecType' not in p_msg.keys():
+                    continue
+                
+                if str(p_msg['ExecType']) == '0':
+                    p_reason = 'new acked'
+                    
+                elif str(p_msg['ExecType']) == '1':
+                    p_exec_qty += int(p_msg['LastShares'])
+                    num_exec_vwap += float(p_msg['LastShares']) * float(p_msg['LastPx'])
+                    p_nb_exec += 1
+                    if p_eff_starttime == "none":
+                        p_eff_starttime = p_msg['TransactTime']
+                    
+                    if Side * float(p_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
+                        p_volume_at_would += int(p_msg['LastShares'])
+                    
+                elif str(p_msg['ExecType']) == '2':
+                    p_nb_exec += 1
+                    p_exec_qty += int(p_msg['LastShares'])
+                    num_exec_vwap += float(p_msg['LastShares']) * float(p_msg['LastPx'])
+                    
+                    if Side * float(p_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
+                        p_volume_at_would += int(p_msg['LastShares'])
+                    
+                    p_reason = 'filled'
+                    if p_eff_starttime == "none":
+                        p_eff_starttime = p_msg['TransactTime']
+                        
+                    done = True
+                    
+                elif str(p_msg['ExecType']) == '3':
+                    p_reason = 'done for day'
+                    done = True
+                    
+                elif str(p_msg['ExecType']) == '4':
+                    p_reason = 'cancelled'
+                    done = True
+                    
+                elif str(p_msg['ExecType']) == '5':
+                    p_reason = 'replaced'
+                    nb_replace += 1
+                    replaced = True
+                    
+                elif str(p_msg['ExecType']) == '8':
+                    p_reason = 'rejected'
+                    done = True
+                    
+                elif str(p_msg['ExecType']) == 'A':
+                    p_reason = 'pending new'
+                    
+                elif str(p_msg['ExecType']) == 'E':
+                    p_reason = 'pending replace'
+                
+                p_eff_endtime = p_msg['SendingTime']
+                g_eff_endtime = p_eff_endtime
+                
+            if not done and not replaced :
+                [p_reason, done] = check_EoL(order, p_reason, day, ssh, self.dico_FIX, dico_tags, self.ignore_tags, import_type)
+                
+                if not done:
+                    p_reason = 'Front End handling'
+                
+                
+            prev_exec += p_exec_qty
+            prev_num_exec_vwap +=  num_exec_vwap
+            p_num_exec_vwap = num_exec_vwap
+            
+            if p_eff_endtime != "none":
+                p_real_duration = time.mktime(p_eff_endtime.timetuple()) - time.mktime(order['SendingTime'].timetuple())
+            
+            if replaced:
+                
+                loop_count = 0
+                while not done and loop_count<100 and replaced == True:
+                    
+                    replaced = False
+                    loop_count += 1
+                    
+                    cmd = "prt_fxlog %s 3 | egrep '35=G.*41=%s'" %(IN_file, ClOrdID)
                     (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
                     
-                    mkt_data = None
-                    try:
-                        mkt_data = stdout_grep.readlines()[0]
-                    except Exception,e :
-                        logging.info("Cannot get data from algos for the following strategy: " +  str(order["StrategyName"]))
-                        logging.warning("This order could not been processed: " + str(order) )
-                        mkt_data = None  
+                    for str_msg in stdout_grep:
+                        str_msg = str_msg.replace('|\n','')
                     
-                    if mkt_data is not None:
-                        mkt_data = mkt_data[:-1]
-                        mkt_data = mkt_data.rsplit(',')
-                         
-                        for u, v in dico_header.iteritems():
-                            if mkt_data[v] != '':
-                                order['occ_fe_%s'%u] = convertStr(mkt_data[v])
-                # - UPDATE CHEUVREUX SECURITY IDS            
-                if "SecurityID" in order.keys() and str(order['SecurityID']) in dict_secs.keys():
-                    order['cheuvreux_secid'] = dict_secs[str(order['SecurityID'])]
+                    res_trans = self.line_translator(str_msg, dico_tags)
+                    c_msg = res_trans[0]
+                    dico_tags = res_trans[1]
                     
-                order['rate_to_euro'] = ConversionRate.getRate(order['Currency'], day )
-                l_docs.append(order)
-            ssh.close()
-            logging.info('Store all the orders')
-            logging.info(ConversionRate.default_currencies)       
-            storeDB(l_docs, 'AlgoOrders', Client, job_id,'insert')
-        else:
-            logging.warning( "wrong type of FIX connection : only 'I' or 'O' accepted !")
+                    nb_exec = 0
+                    exec_qty = 0
+                    reason = 'unknown'
+                    eff_starttime = "none"
+                    real_duration = 0
+                    num_exec_vwap = 0
+                    volume_at_would = 0
+                    
+                    ClOrdID = c_msg['ClOrdID']
+                    Trader = c_msg['TargetSubID']
+                    
+                    WouldLevel = 0
+                    if "WouldLevel" in c_msg.keys():
+                        WouldLevel = c_msg['WouldLevel']
+                    
+                    if import_type == 'Client':
+                        cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*%s'" %(ER_file, Trader, ClOrdID)
+                    elif import_type == 'Street':
+                        cmd = "prt_fxlog %s 3 | egrep '35=8.*%s'" %(ER_file, ClOrdID)
+        
+                    (stdin, stdout_grep, stderr)= ssh.exec_command(cmd)
+                    rpl_checked = False
+                    
+                    for str_msg in stdout_grep:
+                        str_msg = str_msg.replace('|\n','')
+                        res_trans = self.line_translator(str_msg, dico_tags)
+                        
+                        if res_trans[0] != {}:
+                            cc_msg = res_trans[0]
+                        else:
+                            continue
+                        
+                        dico_tags = res_trans[1]
+                        
+                        if str(cc_msg['ExecType']) == '0':
+                            reason = 'new acked'
+                            
+                        elif str(cc_msg['ExecType']) == '1':
+                            exec_qty += int(cc_msg['LastShares'])
+                            num_exec_vwap += float(cc_msg['LastShares']) * float(cc_msg['LastPx'])
+                            nb_exec += 1
+                            
+                            if Side * float(cc_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
+                                volume_at_would += int(cc_msg['LastShares'])
+                            
+                            if eff_starttime == "none":
+                                eff_starttime = cc_msg['TransactTime']
+                            
+                        elif str(cc_msg['ExecType']) == '2':
+                            nb_exec += 1
+                            exec_qty += int(cc_msg['LastShares'])
+                            num_exec_vwap += float(cc_msg['LastShares']) * float(cc_msg['LastPx'])
+                            
+                            if Side * float(cc_msg['LastPx']) < WouldLevel and WouldLevel != 0 and (Side == 1 or Side == -1):
+                                volume_at_would += int(cc_msg['LastShares'])
+                                
+                            reason = 'filled'
+                            done = True
+                            if eff_starttime == "none":
+                                eff_starttime = cc_msg['TransactTime']
+                            
+                        elif str(cc_msg['ExecType']) == '3':
+                            reason = 'done for day'
+                            done = True
+                            
+                        elif str(cc_msg['ExecType']) == '4':
+                            reason = 'cancelled'
+                            done = True
+                            
+                        elif str(cc_msg['ExecType']) == '5':
+                            if rpl_checked == False:
+                                rpl_checked =True
+                            else:
+                                reason = 'replaced'
+                                nb_replace += 1
+                                replaced = True
+                            
+                        elif str(cc_msg['ExecType']) == '8':
+                            reason = 'rejected'
+                            done = True
+                            
+                        elif str(cc_msg['ExecType']) == 'A':
+                            reason = 'pending new'
+                            
+                        elif str(cc_msg['ExecType']) == 'E':
+                            reason = 'pending replace'
+                    
+                    if not done and not replaced :
+                        [reason, done] = check_EoL(c_msg, reason, day, ssh, self.dico_FIX, dico_tags, self.ignore_tags, import_type)
+                        
+                        if not done:
+                            reason = '%s Front End handling' %reason
+                    
+                    eff_endtime = cc_msg['SendingTime']
+                    g_eff_endtime = eff_endtime
+                    
+                    if eff_endtime != 'none':
+                        real_duration = time.mktime(eff_endtime.timetuple()) - time.mktime(c_msg['SendingTime'].timetuple())
+                    
+                    vwap = 0
+                    prev_vwap = 0
+                    
+                    if exec_qty != 0:
+                        vwap = num_exec_vwap / float(exec_qty)
+                    
+                    if prev_exec != 0:
+                        prev_vwap = prev_num_exec_vwap / float(prev_exec)
+                    
+                    if 'TraderName' in c_msg.keys():
+                        c_msg['TraderName'] = match_trader(c_msg['TraderName'], dico_trader)
+                    
+                    
+                    enrichment = {'reason': reason, 'nb_exec' : nb_exec, 'exec_qty': exec_qty, 'duration': real_duration, 'occ_ID': p_ClOrdID, 'occ_prev_exec_qty': prev_exec, 'exec_vwap': vwap, 'occ_prev_exec_vwap': prev_vwap, 'turnover': num_exec_vwap, 'occ_prev_turnover': prev_num_exec_vwap, 'nb_replace': loop_count}
+                    
+                    if eff_starttime != 'none':
+                        enrichment.update({'first_deal_time': eff_starttime})
+                    
+                    if eff_endtime != 'none':
+                        enrichment.update({'eff_endtime': eff_endtime})
+                    
+                    if volume_at_would != 0:
+                        enrichment.update({'volume_at_would': volume_at_would})
+                        
+                    c_msg.update(enrichment)
+                    order_life.append(c_msg)
+                    
+                    prev_exec += exec_qty
+                    prev_num_exec_vwap += num_exec_vwap
+                    
+            if g_eff_endtime != 'none':
+                global_duration = time.mktime(g_eff_endtime.timetuple()) - time.mktime(order['SendingTime'].timetuple())
             
-        logging.info( "----> END OF IMPORT FOR : %s" %day)
+            p_vwap = 0
+            if p_exec_qty != 0:
+                p_vwap = p_num_exec_vwap / float(p_exec_qty)
+            
+            enrichment = {'reason': p_reason, 'nb_exec' : p_nb_exec, 'occ_nb_replace' : nb_replace, 'exec_qty': p_exec_qty, 'duration': p_real_duration, 'occ_duration': global_duration, 'occ_ID': p_ClOrdID, 'occ_prev_exec_qty': 0, 'exec_vwap': p_vwap, 'occ_prev_exec_vwap': 0, 'turnover': p_num_exec_vwap, 'occ_prev_turnover': 0}
+            
+            if p_eff_starttime != 'none':
+                enrichment.update({'first_deal_time': p_eff_starttime})
+            
+            if p_eff_endtime != 'none':
+                enrichment.update({'eff_endtime': p_eff_endtime})
+            
+            if p_volume_at_would != 0:
+                enrichment.update({'volume_at_would': p_volume_at_would})
+                
+            order.update(enrichment)
+            
+            # - append parent order to order_life list
+            if 'TraderName' in order.keys():
+                order['TraderName'] = match_trader(order['TraderName'], dico_trader)
+            
+            order_life.append(order)
+            
+        else:
+            logging.warning( 'invalid order type : only NewOrderSingle (D) are allowed !')
+        
+        ssh.close()
+        return [order_life, dico_tags]
     
-    if Client.alive():
-        Client.close()
-
 if __name__ == '__main__':
     import sys    
     if len(sys.argv) <= 6:
@@ -898,12 +1069,17 @@ if __name__ == '__main__':
         print "python2.7 import_FIX.py HPP WATFLT01 preprod I CLNT1"
         print "python2.7 import_FIX.py HPP WATFLT01 preprod O CLNT1"
         
-        database    = 'TEST'
+        database_server    = 'TEST'
+        database    = 'DB_test1'
         server_flex = 'WATFLT01'
         environment = 'preprod'
         io          = 'I'
         source      = 'CLNT1'
-        date        = '20130619'
+        dates        = ['20130603','20130604','20130605','20130606','20130607',
+                        '20130610','20130611','20130612','20130613','20130614',
+                        '20130617','20130618','20130619','20130620','20130621',
+                        '20130624','20130625','20130626','20130627']
+        dates = ["20130705"]
         
     else:
         database    = sys.argv[1]
@@ -912,7 +1088,14 @@ if __name__ == '__main__':
         io          = sys.argv[4]
         source      = sys.argv[5]
         date        = sys.argv[6]
-        
-    export(database, server_flex, environment, io, source, [date])
+        dates       = [date]
+  
+    DatabasePlug(database_server    = database_server, 
+                 database           = database,
+                 server_flex        = server_flex, 
+                 environment        = environment, 
+                 source             = source, 
+                 dates              = dates,
+                 mode               = "write").fill()
     
     

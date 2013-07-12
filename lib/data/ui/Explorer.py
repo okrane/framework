@@ -48,7 +48,7 @@ class Explorer:
     def populate(self, df):
                  
         colnames = df.columns
-        rows = min(300,df.shape[0])
+        rows = min(100,df.shape[0])
         columns = df.shape[1]
                  
         for row in range(rows+1):

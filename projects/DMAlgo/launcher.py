@@ -7,7 +7,6 @@ if __name__ == '__main__':
     
     database_server     = 'TEST'
     database            = 'Mars'
-    server_flex         = 'WATFLT01'
     environment         = 'prod'
     source              = 'CLNT1'
     dateToday           = datetime.strftime(datetime.now(), "%Y%m%d")

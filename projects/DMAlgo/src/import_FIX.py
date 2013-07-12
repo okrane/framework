@@ -354,11 +354,14 @@ class DatabasePlug:
                                 dict_order[nameD] = data.replace(tzinfo=pytz.timezone('UTC'))
                                 last_correct_date = data
                             except ValueError, e:
-                                #sometimes instead of getting a date at this format, we get only the time : '%H:%M:%S'
-                               data = data = datetime.strptime(last_correct_date.strftime("%Y%m%d") + "-" +item[1], '%Y%m%d-%H:%M:%S')
-                               dict_order[nameD] = data.replace(tzinfo=pytz.timezone('UTC'))
-                               logging.warning("This datetime: "+str(item[1]) +"has been found to UTC ")
-                                
+                                try :
+                                    #sometimes instead of getting a date at this format, we get only the time : '%H:%M:%S'
+                                    data = datetime.strptime(last_correct_date.strftime("%Y%m%d") + "-" +item[1], '%Y%m%d-%H:%M:%S')
+                                    dict_order[nameD] = data.replace(tzinfo=pytz.timezone('UTC'))
+                                    logging.warning("This datetime: "+str(item[1]) +"has been found to UTC ")
+                                except:
+                                    logging.warning("An order has been removed")
+                                    continue  
         return (dict_order, dico_tags)          
     def fill(self):
         self.fill_algo_orders()

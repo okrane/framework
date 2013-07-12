@@ -6,7 +6,7 @@ import types
 import os
 
 def test_converter():
-    script_dir = os.path.dirname(__file__)
+    script_dir = os.path.dirname(__file__) + '/'
     
     file     = open(script_dir + 'orders.json', 'r')
     input    = file.read()

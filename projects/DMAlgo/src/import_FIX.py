@@ -647,7 +647,7 @@ class DatabasePlug:
         
     def get_strategy_name(self, num):
         if num not in self.strategy_name.keys():
-            database = self.client["DB_test"]
+            database = self.client[self.database]
             collection = database["map_tagFIX"]
             f = collection.find({"$and": [{"tag_name" : "StrategyName"},
                                          {"tag_value"   : str(num)}

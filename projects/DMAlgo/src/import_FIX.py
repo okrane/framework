@@ -87,11 +87,12 @@ class ConversionRate:
     
     @staticmethod  
     def _get_all(dates_datetime):
+        connection_name_backup = connections.Connections.connections
         connections.Connections.change_connections('production')
         ConversionRate.data = read_dataset.histocurrencypair(start_date = dates_datetime[0].strftime("%d/%m/%Y"),
                                                              end_date   = dates_datetime[len(dates_datetime) - 1].strftime("%d/%m/%Y"),
                                                              currency   = ConversionRate.default_currencies)
-        connections.Connections.change_connections('dev')
+        connections.Connections.change_connections(connection_name_backup)
         logging.info(str(ConversionRate.data))
 
 def get_last_seq(order, l_orders):

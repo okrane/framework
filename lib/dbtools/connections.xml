@@ -168,6 +168,9 @@
 				<SERVER NAME="KGR">172.29.100.64:1433|KGR|python_ro|python4ever!!</SERVER>		
 				<SERVER NAME="MARKET_DATA">172.29.100.64:1433|Market_data|batch_algo|25b175f3e5</SERVER>
             </connections>
+            <connections driver="Mongo"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
+				<SERVER NAME="PROD">172.29.100.27:27017|Mars|python_write|pythonpasswrite</SERVER>
+            </connections> 
 			<bases>
                 <base key="quant" name="quant"/>
                 <base key="quant_data" name="quant_data"/>

@@ -236,7 +236,6 @@ class DatabasePlug:
         self.conf           = self.get_conf(self.environment, self.universe_file)
         
         
-        
         file = open(path + '/../cfg/fix_types.json', 'r')
         input = file.read()
         file.close()
@@ -249,9 +248,12 @@ class DatabasePlug:
         
         self.list_of_dict.extend(simplejson.loads(input))
         self.checker        = Converter(self.list_of_dict)
+        
         # Open MONGODB connection
         self.client = connections.Connections.getClient(self.database_server)
         logging.info("Connected to database: " + self.database_server)
+        
+        self.get_all_strategy_name()
        
     def store_db(self, orders, collection_name, job_id, mode='insert'):
         database = self.client[self.database]
@@ -502,11 +504,11 @@ class DatabasePlug:
             u_orders = serialize.DateTimeJSONEncoder().encode(u_orders)
             l_kep_secids = simplejson.dumps(l_kep_secids, separators=(',',':'))
              
-            file_orders = open('orders.json', 'r')
+            file_orders = open(self.server['ip_addr'] + '.orders.json', 'r')
             u_orders = simplejson.loads(file_orders.read(), object_hook = serialize.as_datetime)
             file_orders.close()
              
-            file_ids = open('secids.json', 'r')
+            file_ids = open(self.server['ip_addr'] + '.secids.json', 'r')
             l_kep_secids = simplejson.loads(file_ids.read())
             file_ids.close()
         else:
@@ -542,11 +544,11 @@ class DatabasePlug:
             j_orders = serialize.DateTimeJSONEncoder().encode(u_orders)
             j_kep_secids = simplejson.dumps(l_kep_secids, separators=(',',':'))
             
-            file_orders = open('orders.json', 'w')
+            file_orders = open(self.server['ip_addr'] + '.orders.json', 'w')
             file_orders.write(j_orders)
             file_orders.close()
             
-            file_ids = open('secids.json', 'w')
+            file_ids = open(self.server['ip_addr'] + '.secids.json', 'w')
             file_ids.write(j_kep_secids)
             file_ids.close()
         
@@ -644,16 +646,19 @@ class DatabasePlug:
         logging.info('Store all the orders')
         logging.info(ConversionRate.default_currencies)    
         return l_docs  
-        
+    def get_all_strategy_name(self):
+        database = self.client[self.database]
+        collection = database["map_tagFIX"]
+        result   = collection.find({"tag_name" : "StrategyName"})
+        l_result = list(result)
+        for el in l_result:
+            self.strategy_name[int(el["tag_value"])] = el["strategy_name"]
+            
     def get_strategy_name(self, num):
         if num not in self.strategy_name.keys():
-            database = self.client[self.database]
-            collection = database["map_tagFIX"]
-            f = collection.find({"$and": [{"tag_name" : "StrategyName"},
-                                         {"tag_value"   : str(num)}
-                                        ]})
-            self.strategy_name[num] = list(f)[0]['strategy_name']
-        return self.strategy_name[num]
+            logging.error("This Strategy does not exist " + str(num))
+            self.strategy_name[int(num)] = None
+        return self.strategy_name[int(num)]
     def import_FIXmsg(self, type_order, dico_tags={}, trader=''):
         
         # - io :
@@ -1100,6 +1105,6 @@ if __name__ == '__main__':
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill()
+                 mode               = "read").fill()
     
     

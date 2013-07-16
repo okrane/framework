@@ -32,14 +32,20 @@ def send_email(_to      = ["quant.algo@keplerchevreux.com"],
     msg.attach(html)
     
     try:
-       smtpObj = smtplib.SMTP('172.29.97.16')
-       smtpObj.sendmail( _from,  _to, msg.as_string())         
-       logging.info("Successfully sent email")
+        smtpObj = smtplib.SMTP('172.29.97.16')
+        smtpObj.sendmail( _from,  _to, msg.as_string())         
+        logging.info("Successfully sent email")
     except smtplib.SMTPException,e :
-       logging.error("Error: unable to send email")
-       get_traceback()
-    finally: 
-       smtpObj.quit()
+        logging.error("Error: unable to send email")
+        get_traceback()
+    finally:
+        try:
+            smtpObj.quit()
+        except:
+            import time
+            file = open(str(time.time())+".html", "w")
+            file.write(_message)
+            file.close()
  
        
 if __name__ == "__main__":

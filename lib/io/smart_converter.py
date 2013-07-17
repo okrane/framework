@@ -104,7 +104,7 @@ class Converter:
                     to_return = self._convert_to(self._map(key), value)
                 except ValueError:
                     to_return = str(value)
-                    logging.error("Impossible to convert this entry(" + key + "): " + str(value) + " to " + self.map[key])
+                    logging.error("Impossible to convert this entry(" + key + "): " + str(value) + " to " + str(self.map[key]))
                     get_traceback()
                     logging.warning("Will be kept as string")
                 return to_return

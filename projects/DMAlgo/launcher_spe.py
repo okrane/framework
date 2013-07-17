@@ -8,9 +8,12 @@ if __name__ == '__main__':
     database            = 'Mars'
     environment         = 'prod'
     source              = 'CLNT1'
-    yesterday           = datetime.now() - timedelta(days = 1)
-    date                = datetime.strftime(yesterday, "%Y%m%d")
-    dates               = [date]
+    dates               =  ['20130708','20130709','20130710','20130711','20130712',
+                            '20130701','20130702','20130703','20130704','20130705',
+                            '20130624','20130625','20130626','20130627', '20130628',
+                            '20130617','20130618','20130619','20130620','20130621',
+                            '20130610','20130611','20130612','20130613','20130614',
+                            '20130603','20130604','20130605','20130606','20130607']
    
     DatabasePlug(database_server    = database_server, 
                  database           = database,

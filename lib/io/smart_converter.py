@@ -3,6 +3,7 @@ from datetime import datetime
 import serialize
 import simplejson
 from lib.logger import *
+from lib.io.toolkit import get_traceback
 
 MAPPING = {"FLOAT"                  : FloatType,
            "INT"                    : IntType,
@@ -99,8 +100,14 @@ class Converter:
                     except:
                         continue
             else:
-                return self._convert_to(self._map(key), value)
-            raise Exception("Impossible to convert this entry(" + key + "): " + str(value) + " to " + self.map[key])      
+                try:
+                    to_return = self._convert_to(self._map(key), value)
+                except ValueError:
+                    to_return = value
+                    logging.error("Impossible to convert this entry(" + key + "): " + str(value) + " to " + self.map[key])
+                    get_traceback()
+                    logging.warning("Will be kept as string")
+                             
         except KeyError, e:
             import traceback
             import StringIO

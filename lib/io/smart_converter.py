@@ -103,10 +103,11 @@ class Converter:
                 try:
                     to_return = self._convert_to(self._map(key), value)
                 except ValueError:
-                    to_return = value
+                    to_return = str(value)
                     logging.error("Impossible to convert this entry(" + key + "): " + str(value) + " to " + self.map[key])
                     get_traceback()
                     logging.warning("Will be kept as string")
+                return to_return
                              
         except KeyError, e:
             import traceback

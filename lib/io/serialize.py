@@ -1,6 +1,6 @@
 import simplejson
 import datetime
-import dateutil.parser
+
 class DateTimeJSONEncoder(simplejson.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime.datetime):

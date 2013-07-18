@@ -1,18 +1,17 @@
 if __name__ == '__main__':
-    import sys
-    from datetime import datetime
+    from datetime import datetime, timedelta
     from src.import_FIX import DatabasePlug
+    from lib.dbtools.connections import Connections
+    Connections.change_connections("production")
     
-    dates       = ["20130701"]
-    
-    database_server     = 'TEST'
+    database_server     = 'PROD'
     database            = 'Mars'
-    server_flex         = 'WATFLT01'
     environment         = 'prod'
     source              = 'CLNT1'
-    dateToday           = datetime.strftime(datetime.now(), "%Y%m%d")
-    dates               = [dateToday]
-    
+    yesterday           = datetime.now() - timedelta(days = 1)
+    date                = datetime.strftime(yesterday, "%Y%m%d")
+    dates               = [date]
+   
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 

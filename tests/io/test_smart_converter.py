@@ -3,23 +3,24 @@ from lib.io.serialize import *
 import simplejson
 from datetime import datetime
 import types
+import os
 
 def test_converter():
+    script_dir = os.path.dirname(__file__) + '/'
     
-    
-    file     = open('orders.json', 'r')
+    file     = open(script_dir + 'orders.json', 'r')
     input    = file.read()
     file.close()
     
     dict_list= simplejson.loads(input, object_hook = as_datetime)
     
-    file = open('fix_types.json', 'r')
+    file = open(script_dir + 'fix_types.json', 'r')
     input = file.read()
     file.close()
 
     list_map = simplejson.loads(input)["fix"]["fields"]["field"]
     
-    file = open('enrichment_types.json', 'r')
+    file = open(script_dir + 'enrichment_types.json', 'r')
     input = file.read()
     file.close()
     

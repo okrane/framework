@@ -300,7 +300,7 @@ def fieldList(cname=None, db_name="Mars", **kwargs):
     #### CONNECTIONS and DB
     map_name="field_map"
     #client = MongoClient(connect_info)
-    client = Connections.getClient('HPP')
+    client = Connections.getClient(db_name.upper())
     req_=client[db_name][map_name].find({"collection_name":cname},{"list_columns":1,"_id":0}) 
     
     #### Create the data

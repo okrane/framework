@@ -80,7 +80,7 @@ def convert_symbol(**kwargs):
     # ----------------
     # request
     # ----------------  
-    query = "SELECT %s from SECURITY where %s = '%s'" % (fields[kwargs['dest']], fields[kwargs['source']], kwargs['value'])
+    query = "SELECT distinct %s from SECURITY where %s = '%s'" % (fields[kwargs['dest']], fields[kwargs['source']], kwargs['value'])
     query += " and EXCHGID = '%s'" % kwargs['exchgid'] if kwargs.has_key('exchgid') else ""    
     print query
     val=Connections.exec_sql('KGR',query,schema = False)    
@@ -234,7 +234,7 @@ def tradingtime(**kwargs):
             if not (date==[]):
                 # if date, the output will be in datetime whether in time format
                 out[cols]=datetime.combine(datetime.strptime(date, '%d/%m/%Y').date(),out[cols].values[0])
-    exchange_main
+
     return out
 
 #------------------------------------------------------------------------------
@@ -269,18 +269,18 @@ def exchangeinfo(**kwargs):
     req=(" SELECT  sm.security_id,sm.ranking,sm.quotation_group, "
      " erefcompl.EXCHANGE,erefcompl.EXCHGID,erefcompl.MIC,erefcompl.EXCHANGETYPE,erefcompl.TIMEZONE, "
      " gzone.NAME as GLOBALZONE,ex.EXCHGNAME "
-     " FROM  %sKGR..security_market sm "
-     " LEFT JOIN %sKGR..EXCHANGEREFCOMPL erefcompl ON ( "
+     " FROM  security_market sm "
+     " LEFT JOIN EXCHANGEREFCOMPL erefcompl ON ( "
      " sm.trading_destination_id=erefcompl.EXCHANGE  "
      " )  "
-     " LEFT JOIN %sKGR..GLOBALZONE gzone ON ( "
+     " LEFT JOIN GLOBALZONE gzone ON ( "
      " erefcompl.GLOBALZONEID=gzone.GLOBALZONEID  "
      " )  "
-     " LEFT JOIN %sKGR..EXCHANGE ex ON ( "
+     " LEFT JOIN EXCHANGE ex ON ( "
      " erefcompl.EXCHGID=ex.EXCHGID  "
      " )  "
      " WHERE  sm.security_id in %s "
-     " ORDER BY sm.security_id,sm.ranking ") % (pref_,pref_,pref_,pref_,str_lids)
+     " ORDER BY sm.security_id,sm.ranking ") % (str_lids)
     
     vals=Connections.exec_sql('KGR',req,schema = True)
     
@@ -320,9 +320,9 @@ def exchangeid2tz(**kwargs):
     req=(" SELECT "
         " EXCHANGE,TIMEZONE " 
         " FROM " 
-        " %sKGR..EXCHANGEREFCOMPL "
+        " EXCHANGEREFCOMPL "
         " WHERE "
-        " EXCHANGE in %s ") % (pref_,str_lids)
+        " EXCHANGE in %s ") % (str_lids)
     vals=Connections.exec_sql('KGR',req)
     # ----------------
     # format
@@ -371,9 +371,9 @@ def tdidch2exchangeid(**kwargs):
     req=(" SELECT "
     " trading_destination_id,EXCHANGE "
     " FROM "
-    " %sKGR..EXCHANGEMAPPING "
+    " EXCHANGEMAPPING "
     " WHERE "
-    " trading_destination_id in %s ") % (pref_,str_lids)
+    " trading_destination_id in %s ") % (str_lids)
 
     vals=Connections.exec_sql('KGR',req)
     if not (not vals):

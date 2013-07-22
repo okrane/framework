@@ -25,7 +25,7 @@ from lib.dbtools.connections import Connections
 data_seq = get_algodata.sequence_info(start_date="13/06/2013",end_date="13/06/2013")
 
 # test
-data_order=get_algodata.sequence_info(sequence_id=['FY2000007221801'])
+data_order=get_algodata.sequence_info(sequence_id=['FY000015064401'])
 data_deal=get_algodata.deal(sequence_id=['FY2000007221801'])
 a=compute_stats.aggexec(data_order=data_order,data_deal=data_deal)
 b=compute_stats.aggexec(data_order=data_order,data_deal=data_deal)
@@ -33,6 +33,7 @@ b=compute_stats.aggexec(data_order=data_order,data_deal=data_deal)
 
 #data=get_algostats.sequence(occurence_id='FY2000007382301')
 data_occ=get_algodata.sequence_info(occurence_id=['FY2000007221801','FY2000007089101'])
+Connections.change_connections('dev')
 data_occ=get_algostats.sequence_info(occurence_id=['FY2000007221801','FY2000007089101'])
 
 #data_occ=get_algodata.occurence_info(occurence_id=['FY2000007221801','FY2000007089101'])
@@ -65,6 +66,11 @@ data_occ=get_algostats.sequence_info(occurence_id=['FY2000007221801','FY20000070
 #req=(" SELECT top 1 * from Market_data..trading_daily ")
 #vals=Connections.exec_sql('MARKET_DATA',req,schema = True)
 #
+
+
+#
+#
+
 
 
 

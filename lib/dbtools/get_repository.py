@@ -155,26 +155,25 @@ def tradingtime(**kwargs):
     ##############################################################
     # request data
     ##############################################################
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
     data=exchangeinfo(security_id=lids)
     if (data.shape[0]==0) or (not np.any(data['EXCHANGETYPE']=='M')):
         return out
     data=data[data['EXCHANGETYPE']=='M']
         
     req=("SELECT * "
-    " FROM %sKGR..trading_hours_master " 
+    " FROM trading_hours_master " 
     " WHERE trading_destination_id = %d "
     " AND context_id is null "
-    " AND quotation_group = '%s'") % (pref_,data['EXCHANGE'].values[0],data['quotation_group'].values[0]) 
+    " AND quotation_group = '%s'") % (data['EXCHANGE'].values[0],data['quotation_group'].values[0]) 
     
     vals=Connections.exec_sql('KGR',req,schema = True)
     
     if not vals[0]:
         req=('SELECT * '
-            ' FROM %sKGR..trading_hours_master ' 
+            ' FROM trading_hours_master ' 
             ' WHERE trading_destination_id = %d '
             ' AND context_id is null '
-            ' AND quotation_group is null') % (pref_,data['EXCHANGE'])
+            ' AND quotation_group is null') % (data['EXCHANGE'])
         vals=Connections.exec_sql('KGR',req,schema = True)
         if not vals[0]:
             raise NameError('get_repository:tradingtime - No trading hours/ exchange: '+str(data['EXCHANGE'].values[0])+' / quotation_group: '+data['quotation_group'].values[0])
@@ -195,7 +194,6 @@ def tradingtime(**kwargs):
             if not (date==[]):
                 # if date, the output will be in datetime whether in time format
                 out[cols]=datetime.combine(datetime.strptime(date, '%d/%m/%Y').date(),out[cols].values[0])
-    exchange_main
     return out
 
 #------------------------------------------------------------------------------
@@ -220,8 +218,7 @@ def exchangeinfo(**kwargs):
     ##############################################################
     # ----------------
     # NEEDED
-    # ----------------
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
+    # ---------------- 
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -230,18 +227,18 @@ def exchangeinfo(**kwargs):
     req=(" SELECT  sm.security_id,sm.ranking,sm.quotation_group, "
      " erefcompl.EXCHANGE,erefcompl.EXCHGID,erefcompl.MIC,erefcompl.EXCHANGETYPE,erefcompl.TIMEZONE, "
      " gzone.NAME as GLOBALZONE,ex.EXCHGNAME "
-     " FROM  %sKGR..security_market sm "
-     " LEFT JOIN %sKGR..EXCHANGEREFCOMPL erefcompl ON ( "
+     " FROM  security_market sm "
+     " LEFT JOIN EXCHANGEREFCOMPL erefcompl ON ( "
      " sm.trading_destination_id=erefcompl.EXCHANGE  "
      " )  "
-     " LEFT JOIN %sKGR..GLOBALZONE gzone ON ( "
+     " LEFT JOIN GLOBALZONE gzone ON ( "
      " erefcompl.GLOBALZONEID=gzone.GLOBALZONEID  "
      " )  "
-     " LEFT JOIN %sKGR..EXCHANGE ex ON ( "
+     " LEFT JOIN EXCHANGE ex ON ( "
      " erefcompl.EXCHGID=ex.EXCHGID  "
      " )  "
      " WHERE  sm.security_id in %s "
-     " ORDER BY sm.security_id,sm.ranking ") % (pref_,pref_,pref_,pref_,str_lids)
+     " ORDER BY sm.security_id,sm.ranking ") % (str_lids)
     
     vals=Connections.exec_sql('KGR',req,schema = True)
     
@@ -272,7 +269,6 @@ def exchangeid2tz(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -281,9 +277,9 @@ def exchangeid2tz(**kwargs):
     req=(" SELECT "
         " EXCHANGE,TIMEZONE " 
         " FROM " 
-        " %sKGR..EXCHANGEREFCOMPL "
+        " EXCHANGEREFCOMPL "
         " WHERE "
-        " EXCHANGE in %s ") % (pref_,str_lids)
+        " EXCHANGE in %s ") % (str_lids)
     vals=Connections.exec_sql('KGR',req)
     # ----------------
     # format
@@ -323,7 +319,6 @@ def tdidch2exchangeid(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -332,9 +327,9 @@ def tdidch2exchangeid(**kwargs):
     req=(" SELECT "
     " trading_destination_id,EXCHANGE "
     " FROM "
-    " %sKGR..EXCHANGEMAPPING "
+    " EXCHANGEMAPPING "
     " WHERE "
-    " trading_destination_id in %s ") % (pref_,str_lids)
+    " trading_destination_id in %s ") % (str_lids)
 
     vals=Connections.exec_sql('KGR',req)
     if not (not vals):
@@ -357,9 +352,9 @@ def tdidch2exchangeid(**kwargs):
         req=(" SELECT "
         " EXCHANGE,TIMEZONE " 
         " FROM " 
-        " %sKGR..EXCHANGEREFCOMPL "
+        " EXCHANGEREFCOMPL "
         " WHERE "
-        " EXCHANGE in %s ") % (pref_,str_exchnotnone)
+        " EXCHANGE in %s ") % (str_exchnotnone)
         vals=Connections.exec_sql('KGR',req)
         
         if (any([x[1] is 'America/New_York' for x in vals])) and (not secid==[]):
@@ -368,10 +363,10 @@ def tdidch2exchangeid(**kwargs):
             req=(" SELECT "
             " trading_destination_id " 
             " FROM " 
-            " %sKGR..security_market "
+            " security_market "
             " WHERE "
             " security_id = %d "
-            " and ranking=1 ") % (pref_,secid)
+            " and ranking=1 ") % (secid)
             vals=Connections.exec_sql('KGR',req)
             out=np.array([vals[0][0]]*lids.size) 
         else:
@@ -402,18 +397,17 @@ def local_tz_from(**kwargs):
         # construct request
         str_lids="("+"".join([str(x)+',' for x in lids])
         str_lids=str_lids[:-1]+")"
-        pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
         
         req=(" select "
         " sec.SYMBOL6, exch.TIMEZONE "
         " from "
-            " %sKGR..SECURITY sec ,"
-            " %sKGR..EXCHANGEREFCOMPL exch "
+            " SECURITY sec ,"
+            " EXCHANGEREFCOMPL exch "
         " where "
             " sec.SYMBOL6 in %s "
             " and sec.EXCHGID=exch.EXCHGID "
             " and exch.EXCHANGETYPE='M' "
-            " and sec.STATUS='A' ") % (pref_,pref_,str_lids)
+            " and sec.STATUS='A' ") % (str_lids)
             
     else:
         raise NameError('get_repository:tz_from - Bad input data')

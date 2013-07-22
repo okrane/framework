@@ -271,7 +271,7 @@ class DatabasePlug:
         if mode == 'insert':
             logging.info("insert %s Orders into database" %str(len(orders)) )
             
-        l = list(self.client['field_map'].find({'collection_name':collection_name}))
+        l = list(self.client['Mars']['field_map'].find({'collection_name':collection_name}))
         fields = []
         if len(l) > 0:
             for el in l:

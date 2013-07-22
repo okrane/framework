@@ -19,7 +19,7 @@ from lib.io.toolkit import get_traceback
 # convert_symbol
 #------------------------------------------------------------------------------
 def convert_symbol(**kwargs):
-    """ Converts between:  (security_id, ric, glid, bloomberg, sedol, SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6)
+    """ Converts between:  (security_id, security_name, ric, glid, bloomberg, sedol, SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6)
         the keys to be passed are :
         a. a key < value > containing the value to convert
         b. a key < source > with the type of the element in the above list
@@ -28,6 +28,12 @@ def convert_symbol(**kwargs):
         d. optionally pass the EXCHGID for disambiguation purposes
         
         @return the requested symbol in a string format (empty string if not found)
+        
+        Examples:
+            print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110, exchgid='SEPA'))
+            print "security_id(%s)->SECID=%s"% (110, convert_symbol(source = 'security_id', dest = 'SECID', value = 110, exchgid='SEPA'))
+            print "security_id(%s)->ISIN=%s"% (110, convert_symbol(source = 'security_id', dest = 'ISIN', value = 110, exchgid='SEPA'))
+            print "security_id(%s)->bloomberg=%s"% (110, convert_symbol(source = 'security_id', dest = 'bloomberg', value = 110, exchgid='SEPA'))    
     """   
     ##############################################################
     # input handling: allowed keys
@@ -79,7 +85,26 @@ def convert_symbol(**kwargs):
     print query
     val=Connections.exec_sql('KGR',query,schema = False)    
     return val[0][0] if len(val) == 1 else val
-  
+
+def currency(**kwargs):  
+    """
+        Use Example:
+        print currency(security_id = 2) 
+    """
+    ##############################################################
+    # input handling
+    ############################################################## 
+    if not "security_id" in kwargs.keys():
+        raise NameError('get_repository:currency - Bad input : security_id is missing')
+   
+    ##############################################################
+    # request and format
+    ##############################################################   
+    main_destination = exchangeidmain(security_id = kwargs['security_id'])        
+    query = "select CCY from SECURITY where SYMBOL6 = %d and STATUS = 'A' and EXCHGID = (select EXCHGID from EXCHANGEREFCOMPL where EXCHANGE = %d) " % (kwargs['security_id'], main_destination)    
+    out = Connections.exec_sql('KGR', query, as_dict = True)    
+    return out[0]['CCY']
+
 def get_symbol6_from_ticker(ticker):
     ticker.replace('|', ' ')
     if ticker[-3:] == '.AG':
@@ -209,7 +234,7 @@ def tradingtime(**kwargs):
             if not (date==[]):
                 # if date, the output will be in datetime whether in time format
                 out[cols]=datetime.combine(datetime.strptime(date, '%d/%m/%Y').date(),out[cols].values[0])
-    
+    exchange_main
     return out
 
 #------------------------------------------------------------------------------
@@ -611,8 +636,9 @@ def local_tz_from(**kwargs):
 if __name__ == "__main__":
     print get_symbol6_from_ticker("MMK.VN")
     print get_symbol6_from_ticker("PSMd.AG")
+    print exchangeinfo(security_id = 2)    
     
-    print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110))
+    print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110, exchgid='SEPA'))
     print "security_id(%s)->SECID=%s"% (110, convert_symbol(source = 'security_id', dest = 'SECID', value = 110, exchgid='SEPA'))
     print "security_id(%s)->ISIN=%s"% (110, convert_symbol(source = 'security_id', dest = 'ISIN', value = 110, exchgid='SEPA'))
     print "security_id(%s)->bloomberg=%s"% (110, convert_symbol(source = 'security_id', dest = 'bloomberg', value = 110, exchgid='SEPA'))

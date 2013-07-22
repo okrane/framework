@@ -291,7 +291,7 @@ class DatabasePlug:
                     fields.append(k)
                     to_add = True
         if to_add:
-            self.client['field_map'].save({'collection_name' : collection_name, 'list_columns' : fields})
+            self.client['Mars']['field_map'].save({'collection_name' : collection_name, 'list_columns' : fields})
         logging.info("End Of insertion to the database")
 
     def get_dico_header(self, day):

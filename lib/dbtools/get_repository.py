@@ -11,6 +11,8 @@ import pytz
 import numpy as np
 from lib.data.matlabutils import *
 from lib.dbtools.connections import Connections
+from lib.logger import *
+from lib.io.toolkit import get_traceback
 
 
 #------------------------------------------------------------------------------
@@ -78,6 +80,43 @@ def convert_symbol(**kwargs):
     val=Connections.exec_sql('KGR',query,schema = False)    
     return val[0][0] if len(val) == 1 else val
   
+def get_symbol6_from_ticker(ticker):
+    ticker.replace('|', ' ')
+    if ticker[-3:] == '.AG':
+        parent_code = ticker[:-3]
+        query = """SELECT distinct SYMBOL6
+                FROM SECURITY
+                where PARENTCODE='%s'
+                and SYMBOL6 <> 'NULL'""" % (parent_code)
+    else:
+        l = ticker.split('.')
+        suffix = l.pop()
+        symbol1 = ticker[:-(len(suffix)+1)]
+
+        query = """SELECT distinct sec.SYMBOL6
+                FROM SECURITY sec,
+                EXCHANGEMAPPING exhm,
+                FlextradeExchangeMapping exflex
+                where sec.SYMBOL1='%s'
+                and sec.EXCHGID=exhm.EXCHGID
+                and exflex.SUFFIX='%s'
+                and exhm.EXCHANGE=exflex.EXCHANGE
+                AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
+
+    result = Connections.exec_sql('KGR', query, as_dict = True)
+    if len(result) == 0:
+        logging.info(query)
+        logging.warning("Got no SYMBOL 6 for this ticker: " + ticker)
+        return ""
+    elif len(result)>1:
+        logging.info(query)
+        logging.warning("Got more than one SYMBOL 6 for this ticker: " + ticker)
+        return result[0]['SYMBOL6']
+    else:
+        return result[0]['SYMBOL6']
+        
+
+
 #------------------------------------------------------------------------------
 # exchangeidmain
 #------------------------------------------------------------------------------
@@ -570,6 +609,9 @@ def local_tz_from(**kwargs):
     
     
 if __name__ == "__main__":
+    print get_symbol6_from_ticker("MMK.VN")
+    print get_symbol6_from_ticker("PSMd.AG")
+    
     print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110))
     print "security_id(%s)->SECID=%s"% (110, convert_symbol(source = 'security_id', dest = 'SECID', value = 110, exchgid='SEPA'))
     print "security_id(%s)->ISIN=%s"% (110, convert_symbol(source = 'security_id', dest = 'ISIN', value = 110, exchgid='SEPA'))

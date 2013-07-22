@@ -46,19 +46,21 @@ def convert_str(s, date_format = "%Y-%m-%d %H:%M:%S"):
                 return s
     return ret  
 class Converter:
-    def __init__(self, list_of_maps, out_file = 'types_to_add.json'):
-        
+    def __init__(self, list_of_maps, out_file = 'types_to_add.json', required_tag = 'required'):
         self.accepted_date_formats = ["%Y-%m-%d %H:%M:%S", "%Y%m%d"]
         self.to_add     = [] 
         self.out_file   = out_file
         self.unmapped   = list_of_maps
         self.map        = {}
-        self._populate_required()
+        self.required_tag = required_tag
         self.missing    = []
+        
+        self._populate_required()
+        
     def _populate_required(self):
         self.required = []
         for el in self.unmapped:
-            if "required" in el.keys() and el["required"]:
+            if self.required_tag in el.keys() and el[self.required_tag]:
                 self.required.append(el["name"]) 
                    
     def _map(self, key):
@@ -117,6 +119,7 @@ class Converter:
             logging.error(fp.getvalue())
             logging.exception("This key " + str(key) + " (= " + str(value) + ") is not specified in your input dict")
             return convert_str(value)
+        
     def convert_dict(self, dict):
         """ 
         Take only the first key into account
@@ -132,7 +135,7 @@ class Converter:
         for el in dict:
             new_dict[el] = self.convert(el, dict[el])
         for el in self.required:
-            if el not in new_dict.keys():
+            if el not in new_dict.keys() or (el in new_dict.keys() and new_dict[el] == ''):
                 missing.append(el)
         if len(missing)>0:
             logging.error("Those keys (" + str(missing) + ") are missing in this dict: " + str(dict))

@@ -1,8 +1,8 @@
 if __name__ == '__main__':
     from datetime import datetime, timedelta
     from src.import_FIX import DatabasePlug
-    from lib.dbtools.connections import Connections
-    Connections.change_connections("production")
+#     from lib.dbtools.connections import Connections
+#     Connections.change_connections("production")
     
     database_server     = 'PROD'
     database            = 'Mars'
@@ -15,7 +15,6 @@ if __name__ == '__main__':
                             '20130610','20130611','20130612','20130613','20130614',
                             '20130603','20130604','20130605','20130606','20130607']
     
-    dates                = ["20130711"]
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 

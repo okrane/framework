@@ -43,7 +43,9 @@ def send_email(_to      = ["quant.algo@keplerchevreux.com"],
             smtpObj.quit()
         except:
             import time
-            file = open(str(time.time())+".html", "w")
+            import random
+            s = '__' + str(random.randint(1, 1000))
+            file = open(str(time.time()) + s + ".html", "w")
             file.write(_message)
             file.close()
  

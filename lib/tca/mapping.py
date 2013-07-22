@@ -28,31 +28,42 @@ def ExcludeAuction(x):
 #------------------------------------------------------------------------------
 # StrategyName
 #------------------------------------------------------------------------------
-def StrategyName(x,y):
-    if x==1:
+def StrategyName(id, sweepLit = None, database = 'Mars'):
+    file_orders = open(self.server['ip_addr'] + '.orders.json', 'r')
+    u_orders = simplejson.loads(file_orders.read(), object_hook = serialize.as_datetime)
+    file_orders.close()
+    
+    database = self.client[database]
+    collection = database["map_tagFIX"]
+    result   = collection.find({"tag_name" : "StrategyName"})
+    l_result = list(result)
+    for el in l_result:
+    self.strategy_name[int(el["tag_value"])] = el["strategy_name"]
+    
+    if id==1:
         out="VWAP"
-    elif x==2:
+    elif id==2:
         out="TWAP"
-    elif x==3:
+    elif id==3:
         out="VOL"    
-    elif x==4:
+    elif id==4:
         out="ICEBERG"   
-    elif x==5:
+    elif id==5:
         out="DYNVOL"   
-    elif x==6:
+    elif id==6:
         out="IS"   
-    elif x==7:
+    elif id==7:
         out="CROSSFIRE"   
-    elif x==8:
+    elif id==8:
         out="CLOSE"   
-    elif x==10:
+    elif id==10:
         out="BLINK"    
-    elif x==9:
-        if y=="CF":
+    elif id==9:
+        if sweepLit=="CF":
             out="CROSSFIRE" 
-        elif y=="BF":
+        elif sweepLit=="BF":
             out="BLINK" 
-        elif y=="yes":
+        elif sweepLit=="yes":
             out="HUNT" 
         else:
             raise NameError('mapping:StrategyName - Bad inputs')

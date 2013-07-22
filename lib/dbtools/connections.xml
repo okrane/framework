@@ -26,6 +26,7 @@
 			</connections>
 			<connections driver="Mongo"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
 				<SERVER NAME="DB_TEST">172.29.0.32:27017|DB_test|python_script|pythonpass</SERVER>
+				<SERVER NAME="MARS">172.29.0.32:27017|Mars|python_write|pythonpasswrite</SERVER>
             </connections> 
             <bases>
                 <base key="quant" name="quant"/>
@@ -141,7 +142,6 @@
             </connections>
 			<connections driver="Mongo"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
 				<SERVER NAME="MARS">172.29.100.27:27017|Mars|python_read|pythonpassread</SERVER>
-				<SERVER NAME="HPP">172.29.0.32:27017|DB_test|python_script|pythonpass</SERVER>
             </connections>
 			<bases>
                 <base key="quant" name="quant"/>

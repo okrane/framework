@@ -17,17 +17,14 @@ from lib.dbtools.connections import Connections
 #--------------------------------------------------------------------------
 # sequence_info
 #--------------------------------------------------------------------------
-def sequence_info(**kwargs):
+def sequence_info(db_name = "Mars", **kwargs):
      
     #### DEFAULT OUTPUT    
     data=[]
     
-    #### CONNECTIONS and DB 
-    db_name="DB_test"
-    order_cname="AlgoOrders"
     #client = MongoClient(connect_info)
-    client = Connections.getClient('HPP')
-    occ_db = client[db_name][order_cname]
+    client = Connections.getClient(db_name.upper())
+    occ_db = client[db_name]["AlgoOrders"]
     
     #### Build the request
     t0=time.clock()
@@ -35,7 +32,7 @@ def sequence_info(**kwargs):
     # get all the sequences from sequence ids
     if "sequence_id" in kwargs.keys():
         ids=kwargs["sequence_id"]
-        if isinstance(ids,basestring):
+        if isinstance(ids, basestring):
             ids=[ids] 
         req_=occ_db.find({"ClOrdID": {"$in" : ids}})
     # get all the sequences from occurence ids
@@ -89,7 +86,7 @@ def sequence_info(**kwargs):
     #- time infos
     u'eff_starttime',u'eff_endtime',u'duration',
     #- parameter info
-    u'Side',u'OrderQty',u'StrategyName',
+    u'Side',u'OrderQty',u'StrategyName',u'strategy_name_mapped',
     u'StartTime',u'EndTime',u'ExcludeAuction',
     u'Price',u'WouldLevel',
     u'MinPctVolume',u'MaxPctVolume',u'AuctionPct',
@@ -113,8 +110,8 @@ def sequence_info(**kwargs):
         data['nb_replace']=tmp
     if ('Side' in data.columns.tolist()):
         tmp=np.array([np.NaN]*data.shape[0])
-        tmp[np.nonzero([x in [1,3] for x in data['Side']])[0]]=1
-        tmp[np.nonzero([x in [2,4] for x in data['Side']])[0]]=-1
+        tmp[np.nonzero([x in ['1','3'] for x in data['Side']])[0]]=1
+        tmp[np.nonzero([x in ['2','4'] for x in data['Side']])[0]]=-1
         if np.any(np.isnan(tmp)):
             raise NameError('get_algodata:sequence_info - Side : strange values')
         data['Side']=tmp
@@ -142,17 +139,14 @@ def sequence_info(**kwargs):
 #--------------------------------------------------------------------------
 # occurence_info
 #--------------------------------------------------------------------------        
-def occurence_info(**kwargs): 
+def occurence_info(db_name = "Mars", **kwargs): 
     
     #### DEFAULT OUTPUT    
     data=[]
     
-    #### CONNECTIONS and DB
-    db_name="DB_test"
-    order_cname="AlgoOrders"
     #client = MongoClient(connect_info)
-    client = Connections.getClient('HPP')
-    occ_db = client[db_name][order_cname]
+    client = Connections.getClient(db_name.upper())
+    occ_db = client[db_name]['AlgoOrders']
     
     #### Build the request
     # if list of sequence_id then        
@@ -164,7 +158,7 @@ def occurence_info(**kwargs):
     elif all(x in ["start_date","end_date"] for x in kwargs.keys()):
         sday=dt.datetime.strptime(kwargs["start_date"]+'-00:00:01', '%d/%m/%Y-%H:%M:%S')
         eday=dt.datetime.strptime(kwargs["end_date"]+'-23:59:59', '%d/%m/%Y-%H:%M:%S')
-        req_=occ_db.find({"SendingTime": {"$gte":sday , "$lt":eday }})  
+        #req_=occ_db.find({"SendingTime": {"$gte":sday , "$lt":eday }})  
         req_=occ_db.find({"MsgType":"D","SendingTime": {"$gte":sday , "$lt":eday}})  
     else:
         raise NameError('get_algodata:occurence_info - Bad input data')
@@ -206,8 +200,8 @@ def occurence_info(**kwargs):
     #### Transform the data        
     if ('Side' in data.columns.tolist()):
         tmp=np.array([np.NaN]*data.shape[0])
-        tmp[np.nonzero([x in [1,3] for x in data['Side']])[0]]=1
-        tmp[np.nonzero([x in [2,4] for x in data['Side']])[0]]=-1
+        tmp[np.nonzero([x in ['1','3'] for x in data['Side']])[0]]=1
+        tmp[np.nonzero([x in ['2','4'] for x in data['Side']])[0]]=-1
         if np.any(np.isnan(tmp)):
             raise NameError('get_algodata:occurence_info - Side : strange values')
         data['Side']=tmp   
@@ -236,17 +230,16 @@ def occurence_info(**kwargs):
 #--------------------------------------------------------------------------
 # deal
 #--------------------------------------------------------------------------        
-def deal(**kwargs): 
+def deal(db_name="Mars", **kwargs): 
     
     #### DEFAULT OUTPUT    
     data=[]
     
     #### CONNECTIONS and DB
-    db_name="DB_test"
-    deal_cname="OrderDeals"
+
     # client = MongoClient(connect_info)
-    client = Connections.getClient('HPP')
-    deal_db = client[db_name][deal_cname]            
+    client = Connections.getClient(db_name.upper())
+    deal_db = client[db_name]["OrderDeals"]            
         
     #### Build the request
     # if list of sequence_id then        
@@ -302,13 +295,12 @@ def deal(**kwargs):
 #--------------------------------------------------------------------------
 # fieldList
 #--------------------------------------------------------------------------        
-def fieldList(cname=None):
+def fieldList(cname=None, db_name="Mars", **kwargs):
     
     #### CONNECTIONS and DB
-    db_name="DB_test"
     map_name="field_map"
     #client = MongoClient(connect_info)
-    client = Connections.getClient('HPP')
+    client = Connections.getClient(db_name.upper())
     req_=client[db_name][map_name].find({"collection_name":cname},{"list_columns":1,"_id":0}) 
     
     #### Create the data

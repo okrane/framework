@@ -11,6 +11,8 @@ import pytz
 import numpy as np
 from lib.data.matlabutils import *
 from lib.dbtools.connections import Connections
+from lib.logger import *
+from lib.io.toolkit import get_traceback
 
 
 #------------------------------------------------------------------------------
@@ -78,7 +80,7 @@ def convert_symbol(**kwargs):
     # ----------------
     # request
     # ----------------  
-    query = "SELECT %s from SECURITY where %s = '%s'" % (fields[kwargs['dest']], fields[kwargs['source']], kwargs['value'])
+    query = "SELECT distinct %s from SECURITY where %s = '%s'" % (fields[kwargs['dest']], fields[kwargs['source']], kwargs['value'])
     query += " and EXCHGID = '%s'" % kwargs['exchgid'] if kwargs.has_key('exchgid') else ""    
     print query
     val=Connections.exec_sql('KGR',query,schema = False)    
@@ -102,6 +104,43 @@ def currency(**kwargs):
     query = "select CCY from SECURITY where SYMBOL6 = %d and STATUS = 'A' and EXCHGID = (select EXCHGID from EXCHANGEREFCOMPL where EXCHANGE = %d) " % (kwargs['security_id'], main_destination)    
     out = Connections.exec_sql('KGR', query, as_dict = True)    
     return out[0]['CCY']
+
+def get_symbol6_from_ticker(ticker):
+    ticker.replace('|', ' ')
+    if ticker[-3:] == '.AG':
+        parent_code = ticker[:-3]
+        query = """SELECT distinct SYMBOL6
+                FROM SECURITY
+                where PARENTCODE='%s'
+                and SYMBOL6 <> 'NULL'""" % (parent_code)
+    else:
+        l = ticker.split('.')
+        suffix = l.pop()
+        symbol1 = ticker[:-(len(suffix)+1)]
+
+        query = """SELECT distinct sec.SYMBOL6
+                FROM SECURITY sec,
+                EXCHANGEMAPPING exhm,
+                FlextradeExchangeMapping exflex
+                where sec.SYMBOL1='%s'
+                and sec.EXCHGID=exhm.EXCHGID
+                and exflex.SUFFIX='%s'
+                and exhm.EXCHANGE=exflex.EXCHANGE
+                AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
+
+    result = Connections.exec_sql('KGR', query, as_dict = True)
+    if len(result) == 0:
+        logging.info(query)
+        logging.warning("Got no SYMBOL 6 for this ticker: " + ticker)
+        return ""
+    elif len(result)>1:
+        logging.info(query)
+        logging.warning("Got more than one SYMBOL 6 for this ticker: " + ticker)
+        return result[0]['SYMBOL6']
+    else:
+        return result[0]['SYMBOL6']
+        
+
 
 #------------------------------------------------------------------------------
 # exchangeidmain
@@ -155,25 +194,26 @@ def tradingtime(**kwargs):
     ##############################################################
     # request data
     ##############################################################
+    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
     data=exchangeinfo(security_id=lids)
     if (data.shape[0]==0) or (not np.any(data['EXCHANGETYPE']=='M')):
         return out
     data=data[data['EXCHANGETYPE']=='M']
         
     req=("SELECT * "
-    " FROM trading_hours_master " 
+    " FROM %sKGR..trading_hours_master " 
     " WHERE trading_destination_id = %d "
     " AND context_id is null "
-    " AND quotation_group = '%s'") % (data['EXCHANGE'].values[0],data['quotation_group'].values[0]) 
+    " AND quotation_group = '%s'") % (pref_,data['EXCHANGE'].values[0],data['quotation_group'].values[0]) 
     
     vals=Connections.exec_sql('KGR',req,schema = True)
     
     if not vals[0]:
         req=('SELECT * '
-            ' FROM trading_hours_master ' 
+            ' FROM %sKGR..trading_hours_master ' 
             ' WHERE trading_destination_id = %d '
             ' AND context_id is null '
-            ' AND quotation_group is null') % (data['EXCHANGE'])
+            ' AND quotation_group is null') % (pref_,data['EXCHANGE'])
         vals=Connections.exec_sql('KGR',req,schema = True)
         if not vals[0]:
             raise NameError('get_repository:tradingtime - No trading hours/ exchange: '+str(data['EXCHANGE'].values[0])+' / quotation_group: '+data['quotation_group'].values[0])
@@ -194,6 +234,7 @@ def tradingtime(**kwargs):
             if not (date==[]):
                 # if date, the output will be in datetime whether in time format
                 out[cols]=datetime.combine(datetime.strptime(date, '%d/%m/%Y').date(),out[cols].values[0])
+
     return out
 
 #------------------------------------------------------------------------------
@@ -218,7 +259,8 @@ def exchangeinfo(**kwargs):
     ##############################################################
     # ----------------
     # NEEDED
-    # ---------------- 
+    # ----------------
+    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -269,6 +311,7 @@ def exchangeid2tz(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
+    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -319,6 +362,7 @@ def tdidch2exchangeid(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
+    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -352,9 +396,9 @@ def tdidch2exchangeid(**kwargs):
         req=(" SELECT "
         " EXCHANGE,TIMEZONE " 
         " FROM " 
-        " EXCHANGEREFCOMPL "
+        " %sKGR..EXCHANGEREFCOMPL "
         " WHERE "
-        " EXCHANGE in %s ") % (str_exchnotnone)
+        " EXCHANGE in %s ") % (pref_,str_exchnotnone)
         vals=Connections.exec_sql('KGR',req)
         
         if (any([x[1] is 'America/New_York' for x in vals])) and (not secid==[]):
@@ -363,10 +407,10 @@ def tdidch2exchangeid(**kwargs):
             req=(" SELECT "
             " trading_destination_id " 
             " FROM " 
-            " security_market "
+            " %sKGR..security_market "
             " WHERE "
             " security_id = %d "
-            " and ranking=1 ") % (secid)
+            " and ranking=1 ") % (pref_,secid)
             vals=Connections.exec_sql('KGR',req)
             out=np.array([vals[0][0]]*lids.size) 
         else:
@@ -397,17 +441,18 @@ def local_tz_from(**kwargs):
         # construct request
         str_lids="("+"".join([str(x)+',' for x in lids])
         str_lids=str_lids[:-1]+")"
+        pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
         
         req=(" select "
         " sec.SYMBOL6, exch.TIMEZONE "
         " from "
-            " SECURITY sec ,"
-            " EXCHANGEREFCOMPL exch "
+            " %sKGR..SECURITY sec ,"
+            " %sKGR..EXCHANGEREFCOMPL exch "
         " where "
             " sec.SYMBOL6 in %s "
             " and sec.EXCHGID=exch.EXCHGID "
             " and exch.EXCHANGETYPE='M' "
-            " and sec.STATUS='A' ") % (str_lids)
+            " and sec.STATUS='A' ") % (pref_,pref_,str_lids)
             
     else:
         raise NameError('get_repository:tz_from - Bad input data')
@@ -589,6 +634,8 @@ def local_tz_from(**kwargs):
     
     
 if __name__ == "__main__":
+    print get_symbol6_from_ticker("MMK.VN")
+    print get_symbol6_from_ticker("PSMd.AG")
     print exchangeinfo(security_id = 2)    
     
     print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110, exchgid='SEPA'))

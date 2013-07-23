@@ -21,7 +21,7 @@ from bson.json_util import default
 from lib.dbtools.get_repository import get_symbol6_from_ticker
 from lib.io.smart_converter import *
 logging.getLogger("paramiko").setLevel(logging.WARNING)
-from lib.tca import mapping as strategy_mapping
+from lib.tca import mapping
     
 
 
@@ -392,9 +392,9 @@ class DatabasePlug:
         return (dict_order, dico_tags)        
       
     def fill(self, order_deals = True, algo_orders = True):
-        if algo_orders:
-            self.fill_order_deals()
         if order_deals:
+            self.fill_order_deals()
+        if  algo_orders:
             self.fill_algo_orders()
         
     def fill_order_deals(self):
@@ -508,12 +508,13 @@ class DatabasePlug:
         if len(self.missing_enrichment.keys()) > 0:
             m = "<h2>Could not add data to those orders for this date: %s</h2>\n" % day
             m += "<table border='1' cellpadding='1' cellspacing='1' width='580'>\n"
-            m += "\t<tr>"
+            
             for el in self.missing_enrichment:
+                m += "\t<tr>"
                 m += "\t\t<td>" + str(el) + "</td>\n"
                 m += "\t\t<td>" + str(self.missing_enrichment[el][0]) + "</td>\n"
                 m += "\t\t<td><pre>" + str(self.missing_enrichment[el][1]).replace(',', '\n') + "</pre></td>\n"
-            m += "\t</tr>"
+                m += "\t</tr>"
             m += "</table>\n"
             send_email(_to = self.missing_enri_receivers, _subject = "[MongoDatabase]Missing Enrichment", _message = m) 
                
@@ -687,7 +688,7 @@ class DatabasePlug:
                     if "SweepLit" in order.keys():
                         sweep_lit = order["SweepLit"]
                         
-                    order['strategy_name_mapped'] = strategy_mapping(order["StrategyName"])
+                    order['strategy_name_mapped'] = mapping.StrategyName(id = order["StrategyName"], sweep_lit=sweep_lit)
                 else:
                     logging.error("StrategyName is unknown for this order: " + str(order) )                   
                 # Tag to add
@@ -715,7 +716,8 @@ class DatabasePlug:
                         logging.error("chevreux_secid is unknown for this order: " + str(order) )
                         
                     if len(order["cheuvreux_secid"]) == 0:
-                        self.missing_ids.append(str(order['Symbol']))
+                        if "BridgeRejection" in order.keys(): # Means rejected
+                            self.missing_ids.append(str(order['Symbol']))
                         logging.error("chevreux_secid is unknown for this order: " + str(order) )
                 else:
                     logging.error("Symbol is unknown for this order: " + str(order) )

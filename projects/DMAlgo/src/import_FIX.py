@@ -21,7 +21,7 @@ from bson.json_util import default
 from lib.dbtools.get_repository import get_symbol6_from_ticker
 from lib.io.smart_converter import *
 logging.getLogger("paramiko").setLevel(logging.WARNING)
-
+from lib.tca import mapping as strategy_mapping
     
 
 
@@ -207,7 +207,7 @@ def update_security_ids(l_kep_secids):
         
     return dict_secs
 
-def update_security_ids_tickers(tickers):
+def update_security_ids_symbol(tickers):
     dict = {}
     for ticker in tickers:
         dict[ticker] = get_symbol6_from_ticker(ticker)
@@ -391,9 +391,11 @@ class DatabasePlug:
                                     continue  
         return (dict_order, dico_tags)        
       
-    def fill(self):
-        self.fill_order_deals()
-        self.fill_algo_orders()
+    def fill(self, order_deals = True, algo_orders = True):
+        if algo_orders:
+            self.fill_order_deals()
+        if order_deals:
+            self.fill_algo_orders()
         
     def fill_order_deals(self):
         self.io      = "O"
@@ -426,6 +428,7 @@ class DatabasePlug:
         to_return   = []
         self.io     = "I"
         for day in self.dates:
+            
             self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
             orders          = []
             for s in self.conf:
@@ -447,7 +450,8 @@ class DatabasePlug:
             self.send_missing_ids(day) 
             self.send_missing_tags()
             self.send_missing_enrichment(day)
-            self.checker = []
+            
+            self.checker.flush()
         return to_return
     def send_missing_tags(self):
         if len(self.checker.missing) > 0:
@@ -489,16 +493,16 @@ class DatabasePlug:
                 summary += "<li>" + key + " \t=\t " + str(val) + "</li>\n"
             summary += "</ul>"     
             msg = title + summary + m
-            send_email(_to = self.missing_tags_receivers, _subject = "Missing tags", _message = msg)
+            send_email(_to = self.missing_tags_receivers, _subject = "[MongoDatabase]Missing tags", _message = msg)
       
     def send_missing_ids(self, day):
         if len(self.missing_ids) > 0:
-            m = "<h2>Those TickerHisto ids cannot be retrieved in KGR for this date: %s</h2>\n" % day
+            m = "<h2>Those Symbol ids cannot be retrieved in KGR for this date: %s</h2>\n" % day
             m += "<ul>"
             for el in set(self.missing_ids):
                 m += "<li>" + str(el) + "</li>\n"
             m += "</ul>"
-            send_email(_to = self.missing_id_receivers, _subject = "Missing ids", _message = m)
+            send_email(_to = self.missing_id_receivers, _subject = "[MongoDatabase]Missing ids", _message = m)
             
     def send_missing_enrichment(self, day):
         if len(self.missing_enrichment.keys()) > 0:
@@ -511,7 +515,7 @@ class DatabasePlug:
                 m += "\t\t<td><pre>" + str(self.missing_enrichment[el][1]).replace(',', '\n') + "</pre></td>\n"
             m += "\t</tr>"
             m += "</table>\n"
-            send_email(_to = self.missing_enri_receivers, _subject = "Missing Enrichment", _message = m) 
+            send_email(_to = self.missing_enri_receivers, _subject = "[MongoDatabase]Missing Enrichment", _message = m) 
                
     def get_algo_orders(self, day):
         logging.debug('Generating dico for Trader matching')
@@ -533,7 +537,7 @@ class DatabasePlug:
         self.dico_tags = res_import[1]
          
         l_kep_secids = []
-        l_ticker     = []
+        l_symbol     = []
         job_id = 'AO%s' %day
         
         if self.mode == "write":
@@ -575,14 +579,14 @@ class DatabasePlug:
 #                         print temp
                 if 'SecurityID' in u_order[0].keys():
                     l_kep_secids.append(u_order[0]['SecurityID'])
-                if 'TickerHisto' in u_order[0].keys():
-                    l_ticker.append(u_order[0]['TickerHisto'])
+                if 'Symbol' in u_order[0].keys():
+                    l_symbol.append(u_order[0]['Symbol'])
             import lib.io.serialize as serialize
             import simplejson
             
             j_orders = serialize.DateTimeJSONEncoder().encode(u_orders)
             j_kep_secids = simplejson.dumps(l_kep_secids, separators=(',',':'))
-            j_kep_secids_ticker = simplejson.dumps(l_ticker, separators=(',',':'))
+            j_kep_secids_ticker = simplejson.dumps(l_symbol, separators=(',',':'))
             
             file_orders = open(self.server['ip_addr'] + '.orders.json', 'w')
             file_orders.write(j_orders)
@@ -592,7 +596,7 @@ class DatabasePlug:
             file_ids.write(j_kep_secids)
             file_ids.close()
             
-            file_ids = open(self.server['ip_addr'] + '.secids.ticker.json', 'w')
+            file_ids = open(self.server['ip_addr'] + '.secids.symbol.json', 'w')
             file_ids.write(j_kep_secids_ticker)
             file_ids.close()
         else:
@@ -607,15 +611,15 @@ class DatabasePlug:
             l_kep_secids = simplejson.loads(file_ids.read())
             file_ids.close 
              
-            file_ids = open(self.server['ip_addr'] + '.secids.ticker.json', 'r')
-            l_ticker = simplejson.loads(file_ids.read())
+            file_ids = open(self.server['ip_addr'] + '.secids.symbol.json', 'r')
+            l_symbol = simplejson.loads(file_ids.read())
             file_ids.close()
         
             
         
         
         dict_secs = update_security_ids(set(l_kep_secids))
-        dict_secs_ticker = update_security_ids_tickers(set(l_ticker))
+        dict_secs_symbol = update_security_ids_symbol(set(l_symbol))
 #         if len(dict_secs) == 0:
 #             logging.critical("IMPOSSIBLE TO GET DATA FROM KGR")
 #             logging.critical("Shutdown")
@@ -678,7 +682,12 @@ class DatabasePlug:
                                     
                 # Strategy Name mapping
                 if "StrategyName"  in order.keys():
-                    order['strategy_name_mapped'] = self.get_strategy_name(order["StrategyName"])
+                    sweep_lit = None
+                    
+                    if "SweepLit" in order.keys():
+                        sweep_lit = order["SweepLit"]
+                        
+                    order['strategy_name_mapped'] = strategy_mapping(order["StrategyName"])
                 else:
                     logging.error("StrategyName is unknown for this order: " + str(order) )                   
                 # Tag to add
@@ -698,14 +707,18 @@ class DatabasePlug:
 #                     self.missing_ids.append(str(order['SecurityID']))
 #                     logging.error("The cheuvreux Sec Id could not be found: " + str(order))
 
-                if "TickerHisto" in order.keys():
-                    order["cheuvreux_secid"] = dict_secs_ticker[order["TickerHisto"]]
-                    
+                if "Symbol" in order.keys():
+                    try:
+                        order["cheuvreux_secid"] = dict_secs_symbol[order["Symbol"]]
+                    except:
+                        order["cheuvreux_secid"] = ''
+                        logging.error("chevreux_secid is unknown for this order: " + str(order) )
+                        
                     if len(order["cheuvreux_secid"]) == 0:
-                        self.missing_ids.append(str(order['TickerHisto']))
+                        self.missing_ids.append(str(order['Symbol']))
                         logging.error("chevreux_secid is unknown for this order: " + str(order) )
                 else:
-                    logging.error("TickerHisto is unknown for this order: " + str(order) )
+                    logging.error("Symbol is unknown for this order: " + str(order) )
                 try:   
                     rate = ConversionRate.getRate(order['Currency'], day )
                     if rate is not None: 

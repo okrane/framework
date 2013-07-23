@@ -56,7 +56,8 @@ class Converter:
         self.missing    = []
         
         self._populate_required()
-        
+    def flush(self):
+        self.missing    = []   
     def _populate_required(self):
         self.required = []
         for el in self.unmapped:

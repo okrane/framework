@@ -33,14 +33,14 @@ def get_local(day, sec_id, srv_addr, local_temp = ''):
         full_path = os.path.realpath(__file__)
         local_temp, f = os.path.split(full_path)
         
-    remote_data_path = '/quant/kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
+    remote_data_path = '/quant/kc_repository_/get_tick/ft/%s/%s.mat' %(sec_id, day)
     
     local_addr = socket.gethostbyname(socket.gethostname())
     local_data_path = '%s/temp_buffer/%s.mat' %(path, day) 
     
-    print "Importing file from distant repository :"
-    print "Source : %s @ %s ==>" %(remote_data_path, srv_addr)
-    print "Target : %s @ %s <==" %(local_data_path, local_addr)
+#     print "Importing file from distant repository :"
+#     print "Source : %s @ %s ==>" %(remote_data_path, srv_addr)
+#     print "Target : %s @ %s <==" %(local_data_path, local_addr)
     
     transport = paramiko.Transport((srv_addr, 22))
     transport.connect(username = 'flexsys', password = 'flexsys1')
@@ -164,7 +164,8 @@ def histocurrencypair(**kwargs):
     ##############################################################
     # request and format
     ##############################################################
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
+    pref_ = ""
+#     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
         
     ####  construct request    
     req=(" SELECT "
@@ -279,6 +280,6 @@ if __name__=='__main__':
     # ft french stock
     data=read_dataset.ft(security_id=110,date='11/03/2013')
     # ft french stock (local)
-    data=read_dataset.ft(security_id=110,date='11/03/2013', remote=True)
+    data=ft(security_id=110,date='11/03/2013', remote=True)
     # currency rate
     data=read_dataset.histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])

@@ -1,2 +1,2 @@
-StrategyName|ExDestination|Symbol|SecurityID|Side|Currency|OrderQty|Price|StartTime|EndTime|MinSize|AggregatedStyle|
-9|XPAR|FP|FR0000120271|EUR|10|10|11:00|13:00|1|yes|
+StrategyName|ExDestination|Symbol|SecurityID|Side|Currency|OrderQty|Price|MaxPctVolume|ExecutionStyle|AuctionPct|AggregatedStyle|
+3|XPAR|FP|FR0000120271|1|EUR|300000|100|20| | |yes|

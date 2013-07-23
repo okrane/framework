@@ -73,8 +73,7 @@ def convert_symbol(**kwargs):
     # request
     # ----------------  
     query = "SELECT %s from SECURITY where %s = '%s'" % (fields[kwargs['dest']], fields[kwargs['source']], kwargs['value'])
-    query += " and EXCHGID = '%s'" % kwargs['exchgid'] if kwargs.has_key('exchgid') else ""    
-    print query
+    query += " and EXCHGID = '%s'" % kwargs['exchgid'] if kwargs.has_key('exchgid') else ""
     val=Connections.exec_sql('KGR',query,schema = False)    
     return val[0][0] if len(val) == 1 else val
   
@@ -130,7 +129,8 @@ def tradingtime(**kwargs):
     ##############################################################
     # request data
     ##############################################################
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
+    pref_ = ""
+#     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
     data=exchangeinfo(security_id=lids)
     if (data.shape[0]==0) or (not np.any(data['EXCHANGETYPE']=='M')):
         return out
@@ -196,7 +196,8 @@ def exchangeinfo(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
+    pref_ = ""
+#     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -247,7 +248,8 @@ def exchangeid2tz(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
+    pref_ = ""
+#     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -298,7 +300,8 @@ def tdidch2exchangeid(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
+    pref_ = ""
+#     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -377,7 +380,8 @@ def local_tz_from(**kwargs):
         # construct request
         str_lids="("+"".join([str(x)+',' for x in lids])
         str_lids=str_lids[:-1]+")"
-        pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
+        pref_ = ""
+#         pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
         
         req=(" select "
         " sec.SYMBOL6, exch.TIMEZONE "

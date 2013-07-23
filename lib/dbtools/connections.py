@@ -76,7 +76,6 @@ class Connections:
         parser.setContentHandler(handler)
         parser.parse(db_connection_file)
       
-        driver = 'SQL Server'if os.name == 'nt' else 'TDS'
         
         driver = handler.mapping[server.upper()][4]
         if driver == 'SQL Server' and os.name != 'nt': driver = 'TDS'

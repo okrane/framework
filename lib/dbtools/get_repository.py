@@ -11,13 +11,15 @@ import pytz
 import numpy as np
 from lib.data.matlabutils import *
 from lib.dbtools.connections import Connections
+from lib.logger import *
+from lib.io.toolkit import get_traceback
 
 
 #------------------------------------------------------------------------------
 # convert_symbol
 #------------------------------------------------------------------------------
 def convert_symbol(**kwargs):
-    """ Converts between:  (security_id, ric, glid, bloomberg, sedol, SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6)
+    """ Converts between:  (security_id, security_name, ric, glid, bloomberg, sedol, SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6)
         the keys to be passed are :
         a. a key < value > containing the value to convert
         b. a key < source > with the type of the element in the above list
@@ -26,6 +28,12 @@ def convert_symbol(**kwargs):
         d. optionally pass the EXCHGID for disambiguation purposes
         
         @return the requested symbol in a string format (empty string if not found)
+        
+        Examples:
+            print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110, exchgid='SEPA'))
+            print "security_id(%s)->SECID=%s"% (110, convert_symbol(source = 'security_id', dest = 'SECID', value = 110, exchgid='SEPA'))
+            print "security_id(%s)->ISIN=%s"% (110, convert_symbol(source = 'security_id', dest = 'ISIN', value = 110, exchgid='SEPA'))
+            print "security_id(%s)->bloomberg=%s"% (110, convert_symbol(source = 'security_id', dest = 'bloomberg', value = 110, exchgid='SEPA'))    
     """   
     ##############################################################
     # input handling: allowed keys
@@ -72,11 +80,73 @@ def convert_symbol(**kwargs):
     # ----------------
     # request
     # ----------------  
+<<<<<<< HEAD
     query = "SELECT %s from SECURITY where %s = '%s'" % (fields[kwargs['dest']], fields[kwargs['source']], kwargs['value'])
     query += " and EXCHGID = '%s'" % kwargs['exchgid'] if kwargs.has_key('exchgid') else ""
+=======
+    query = "SELECT distinct %s from SECURITY where %s = '%s'" % (fields[kwargs['dest']], fields[kwargs['source']], kwargs['value'])
+    query += " and EXCHGID = '%s'" % kwargs['exchgid'] if kwargs.has_key('exchgid') else ""    
+    print query
+>>>>>>> 7ee434e62b2d845b5cf26676f957e0a7645dcc7e
     val=Connections.exec_sql('KGR',query,schema = False)    
     return val[0][0] if len(val) == 1 else val
-  
+
+def currency(**kwargs):  
+    """
+        Use Example:
+        print currency(security_id = 2) 
+    """
+    ##############################################################
+    # input handling
+    ############################################################## 
+    if not "security_id" in kwargs.keys():
+        raise NameError('get_repository:currency - Bad input : security_id is missing')
+   
+    ##############################################################
+    # request and format
+    ##############################################################   
+    main_destination = exchangeidmain(security_id = kwargs['security_id'])        
+    query = "select CCY from SECURITY where SYMBOL6 = %d and STATUS = 'A' and EXCHGID = (select EXCHGID from EXCHANGEREFCOMPL where EXCHANGE = %d) " % (kwargs['security_id'], main_destination)    
+    out = Connections.exec_sql('KGR', query, as_dict = True)    
+    return out[0]['CCY']
+
+def get_symbol6_from_ticker(ticker):
+    ticker.replace('|', ' ')
+    if ticker[-3:] == '.AG':
+        parent_code = ticker[:-3]
+        query = """SELECT distinct SYMBOL6
+                FROM SECURITY
+                where PARENTCODE='%s'
+                and SYMBOL6 <> 'NULL'""" % (parent_code)
+    else:
+        l = ticker.split('.')
+        suffix = l.pop()
+        symbol1 = ticker[:-(len(suffix)+1)]
+
+        query = """SELECT distinct sec.SYMBOL6
+                FROM SECURITY sec,
+                EXCHANGEMAPPING exhm,
+                FlextradeExchangeMapping exflex
+                where sec.SYMBOL1='%s'
+                and sec.EXCHGID=exhm.EXCHGID
+                and exflex.SUFFIX='%s'
+                and exhm.EXCHANGE=exflex.EXCHANGE
+                AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
+
+    result = Connections.exec_sql('KGR', query, as_dict = True)
+    if len(result) == 0:
+        logging.info(query)
+        logging.warning("Got no SYMBOL 6 for this ticker: " + ticker)
+        return ""
+    elif len(result)>1:
+        logging.info(query)
+        logging.warning("Got more than one SYMBOL 6 for this ticker: " + ticker)
+        return result[0]['SYMBOL6']
+    else:
+        return result[0]['SYMBOL6']
+        
+
+
 #------------------------------------------------------------------------------
 # exchangeidmain
 #------------------------------------------------------------------------------
@@ -170,7 +240,7 @@ def tradingtime(**kwargs):
             if not (date==[]):
                 # if date, the output will be in datetime whether in time format
                 out[cols]=datetime.combine(datetime.strptime(date, '%d/%m/%Y').date(),out[cols].values[0])
-    
+
     return out
 
 #------------------------------------------------------------------------------
@@ -206,18 +276,18 @@ def exchangeinfo(**kwargs):
     req=(" SELECT  sm.security_id,sm.ranking,sm.quotation_group, "
      " erefcompl.EXCHANGE,erefcompl.EXCHGID,erefcompl.MIC,erefcompl.EXCHANGETYPE,erefcompl.TIMEZONE, "
      " gzone.NAME as GLOBALZONE,ex.EXCHGNAME "
-     " FROM  %sKGR..security_market sm "
-     " LEFT JOIN %sKGR..EXCHANGEREFCOMPL erefcompl ON ( "
+     " FROM  security_market sm "
+     " LEFT JOIN EXCHANGEREFCOMPL erefcompl ON ( "
      " sm.trading_destination_id=erefcompl.EXCHANGE  "
      " )  "
-     " LEFT JOIN %sKGR..GLOBALZONE gzone ON ( "
+     " LEFT JOIN GLOBALZONE gzone ON ( "
      " erefcompl.GLOBALZONEID=gzone.GLOBALZONEID  "
      " )  "
-     " LEFT JOIN %sKGR..EXCHANGE ex ON ( "
+     " LEFT JOIN EXCHANGE ex ON ( "
      " erefcompl.EXCHGID=ex.EXCHGID  "
      " )  "
      " WHERE  sm.security_id in %s "
-     " ORDER BY sm.security_id,sm.ranking ") % (pref_,pref_,pref_,pref_,str_lids)
+     " ORDER BY sm.security_id,sm.ranking ") % (str_lids)
     
     vals=Connections.exec_sql('KGR',req,schema = True)
     
@@ -258,9 +328,9 @@ def exchangeid2tz(**kwargs):
     req=(" SELECT "
         " EXCHANGE,TIMEZONE " 
         " FROM " 
-        " %sKGR..EXCHANGEREFCOMPL "
+        " EXCHANGEREFCOMPL "
         " WHERE "
-        " EXCHANGE in %s ") % (pref_,str_lids)
+        " EXCHANGE in %s ") % (str_lids)
     vals=Connections.exec_sql('KGR',req)
     # ----------------
     # format
@@ -310,9 +380,9 @@ def tdidch2exchangeid(**kwargs):
     req=(" SELECT "
     " trading_destination_id,EXCHANGE "
     " FROM "
-    " %sKGR..EXCHANGEMAPPING "
+    " EXCHANGEMAPPING "
     " WHERE "
-    " trading_destination_id in %s ") % (pref_,str_lids)
+    " trading_destination_id in %s ") % (str_lids)
 
     vals=Connections.exec_sql('KGR',req)
     if not (not vals):
@@ -574,7 +644,11 @@ def local_tz_from(**kwargs):
     
     
 if __name__ == "__main__":
-    print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110))
+    print get_symbol6_from_ticker("MMK.VN")
+    print get_symbol6_from_ticker("PSMd.AG")
+    print exchangeinfo(security_id = 2)    
+    
+    print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110, exchgid='SEPA'))
     print "security_id(%s)->SECID=%s"% (110, convert_symbol(source = 'security_id', dest = 'SECID', value = 110, exchgid='SEPA'))
     print "security_id(%s)->ISIN=%s"% (110, convert_symbol(source = 'security_id', dest = 'ISIN', value = 110, exchgid='SEPA'))
     print "security_id(%s)->bloomberg=%s"% (110, convert_symbol(source = 'security_id', dest = 'bloomberg', value = 110, exchgid='SEPA'))

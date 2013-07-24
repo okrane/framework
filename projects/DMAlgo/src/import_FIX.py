@@ -408,7 +408,7 @@ class DatabasePlug:
             self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
             job_id          = 'OD%s' %day
             orders          = []
-            self.missing_enrichment = []
+            
             for s in self.conf:
                 self.server = self.conf[s]
                 res_import  = self.import_FIXmsg(type_order, dico_tags, trader)
@@ -430,6 +430,7 @@ class DatabasePlug:
         self.io     = "I"
         for day in self.dates:
             
+            
             self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
             orders          = []
             for s in self.conf:
@@ -449,16 +450,19 @@ class DatabasePlug:
                 
             self.checker.add_json()
             self.send_missing_ids(day) 
-            self.send_missing_tags()
+            self.send_missing_tags(day)
             self.send_missing_enrichment(day)
             
+            self.missing_ids        = []
+            self.missing_ids_reject = []
+            self.missing_enrichment = []
             self.checker.flush()
         return to_return
-    def send_missing_tags(self):
+    def send_missing_tags(self, day):
         if len(self.checker.missing) > 0:
             
             dict = {}
-            title = "<h2>Some tags are missing:</h2>\n"
+            title = "<h2>Some tags are missing for this date: %s</h2>\n" % day
             m = "<table border='1' cellpadding='1' cellspacing='1' width='580'>\n"
             m += "<TH>Missing tag(s)</TH><TH>ClOrdID</TH><TH>Files</TH>\n" 
             for el in self.checker.missing:

@@ -453,9 +453,9 @@ class DatabasePlug:
             self.send_missing_tags(day)
             self.send_missing_enrichment(day)
             
-            self.missing_ids        = []
-            self.missing_ids_reject = []
-            self.missing_enrichment = []
+            self.missing_ids         = []
+            self.missing_ids_reject  = []
+             self.missing_enrichment = {}
             self.checker.flush()
         return to_return
     def send_missing_tags(self, day):

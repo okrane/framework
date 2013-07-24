@@ -994,7 +994,7 @@ class DatabasePlug:
             if replaced:
                 
                 loop_count = 0
-                while not done and loop_count<100 and replaced == True:
+                while not done and loop_count < 150 and replaced == True:
                     
                     replaced = False
                     loop_count += 1

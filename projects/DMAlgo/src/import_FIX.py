@@ -224,6 +224,7 @@ class DatabasePlug:
         self.dates              = dates
         self.dates_datetime     = date_to_datetime(dates)
         self.mode               = mode
+        self.missing_ids_reject = []
         self.missing_ids        = []
         self.strategy_name      = {}
         self.dico_tags          = {}
@@ -407,7 +408,7 @@ class DatabasePlug:
             self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
             job_id          = 'OD%s' %day
             orders          = []
-            
+            self.missing_enrichment = []
             for s in self.conf:
                 self.server = self.conf[s]
                 res_import  = self.import_FIXmsg(type_order, dico_tags, trader)
@@ -500,6 +501,11 @@ class DatabasePlug:
             m = "<h2>Those Symbol ids cannot be retrieved in KGR for this date: %s</h2>\n" % day
             m += "<ul>"
             for el in set(self.missing_ids):
+                m += "<li>" + str(el) + "</li>\n"
+            m += "</ul>"
+            m += "<h2>Those Symbol has been rejected: %s</h2>\n" % day
+            m += "<ul>"
+            for el in set(self.missing_ids_reject):
                 m += "<li>" + str(el) + "</li>\n"
             m += "</ul>"
             send_email(_to = self.missing_id_receivers, _subject = "[MongoDatabase]Missing ids", _message = m)
@@ -716,7 +722,10 @@ class DatabasePlug:
                         logging.error("chevreux_secid is unknown for this order: " + str(order) )
                         
                     if len(order["cheuvreux_secid"]) == 0:
+                        del order["cheuvreux_secid"]
                         if "BridgeRejection" in order.keys(): # Means rejected
+                            self.missing_ids_reject.append(str(order['Symbol']))
+                        else:
                             self.missing_ids.append(str(order['Symbol']))
                         logging.error("chevreux_secid is unknown for this order: " + str(order) )
                 else:

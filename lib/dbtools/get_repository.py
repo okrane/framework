@@ -106,6 +106,7 @@ def currency(**kwargs):
     return out[0]['CCY']
 
 def get_symbol6_from_ticker(ticker):
+    ticker = str(ticker)
     ticker.replace('|', ' ')
     if ticker[-3:] == '.AG':
         parent_code = ticker[:-3]

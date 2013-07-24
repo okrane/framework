@@ -8,7 +8,7 @@ if __name__ == '__main__':
     database            = 'Mars'
     environment         = 'prod'
     source              = 'CLNT1'
-    dates               =  ['20130722',
+    dates               =  ['20130722', '20130723',
                             '20130715','20130716','20130717','20130718','20130719',
                             '20130708','20130709','20130710','20130711','20130712',
                             '20130701','20130702','20130703','20130704','20130705',
@@ -26,4 +26,4 @@ if __name__ == '__main__':
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill()
+                 mode               = "write").fill(order_deals=False)

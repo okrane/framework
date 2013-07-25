@@ -16,7 +16,6 @@ from lib.data.matlabutils import *
 import lib.data.st_data as st_data
 import lib.stats.slicer as slicer
 import lib.stats.formula as formula
-from virtualenv import read_data
 
 if os.name != 'nt':
     import socket

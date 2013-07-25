@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 import paramiko
 import pymongo as mongo
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from lib.dbtools import connections
 from pandas import *
 from lib.data.pyData import convertStr
@@ -20,6 +20,7 @@ from lib.io.toolkit import *
 from bson.json_util import default
 from lib.dbtools.get_repository import get_symbol6_from_ticker
 from lib.io.smart_converter import *
+from paramiko import ssh_exception
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 from lib.tca import mapping
     
@@ -67,6 +68,20 @@ class ConversionRate:
         for d in dates_datetime:
             try:
                 rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].ix[d.strftime("%Y-%m-%d")]["rate"]
+            except KeyError, e:
+                new_date = d-timedelta(days=1)
+                try:
+                    rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].ix[new_date.strftime("%Y-%m-%d")]["rate"]
+                except Exception, e:
+                    rate = None
+                    import traceback
+                    import StringIO
+                    fp = StringIO.StringIO()
+                    traceback.print_exc(file = fp)
+                    logging.error(fp.getvalue())
+                    logging.error(e)
+                    logging.error("Impossible to get the currency: " + str(curr) + " at the date: " + str(d))
+                    logging.error("The required rate has been set to None")
             except Exception, e:
                 rate = None
                 import traceback
@@ -90,9 +105,8 @@ class ConversionRate:
     def _get_all(dates_datetime):
         connection_name_backup = connections.Connections.connections
         connections.Connections.change_connections('production')
-        ConversionRate.data = read_dataset.histocurrencypair(start_date = dates_datetime[0].strftime("%d/%m/%Y"),
-                                                             end_date   = dates_datetime[len(dates_datetime) - 1].strftime("%d/%m/%Y"),
-                                                             currency   = ConversionRate.default_currencies)
+        ConversionRate.data = read_dataset.histocurrencypair(last_date_from   = dates_datetime[len(dates_datetime) - 1].strftime("%d/%m/%Y"),
+                                                             currency         = ConversionRate.default_currencies)
         connections.Connections.change_connections(connection_name_backup)
         logging.info(str(ConversionRate.data))
 
@@ -229,6 +243,7 @@ class DatabasePlug:
         self.strategy_name      = {}
         self.dico_tags          = {}
         self.missing_enrichment = {}
+        self.ssh_attempts       = 0
         
         # Constants
         self.ignore_tags            = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
@@ -292,7 +307,7 @@ class DatabasePlug:
                     fields.append(k)
                     to_add = True
         if to_add:
-            self.client['Mars']['field_map'].save({'collection_name' : collection_name, 'list_columns' : fields})
+            self.client['Mars']['field_map'].update({'collection_name' : collection_name, 'list_columns' : fields})
         logging.info("End Of insertion to the database")
 
     def get_dico_header(self, day):
@@ -448,6 +463,8 @@ class DatabasePlug:
                 self.client[self.database]['AlgoOrders'].remove({'job_id':job_id})
                 self.store_db(typed_orders, "AlgoOrders", job_id)
                 
+                for order in typed_orders:
+                    self.client[self.database]['OrderDeals'].update({'ClOrdID' : order['ClOrdID']}, {'$set': {'rate_to_euro' : order['rate_to_euro'], 'cheuvreux_secid' : order['cheuvreux_secid']} }, multi=True)
             self.checker.add_json()
             self.send_missing_ids(day) 
             self.send_missing_tags(day)
@@ -568,9 +585,7 @@ class DatabasePlug:
             i = 0
             for order in d_orders:
                 i+=1
-                
                 logging.info('Order ID : %s' %order['ClOrdID'])
-                
                 l_events = self.order_life(order          = order, 
                                           day            = day, 
                                           dico_tags      = self.dico_tags, 
@@ -588,10 +603,12 @@ class DatabasePlug:
 #                         import simplejson
 #                         temp = serialize.DateTimeJSONEncoder().encode(ord)
 #                         print temp
-                if 'SecurityID' in u_order[0].keys():
-                    l_kep_secids.append(u_order[0]['SecurityID'])
-                if 'Symbol' in u_order[0].keys():
-                    l_symbol.append(u_order[0]['Symbol'])
+
+                for ord in u_order:
+                    if 'SecurityID' in ord.keys():
+                        l_kep_secids.append(u_order[0]['SecurityID'])
+                    if 'Symbol' in ord.keys():
+                        l_symbol.append(ord['Symbol'])
             import lib.io.serialize as serialize
             import simplejson
             
@@ -625,17 +642,10 @@ class DatabasePlug:
             file_ids = open(self.server['ip_addr'] + '.secids.symbol.json', 'r')
             l_symbol = simplejson.loads(file_ids.read())
             file_ids.close()
-        
-            
-        
-        
-        dict_secs = update_security_ids(set(l_kep_secids))
+
+#         dict_secs = update_security_ids(set(l_kep_secids))
         dict_secs_symbol = update_security_ids_symbol(set(l_symbol))
-#         if len(dict_secs) == 0:
-#             logging.critical("IMPOSSIBLE TO GET DATA FROM KGR")
-#             logging.critical("Shutdown")
-#             import sys
-#             sys.exit()
+
         # GET WHETHER THERE IS DATA FROM ALGO
         # - GET COLUMN NUMBER IN MKT
         result      = self.get_dico_header(day)
@@ -723,17 +733,20 @@ class DatabasePlug:
                         order["cheuvreux_secid"] = dict_secs_symbol[order["Symbol"]]
                     except:
                         order["cheuvreux_secid"] = ''
-                        logging.error("chevreux_secid is unknown for this order: " + str(order) )
-                        
+                                                
                     if len(order["cheuvreux_secid"]) == 0:
                         del order["cheuvreux_secid"]
+                        logging.error("chevreux_secid is unknown for this order: " + str(order) )
+                        
                         if "BridgeRejection" in order.keys(): # Means rejected
                             self.missing_ids_reject.append(str(order['Symbol']))
                         else:
                             self.missing_ids.append(str(order['Symbol']))
-                        logging.error("chevreux_secid is unknown for this order: " + str(order) )
+                        
                 else:
                     logging.error("Symbol is unknown for this order: " + str(order) )
+                    
+                    
                 try:   
                     rate = ConversionRate.getRate(order['Currency'], day )
                     if rate is not None: 
@@ -743,6 +756,18 @@ class DatabasePlug:
                 except KeyError, e:
                     get_traceback()
                     logging.error("This order has no currency: " + str(order))
+                    
+            except ssh_exception.SSHException, e:
+                get_traceback()
+                logging.error("SSH Connection problem" )
+                self.ssh_attempts += 1
+                if self.ssh_attempts < 15:
+                    import time
+                    time.sleep(60)
+                    logging.warning("Will run again algo order filling" )
+                    return self.get_algo_orders(day)
+                else:
+                    logging.error("This order could not be enriched: " + str(order))
             except Exception,e:
                 get_traceback()
                 logging.error("This order could not be enriched: " + str(order))
@@ -1035,7 +1060,7 @@ class DatabasePlug:
         
                     (stdin, stdout_grep, stderr)= ssh.exec_command(cmd)
                     rpl_checked = False
-                    
+                    cc_msg = None
                     for str_msg in stdout_grep:
                         str_msg = str_msg.replace('|\n','')
                         res_trans = self.line_translator(str_msg, dico_tags)
@@ -1106,7 +1131,7 @@ class DatabasePlug:
                         if not done:
                             reason = '%s Front End handling' %reason
                     
-                    eff_endtime = cc_msg['SendingTime']
+                    eff_endtime = order['SendingTime']
                     g_eff_endtime = eff_endtime
                     
                     if eff_endtime != 'none':

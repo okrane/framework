@@ -16,6 +16,7 @@ from lib.data.matlabutils import *
 import lib.data.st_data as st_data
 import lib.stats.slicer as slicer
 import lib.stats.formula as formula
+from virtualenv import read_data
 
 if os.name != 'nt':
     import socket
@@ -130,7 +131,9 @@ def histocurrencypair(**kwargs):
         from_newf=to_newf
     elif all([x in kwargs.keys() for x in ["start_date","end_date"]]):
         from_newf=datetime.strftime(datetime.strptime(kwargs["start_date"], '%d/%m/%Y'),'%Y%m%d')
-        to_newf=datetime.strftime(datetime.strptime(kwargs["end_date"], '%d/%m/%Y'),'%Y%m%d')           
+        to_newf=datetime.strftime(datetime.strptime(kwargs["end_date"], '%d/%m/%Y'),'%Y%m%d') 
+    elif all([x in kwargs.keys() for x in ["currency","last_date_from"]]):   
+        last_date_from = datetime.strftime(datetime.strptime(kwargs["last_date_from"], '%d/%m/%Y'),'%Y%m%d')
     else:
         raise NameError('read_dataset:histocurrencypair - Bad input for dates') 
         
@@ -166,20 +169,34 @@ def histocurrencypair(**kwargs):
     ##############################################################
     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
         
-    ####  construct request    
-    req=(" SELECT "
-        " DATE,CCY,CCYREF,VALUE "
-        " FROM "
-            " %sKGR..HISTOCURRENCYTIMESERIES "
-        " WHERE "
-            " DATE>= '%s' "
-            " and DATE<= '%s' "
-            " and SOURCEID=1 "
-            " and ATTRIBUTEID=43 "
-            " and CCYREF in %s ") % (pref_,from_newf,to_newf,str_curr_ref)
-    
-    if not curr==[]:
-        req=req+((" and CCY in %s ") % (str_curr))
+    ####  construct request
+    if "last_date_from" in kwargs:
+        req=("""SELECT TOP(%d)
+                 DATE, CCY, CCYREF, VALUE 
+                 FROM 
+                     HISTOCURRENCYTIMESERIES 
+                 WHERE  
+                     DATE<= '%s' 
+                     and SOURCEID=1 
+                     and ATTRIBUTEID=43 
+                     and CCYREF in %s """) % (len(curr), last_date_from, str_curr_ref)    
+        if not curr==[]: 
+            req=req+((" and CCY in %s ") % (str_curr))     
+        req += " ORDER BY DATE DESC"
+    else:
+        req=(" SELECT "
+            " DATE,CCY,CCYREF,VALUE "
+            " FROM "
+                " %sKGR..HISTOCURRENCYTIMESERIES "
+            " WHERE "
+                " DATE>= '%s' "
+                " and DATE<= '%s' "
+                " and SOURCEID=1 "
+                " and ATTRIBUTEID=43 "
+                " and CCYREF in %s ") % (pref_, from_newf, to_newf, str_curr_ref)
+        
+        if not curr==[]:
+            req=req+((" and CCY in %s ") % (str_curr))
     
     #### EXECUTE REQUEST 
     vals=Connections.exec_sql('KGR',req)
@@ -274,11 +291,12 @@ def bic(step_sec=300,exchange=False,**kwargs):
 
 
 if __name__=='__main__':
-    # ft london stock
-    data=read_dataset.ft(security_id=10735,date='11/03/2013')
-    # ft french stock
-    data=read_dataset.ft(security_id=110,date='11/03/2013')
-    # ft french stock (local)
-    data=read_dataset.ft(security_id=110,date='11/03/2013', remote=True)
-    # currency rate
-    data=read_dataset.histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])
+    print histocurrencypair(currency='USD', last_date_from='23/07/2013')
+#     # ft london stock
+#     data=read_dataset.ft(security_id=10735,date='11/03/2013')
+#     # ft french stock
+#     data=read_dataset.ft(security_id=110,date='11/03/2013')
+#     # ft french stock (local)
+#     data=read_dataset.ft(security_id=110,date='11/03/2013', remote=True)
+#     # currency rate
+#     data=read_dataset.histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])

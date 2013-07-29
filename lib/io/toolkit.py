@@ -1,8 +1,18 @@
 import smtplib
 from lib.logger import *
-from datetime import datetime
+from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+
+def last_business_day(date=None):
+    """date is a datetime"""
+    if date is None:
+        date = datetime.now()
+    if date.weekday() in [0, 6]: # Monday, Sunday
+        last = date - timedelta(days = 3 - ( (7 - date.weekday() ) %7) )
+    else:
+        last = date - timedelta(days = 1)
+    return last
 
 def date_to_datetime(dates):
     dates_datetime = []

@@ -20,7 +20,8 @@ if __name__ == '__main__':
                             '20130520','20130521','20130522','20130523','20130524',
                             '20130513','20130514','20130515','20130516','20130517',
                             '20130509','20130510']
-    dates                = ['20130524']
+    
+    dates               = sorted(dates)
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 

@@ -39,6 +39,7 @@ class ConversionRate:
     
     @staticmethod    
     def getRates(curr, dates):
+        curr = curr.upper()
         do_get_all = False
         # Initialize if needed
         if ConversionRate.data is None:
@@ -69,6 +70,7 @@ class ConversionRate:
             try:
                 rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].ix[d.strftime("%Y-%m-%d")]["rate"]
             except KeyError, e:
+                logging.error('Could not get date for this date: ' + d.strftime("%Y-%m-%d"))
                 new_date = d-timedelta(days=1)
                 try:
                     rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].ix[new_date.strftime("%Y-%m-%d")]["rate"]
@@ -79,7 +81,6 @@ class ConversionRate:
                     fp = StringIO.StringIO()
                     traceback.print_exc(file = fp)
                     logging.error(fp.getvalue())
-                    logging.error(e)
                     logging.error("Impossible to get the currency: " + str(curr) + " at the date: " + str(d))
                     logging.error("The required rate has been set to None")
             except Exception, e:
@@ -89,7 +90,6 @@ class ConversionRate:
                 fp = StringIO.StringIO()
                 traceback.print_exc(file = fp)
                 logging.error(fp.getvalue())
-                logging.error(e)
                 logging.error("Impossible to get the currency: " + str(curr) + " at the date: " + str(d))
                 logging.error("The required rate has been set to None")
                 
@@ -405,8 +405,19 @@ class DatabasePlug:
                                 except:
                                     logging.warning("An order has been removed")
                                     continue  
-        return (dict_order, dico_tags)        
+        return (dict_order, dico_tags)      
       
+    def define_unique_id(self, order, my_type):
+        day = datetime.strftime(order['TransactTime'], format='%Y%m%d')
+        if my_type == 'OrderDeals':
+            order['p_exec_id'] = day + order['ExecID'] + order['server']
+            
+        if my_type == 'AlgoOrders':
+            order['p_occ_id'] = day + order['occ_ID'] + order['server']
+            
+        order['p_cl_ord_id'] = day + order['ClOrdID'] + order['server']
+        return order
+    
     def fill(self, order_deals = True, algo_orders = True):
         if order_deals:
             self.fill_order_deals()
@@ -431,9 +442,11 @@ class DatabasePlug:
                 dico_tags   = res_import[1]
                 
             for order in orders:
-                order["job_id"] = job_id 
-            
-            typed_orders    = self.checker.verify_all(orders)
+                order["job_id"] = job_id
+                order["server"] = self.server['name']
+                order           = self.define_unique_id(order, my_type='AlgoOrders')
+                
+            typed_orders        = self.checker.verify_all(orders)
             
             if self.mode == "write":
                 self.client[self.database]['OrderDeals'].remove({'job_id':job_id})
@@ -455,16 +468,22 @@ class DatabasePlug:
             job_id          = 'AO%s' %day
             for order in orders:
                 order["job_id"] = job_id
+                order["server"] = self.server['name']
+                order = self.define_unique_id(order, my_type='AlgoOrders')
             typed_orders    = self.checker.verify_all(orders)
             to_return.append(typed_orders)
             
-            if self.mode == "write":
+            if self.mode != "write":
                 job_id = 'AO%s' %day
                 self.client[self.database]['AlgoOrders'].remove({'job_id':job_id})
                 self.store_db(typed_orders, "AlgoOrders", job_id)
                 
                 for order in typed_orders:
-                    self.client[self.database]['OrderDeals'].update({'ClOrdID' : order['ClOrdID']}, {'$set': {'rate_to_euro' : order['rate_to_euro'], 'cheuvreux_secid' : order['cheuvreux_secid']} }, multi=True)
+                    if 'rate_to_euro' in order:
+                        self.client[self.database]['OrderDeals'].update({'ClOrdID' : order['ClOrdID']}, {'$set': {'rate_to_euro'    : order['rate_to_euro']} }, multi=True)
+                    if 'cheuvreux_secid' in order:
+                        self.client[self.database]['OrderDeals'].update({'ClOrdID' : order['ClOrdID']}, {'$set': {'cheuvreux_secid' : order['cheuvreux_secid']} }, multi=True)
+                        
             self.checker.add_json()
             self.send_missing_ids(day) 
             self.send_missing_tags(day)
@@ -685,7 +704,7 @@ class DatabasePlug:
                     except Exception,e :
                         self.missing_enrichment[order["ClOrdID"]] = [cmd, order]
                         logging.error("Cannot get data from algos for the following strategy: " +  str(order["StrategyName"]))
-                        logging.error("This order could not been processed: " + str(order) )
+                        logging.error("This order could not been enriched from the front end: " + str(order) )
                         get_traceback()
                         mkt_data = None  
                     
@@ -1201,6 +1220,8 @@ class DatabasePlug:
     
 if __name__ == '__main__':
     import sys    
+    print ConversionRate.getRate('GBp', '20130724')
+    sys.exit()
     if len(sys.argv) <= 6:
         print "Usage Examples: "
         print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev I"

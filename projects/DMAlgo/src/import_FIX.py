@@ -441,7 +441,7 @@ class DatabasePlug:
                 new_orders  = res_import[0]
                 dico_tags   = res_import[1]
                 
-                for order in orders:
+                for order in new_orders:
                     order["job_id"] = job_id
                     order["server"] = s
                     

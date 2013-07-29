@@ -438,12 +438,16 @@ class DatabasePlug:
             for s in self.conf:
                 self.server = self.conf[s]
                 res_import  = self.import_FIXmsg(type_order, dico_tags, trader)
-                orders.extend(res_import[0])
+                new_orders  = res_import[0]
                 dico_tags   = res_import[1]
                 
+                for order in orders:
+                    order["job_id"] = job_id
+                    order["server"] = s
+                    
+                orders.extend(res_import)
+                    
             for order in orders:
-                order["job_id"] = job_id
-                order["server"] = self.server['name']
                 order           = self.define_unique_id(order, my_type='AlgoOrders')
                 
             typed_orders        = self.checker.verify_all(orders)
@@ -461,11 +465,18 @@ class DatabasePlug:
             
             self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
             orders          = []
+            job_id          = 'AO%s' %day
+            
             for s in self.conf:
                 self.server = self.conf[s]
-                orders.extend(self.get_algo_orders(day))
+                new_orders  = self.get_algo_orders(day)
+                
+                for order in new_orders:
+                    order["job_id"] = job_id
+                    order["server"] = s 
+                    
+                orders.extend(new_orders)          
             
-            job_id          = 'AO%s' %day
             for order in orders:
                 order["job_id"] = job_id
                 order["server"] = self.server['name']

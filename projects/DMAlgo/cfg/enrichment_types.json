@@ -8,11 +8,11 @@
 	{"name":"occ_ID", 				"type" : "STRING"		},
 	{"name":"occ_prev_exec_qty", 	"type" : "INT"			},
 	{"name":"cheuvreux_secid", 		"type" : "INT",			"required":true },
-	{"name":"bloomberg_secid", 		"type" : "STRING",		"required":true },
-	{"name":"gl_secid", 			"type" : "STRING",		"required":true },
-	{"name":"reuters_secid", 		"type" : "STRING",		"required":true },
-	{"name":"sedol_secid", 			"type" : "STRING",		"required":true },
-	{"name":"isin", 				"type" : "STRING",		"required":true },
+	{"name":"bloomberg_secid", 		"type" : "STRING"},
+	{"name":"gl_secid", 			"type" : "STRING"},
+	{"name":"reuters_secid", 		"type" : "STRING"},
+	{"name":"sedol_secid", 			"type" : "STRING"},
+	{"name":"isin", 				"type" : "STRING"},
 	{"name":"occ_prev_turnover", 	"type" : "FLOAT"		},
 	{"name":"reason", 				"type" : "STRING"		},
 	{"name":"nb_exec", 				"type" : "INT"			},
@@ -24,8 +24,11 @@
 	{"name":"exec_vwap", 			"type" : "FLOAT"		},
 	{"name":"occ_prev_exec_vwap", 	"type" : "FLOAT"		},
 	{"name":"first_deal_time", 		"type" : "UTCTIMESTAMP"	},
-	{"name":"job_id", 				"type" : "STRING",		"required":true },
- 	{
+	{"name":"job_id", 				"type" : "STRING",		"deals_required":true,		"required":true },
+	{"name":"p_occ_id",				"type" : "STRING",		"required":true},
+	{"name":"p_cl_ord_id",			"type" : "STRING",		"deals_required":true,		"required":true  },
+	{"name":"server",			"type" : "STRING",		"deals_required":true,		"required":true  }, 
+	{
         "name":"occ_fe_prv_wexec",
         "type":"FLOAT"
     },
@@ -73,4 +76,5 @@
         "name":"occ_fe_arrival_price",
         "type":"FLOAT"
     }
+    
 ]

@@ -3,14 +3,14 @@ if __name__ == '__main__':
     from src.import_FIX import DatabasePlug
     
     
-    database_server     = 'HPP'
+    database_server     = 'MARS'
     database            = 'Mars'
     environment         = 'prod'
     source              = 'CLNT1'
     yesterday           = datetime.now() - timedelta(days = 1)
     date                = datetime.strftime(yesterday, "%Y%m%d")
     dates               = [date]
-    
+
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 

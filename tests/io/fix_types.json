@@ -10657,12 +10657,12 @@
         {
           "number": "9266",
           "name": "TickerHisto",
-          "type": "CHAR"
+          "type": "STRING"
         },
         {
           "number": "9249",
           "name": "TraderName",
-          "type": "CHAR"
+          "type": "STRING"
         },
         {
           "number": "851",

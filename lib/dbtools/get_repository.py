@@ -106,6 +106,7 @@ def currency(**kwargs):
     return out[0]['CCY']
 
 def get_symbol6_from_ticker(ticker):
+    ticker = str(ticker)
     ticker.replace('|', ' ')
     if ticker[-3:] == '.AG':
         parent_code = ticker[:-3]
@@ -113,6 +114,7 @@ def get_symbol6_from_ticker(ticker):
                 FROM SECURITY
                 where PARENTCODE='%s'
                 and SYMBOL6 <> 'NULL'""" % (parent_code)
+        result = Connections.exec_sql('KGR', query, as_dict = True)
     else:
         l = ticker.split('.')
         suffix = l.pop()
@@ -127,8 +129,34 @@ def get_symbol6_from_ticker(ticker):
                 and exflex.SUFFIX='%s'
                 and exhm.EXCHANGE=exflex.EXCHANGE
                 AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
-
-    result = Connections.exec_sql('KGR', query, as_dict = True)
+                
+        result = Connections.exec_sql('KGR', query, as_dict = True)
+        
+        if len(result) == 0:
+            query = """SELECT distinct sec.SYMBOL6
+                FROM SECURITY sec,
+                EXCHANGEMAPPING exhm,
+                FlextradeExchangeMapping exflex
+                where sec.SYMBOL2='%s'
+                and sec.EXCHGID=exhm.EXCHGID
+                and exflex.SUFFIX='%s'
+                and exhm.EXCHANGE=exflex.EXCHANGE
+                AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
+                
+            result = Connections.exec_sql('KGR', query, as_dict = True)
+            if len(result) == 0:
+                query = """SELECT distinct sec.SYMBOL6
+                    FROM SECURITY sec,
+                    EXCHANGEMAPPING exhm,
+                    FlextradeExchangeMapping exflex
+                    where sec.SYMBOL3='%s'
+                    and sec.EXCHGID=exhm.EXCHGID
+                    and exflex.SUFFIX='%s'
+                    and exhm.EXCHANGE=exflex.EXCHANGE
+                    AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
+                    
+                result = Connections.exec_sql('KGR', query, as_dict = True)
+    
     if len(result) == 0:
         logging.info(query)
         logging.warning("Got no SYMBOL 6 for this ticker: " + ticker)

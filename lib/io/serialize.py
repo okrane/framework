@@ -4,7 +4,6 @@ import datetime
 class DateTimeJSONEncoder(simplejson.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime.datetime):
-            print obj
             return obj.isoformat() #.strftime("%y/%m/%d %H:%M:%S")
         else:
             return super(DateTimeJSONEncoder, self).default(obj)

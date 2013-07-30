@@ -2642,8 +2642,8 @@
     <field number="9259" name="OBType" type="CHAR"/>
     <field number="9257" name="ExcludeAuction" type="BOOLEAN"/>
     <field number="9252" name="StrategyName" type="INT"/>
-    <field number="9266" name="TickerHisto" type="CHAR"/>
-    <field number="9249" name="TraderName" type="CHAR"/>
+    <field number="9266" name="TickerHisto" type="STRING"/>
+    <field number="9249" name="TraderName" type="STRING"/>
     <field number="9270" name="BridgeRejection" type="STRING"/>
     <field number="851" name="LastLiquidityInd" type="INT"/>
   </fields>

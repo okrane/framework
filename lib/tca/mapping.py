@@ -6,7 +6,8 @@ Created on Thu Jun 13 10:49:01 2013
 """
 import pandas as pd
 import numpy as np
-#from datetime import *
+from datetime import datetime
+from lib.dbtools.connections import Connections
 #import pytz
 
 #------------------------------------------------------------------------------
@@ -28,34 +29,22 @@ def ExcludeAuction(x):
 #------------------------------------------------------------------------------
 # StrategyName
 #------------------------------------------------------------------------------
-def StrategyName(x,y):
-    if x==1:
-        out="VWAP"
-    elif x==2:
-        out="TWAP"
-    elif x==3:
-        out="VOL"    
-    elif x==4:
-        out="ICEBERG"   
-    elif x==5:
-        out="DYNVOL"   
-    elif x==6:
-        out="IS"   
-    elif x==7:
-        out="CROSSFIRE"   
-    elif x==8:
-        out="CLOSE"   
-    elif x==10:
-        out="BLINK"    
-    elif x==9:
-        if y=="CF":
-            out="CROSSFIRE" 
-        elif y=="BF":
-            out="BLINK" 
-        elif y=="yes":
-            out="HUNT" 
-        else:
-            raise NameError('mapping:StrategyName - Bad inputs')
-    else:
-        raise NameError('mapping:ExcludeAuction - Bad inputs')
-    return out
+def StrategyName(id, sweep_lit = None, database = 'Mars'):
+    client     = Connections.getClient("MARS")
+    collection = client[database]["map_tagFIX"]
+    req        = {"tag_name" : "StrategyName", "tag_value" : str(id)}
+    
+    if sweep_lit is not None:
+        req["SweepLit"] = sweep_lit
+        
+    result     = collection.find(req).sort([("validity_date",-1)])
+    l_result   = list(result)
+    if len(l_result) == 0:
+        raise NameError('mapping:StrategyName - Bad inputs')
+    return l_result[0]["short_name"]
+
+if __name__ == "__main__":
+    print StrategyName(id = 5)
+    print StrategyName(id = 9, sweep_lit='BL')
+    print StrategyName(id = 9, sweep_lit='yes')
+    print StrategyName(id = 9, sweep_lit='CF')

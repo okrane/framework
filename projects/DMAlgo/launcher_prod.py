@@ -4,7 +4,7 @@ if __name__ == '__main__':
     from lib.dbtools.connections import Connections
     Connections.change_connections("production")
     
-    database_server     = 'PROD'
+    database_server     = 'MARS'
     database            = 'Mars'
     environment         = 'prod'
     source              = 'CLNT1'

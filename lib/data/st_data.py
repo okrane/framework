@@ -34,11 +34,11 @@ def to_dataframe(data,timezone=False):
     dataframe=pd.DataFrame.from_records(frame,columns=colnames.append('date'),index = ['date'])    
     
     # test if it is old cheuvreux data info
-    is_old_data=False
+    is_old_data=True
     if (('info' in data[0][0]._fieldnames) and
-        (('version' not in data[0][0].info[0][0]._fieldnames) or
-        (data[0][0].info[0][0].version[0][0] is not 'kepche_1'))):
-            is_old_data=True
+        ('version' in data[0][0].info[0][0]._fieldnames) and
+        (data[0][0].info[0][0].version[0] =='kepche_1')):
+            is_old_data=False
             
     #--------------------------------------------------------------------------
     # Mapping des destinations de trading : Cheuvreux -> Kepler
@@ -50,6 +50,10 @@ def to_dataframe(data,timezone=False):
                                     security_id=data[0][0].info[0][0].security_id[0][0])
         del dataframe['trading_destination_id']
         dataframe.insert(0,'exchange_id',td_newvals)    
+    elif ('trading_destination_id' in colnames):
+        dataframe=dataframe.rename(columns={'trading_destination_id':'exchange_id'})
+    else:
+        raise NameError('to_dataframe:trading_destination_id - trading_destination_id columns is missing !')
     
     #--------------------------------------------------------------------------
     # TIMEZONE

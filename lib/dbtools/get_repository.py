@@ -194,26 +194,25 @@ def tradingtime(**kwargs):
     ##############################################################
     # request data
     ##############################################################
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
     data=exchangeinfo(security_id=lids)
     if (data.shape[0]==0) or (not np.any(data['EXCHANGETYPE']=='M')):
         return out
     data=data[data['EXCHANGETYPE']=='M']
         
     req=("SELECT * "
-    " FROM %sKGR..trading_hours_master " 
+    " FROM trading_hours_master " 
     " WHERE trading_destination_id = %d "
     " AND context_id is null "
-    " AND quotation_group = '%s'") % (pref_,data['EXCHANGE'].values[0],data['quotation_group'].values[0]) 
+    " AND quotation_group = '%s'") % (data['EXCHANGE'].values[0],data['quotation_group'].values[0]) 
     
     vals=Connections.exec_sql('KGR',req,schema = True)
     
     if not vals[0]:
         req=('SELECT * '
-            ' FROM %sKGR..trading_hours_master ' 
+            ' FROM trading_hours_master ' 
             ' WHERE trading_destination_id = %d '
             ' AND context_id is null '
-            ' AND quotation_group is null') % (pref_,data['EXCHANGE'])
+            ' AND quotation_group is null') % (data['EXCHANGE'])
         vals=Connections.exec_sql('KGR',req,schema = True)
         if not vals[0]:
             raise NameError('get_repository:tradingtime - No trading hours/ exchange: '+str(data['EXCHANGE'].values[0])+' / quotation_group: '+data['quotation_group'].values[0])
@@ -260,7 +259,6 @@ def exchangeinfo(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -310,8 +308,7 @@ def exchangeid2tz(**kwargs):
     ##############################################################
     # ----------------
     # NEEDED
-    # ----------------
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
+    # ----------------  
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -362,7 +359,6 @@ def tdidch2exchangeid(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -396,9 +392,9 @@ def tdidch2exchangeid(**kwargs):
         req=(" SELECT "
         " EXCHANGE,TIMEZONE " 
         " FROM " 
-        " %sKGR..EXCHANGEREFCOMPL "
+        " EXCHANGEREFCOMPL "
         " WHERE "
-        " EXCHANGE in %s ") % (pref_,str_exchnotnone)
+        " EXCHANGE in %s ") % (str_exchnotnone)
         vals=Connections.exec_sql('KGR',req)
         
         if (any([x[1] is 'America/New_York' for x in vals])) and (not secid==[]):
@@ -407,10 +403,10 @@ def tdidch2exchangeid(**kwargs):
             req=(" SELECT "
             " trading_destination_id " 
             " FROM " 
-            " %sKGR..security_market "
+            " security_market "
             " WHERE "
             " security_id = %d "
-            " and ranking=1 ") % (pref_,secid)
+            " and ranking=1 ") % (secid)
             vals=Connections.exec_sql('KGR',req)
             out=np.array([vals[0][0]]*lids.size) 
         else:
@@ -418,7 +414,52 @@ def tdidch2exchangeid(**kwargs):
             out[idxnone]=-1*lids[idxnone]
           
     return out
-
+    
+#------------------------------------------------------------------------------
+#  tdidch2exchangeid
+#------------------------------------------------------------------------------
+def mic2exchangeid(mic=None):
+    
+    if mic is None:
+        raise NameError('get_repository:tdidch2exchangeid - Bad input : td_id is missing') 
+       
+    ##############################################################
+    # input handling
+    ##############################################################
+    
+    lids=mic
+    if isinstance(lids,list):
+        lids=np.array(lids)
+    elif not isinstance(lids,np.ndarray):
+        lids=np.array([lids])
+    
+    out=np.array([np.nan]*lids.size)    
+    
+    ##############################################################
+    # request and format
+    ##############################################################
+    # ----------------
+    # NEEDED
+    # ----------------
+    str_lids="("+"".join(["'"+str(x)+"'," for x in uniqueext(lids)])
+    str_lids=str_lids[:-1]+")"
+    # ----------------
+    # PHASE 1 : request on destination
+    # ----------------
+    req=(" SELECT "
+    " MIC,EXCHANGE "
+    " FROM "
+    " EXCHANGEREFCOMPL "
+    " WHERE "
+    " MIC in %s ") % (str_lids)
+    
+    vals=Connections.exec_sql('KGR',req)
+    if not (not vals):
+        for x in vals:
+            out[np.where(lids==x[0])[0]]=x[1]
+    
+    return out  
+    
 #------------------------------------------------------------------------------
 # local_tz_from
 #------------------------------------------------------------------------------
@@ -441,18 +482,17 @@ def local_tz_from(**kwargs):
         # construct request
         str_lids="("+"".join([str(x)+',' for x in lids])
         str_lids=str_lids[:-1]+")"
-        pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
         
         req=(" select "
         " sec.SYMBOL6, exch.TIMEZONE "
         " from "
-            " %sKGR..SECURITY sec ,"
-            " %sKGR..EXCHANGEREFCOMPL exch "
+            " SECURITY sec ,"
+            " EXCHANGEREFCOMPL exch "
         " where "
             " sec.SYMBOL6 in %s "
             " and sec.EXCHGID=exch.EXCHGID "
             " and exch.EXCHANGETYPE='M' "
-            " and sec.STATUS='A' ") % (pref_,pref_,str_lids)
+            " and sec.STATUS='A' ") % (str_lids)
             
     else:
         raise NameError('get_repository:tz_from - Bad input data')

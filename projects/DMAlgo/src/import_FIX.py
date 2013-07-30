@@ -307,7 +307,7 @@ class DatabasePlug:
                     fields.append(k)
                     to_add = True
         if to_add:
-            self.client['Mars']['field_map'].update({'collection_name' : collection_name, 'list_columns' : fields})
+            self.client['Mars']['field_map'].update({'collection_name' : collection_name}, {'collection_name' : collection_name, 'list_columns' : fields})
         logging.info("End Of insertion to the database")
 
     def get_dico_header(self, day):
@@ -409,8 +409,9 @@ class DatabasePlug:
       
     def define_unique_id(self, order, my_type):
         day = datetime.strftime(order['TransactTime'], format='%Y%m%d')
+        
         if my_type == 'OrderDeals':
-            order['p_exec_id'] = day + order['ExecID'] + order['server']
+            order['p_exec_id'] = day + str(order['ExecID']) + order['server']
             
         if my_type == 'AlgoOrders':
             order['p_occ_id'] = day + order['occ_ID'] + order['server']
@@ -444,11 +445,8 @@ class DatabasePlug:
                 for order in new_orders:
                     order["job_id"] = job_id
                     order["server"] = s
-                    
-                orders.extend(res_import)
-                    
-            for order in orders:
-                order           = self.define_unique_id(order, my_type='AlgoOrders')
+                    order           = self.define_unique_id(order, my_type='OrderDeals')
+                orders.extend(new_orders)                
                 
             typed_orders        = self.checker.verify_all(orders)
             
@@ -474,13 +472,11 @@ class DatabasePlug:
                 for order in new_orders:
                     order["job_id"] = job_id
                     order["server"] = s 
+                    order = self.define_unique_id(order, my_type='AlgoOrders')
                     
                 orders.extend(new_orders)          
-            
-            for order in orders:
-                order["job_id"] = job_id
-                order["server"] = self.server['name']
-                order = self.define_unique_id(order, my_type='AlgoOrders')
+
+                
             typed_orders    = self.checker.verify_all(orders)
             to_return.append(typed_orders)
             

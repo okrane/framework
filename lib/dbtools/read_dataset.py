@@ -117,6 +117,7 @@ def ft(**kwargs):
         
     return st_data.to_dataframe(mat['data'],timezone=True)
 
+
 #--------------------------------------------------------------------------
 #  ftickdb : filter and LOAD MATFILES OF STOCK TBT DATA
 #--------------------------------------------------------------------------
@@ -125,6 +126,7 @@ def ftickdb(**kwargs):
     if data.shape[0]>0:
         data=data[(data['trading_after_hours']==0) & (data['trading_at_last']==0) & (data['cross']==0)]
     return data
+
 
 #--------------------------------------------------------------------------
 # histocurrency 

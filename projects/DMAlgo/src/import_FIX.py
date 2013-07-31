@@ -601,12 +601,6 @@ class DatabasePlug:
         logging.info('Get ' + str(len(d_orders)) + ' orders to add !')
         u_orders = []
         
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(self.server['ip_addr'],
-                    username = self.server['list_users']['flexapp']['username'], 
-                    password = self.server['list_users']['flexapp']['passwd'])
-        
         if self.mode == "write" :
             i = 0
             for order in d_orders:
@@ -615,8 +609,7 @@ class DatabasePlug:
                 l_events = self.order_life(order          = order, 
                                           day            = day, 
                                           dico_tags      = self.dico_tags, 
-                                          dico_trader    = dico_trader, 
-                                          ssh            = ssh)
+                                          dico_trader    = dico_trader)
                 
                 u_order          = l_events[0]
                 self.dico_tags   = l_events[1]
@@ -681,6 +674,12 @@ class DatabasePlug:
         l_docs = []
         logging.info('Add information from prod to ' + str(len(u_orders)) + ' orders !')   
         job_id          = 'AO%s' %day
+        
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(self.server['ip_addr'],
+                    username = self.server['list_users']['flexapp']['username'], 
+                    password = self.server['list_users']['flexapp']['passwd'])
                 
         # Enrichment Market Data from PROD
         for order in u_orders:
@@ -787,7 +786,7 @@ class DatabasePlug:
                 get_traceback()
                 logging.error("SSH Connection problem" )
                 self.ssh_attempts += 1
-                if self.ssh_attempts < 15:
+                if self.ssh_attempts < 3:
                     import time
                     time.sleep(60)
                     logging.warning("Will run again algo order filling" )
@@ -907,7 +906,7 @@ class DatabasePlug:
                 return (elt.get('name'), elt.get('type'))
         
         return
-    def order_life(self, order, day,  dico_tags, dico_trader, ssh, import_type='Client'):
+    def order_life(self, order, day,  dico_tags, dico_trader, import_type='Client'):
     
         # - Open SSH connection 
         ssh = paramiko.SSHClient()

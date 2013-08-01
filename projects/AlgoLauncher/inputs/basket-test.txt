@@ -1,2 +1,2 @@
-StrategyName|ExDestination|Symbol|SecurityID|Side|Currency|OrderQty|Price|MaxPctVolume|ExecutionStyle|AuctionPct|AggregatedStyle|
-3|XPAR|FP|FR0000120271|1|EUR|300000|100|20| | |yes|
+StrategyName|ExDestination|Symbol|SecurityID|Side|Currency|OrderQty|Price|StartTime|EndTime|MinPctVolume|MaxPctVolume|ExecutionStyle|WouldLevel|WouldDark|AuctionPct|AggregatedStyle|ExcludeAuction|
+3|XPAR|ORA|FR0000133308|1|EUR|400000|7.3996123|07:00|18:00|none|20|3|7|no|30|yes|1|

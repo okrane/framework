@@ -1,7 +1,8 @@
 if __name__ == '__main__':
     from datetime import datetime, timedelta
     from src.import_FIX import DatabasePlug
-    
+    from lib.dbtools.connections import Connections
+    Connections.change_connections("dev")    
     
     database_server     = 'MARS'
     database            = 'Mars'

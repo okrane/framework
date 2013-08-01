@@ -213,7 +213,7 @@ def occurence_info(db_name = "Mars", **kwargs):
 #--------------------------------------------------------------------------
 # deal
 #--------------------------------------------------------------------------        
-def deal(db_name="Mars",sequence_id=None,start_date=None,end_date=None,merge_order_colnames=None): 
+def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, merge_order_colnames=None): 
     
     #### DEFAULT OUTPUT    
     data=[]

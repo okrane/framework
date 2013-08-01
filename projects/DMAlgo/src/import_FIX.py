@@ -1223,11 +1223,11 @@ class DatabasePlug:
         
         ssh.close()
         return [order_life, dico_tags]
-    
+                    
 if __name__ == '__main__':
     import sys    
-    print ConversionRate.getRate('GBp', '20130724')
-    sys.exit()
+#     print ConversionRate.getRate('GBp', '20130724')
+#     sys.exit()
     if len(sys.argv) <= 6:
         print "Usage Examples: "
         print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev I"
@@ -1253,7 +1253,7 @@ if __name__ == '__main__':
 
 
     
-    database_server     = 'HPP'
+    database_server     = 'MARS'
     database            = 'Mars'
     environment         = 'prod'
     source              = 'CLNT1'
@@ -1265,5 +1265,5 @@ if __name__ == '__main__':
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill()
+                 mode               = "write").generate_file()
     

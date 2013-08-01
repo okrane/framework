@@ -48,9 +48,9 @@ def aggexec(# order information
     # compute stats ON PERIOD
     ##############################################################
     if data_deal.shape[0]>0:
-        indicators={'exec_quantity':np.sum(map(lambda x : float(x),data_deal['LastShares'])),
-                    'exec_nb_trades': np.size(data_deal['LastShares']),
-                    'exec_turnover': np.sum(map(lambda x,y : float(x)*float(y),data_deal['LastShares'],data_deal['LastPx']))}
+        indicators={'exec_quantity':np.sum(map(lambda x : float(x),data_deal['volume'])),
+                    'exec_nb_trades': np.size(data_deal['volume']),
+                    'exec_turnover': np.sum(map(lambda x,y : float(x)*float(y),data_deal['volume'],data_deal['price']))}
         out=out.join(pd.DataFrame([indicators])) 
     else:
         out=out.join(pd.DataFrame([default_indicators])) 

@@ -24,7 +24,9 @@ if os.name != 'nt':
 #--------------------------------------------------------------------------
 #  GET_LOCAL : TOOL FUNCTION TO DOWNLOAD FILE IN LOCAL TEMP FOLDER
 #--------------------------------------------------------------------------
-def get_local(day, sec_id, srv_addr, local_temp = ''):
+def get_local(date, sec_id, srv_addr, local_temp = ''):
+    
+    day=datetime.strftime(datetime.strptime(date, '%d/%m/%Y'),'%Y_%m_%d')
     
     full_path = os.path.realpath(__file__)
     path, f = os.path.split(full_path)
@@ -33,8 +35,16 @@ def get_local(day, sec_id, srv_addr, local_temp = ''):
         full_path = os.path.realpath(__file__)
         local_temp, f = os.path.split(full_path)
         
+<<<<<<< HEAD
     remote_data_path = '/quant/kc_repository_/get_tick/ft/%s/%s.mat' %(sec_id, day)
     
+=======
+    if datetime.strptime(date, '%d/%m/%Y')<=datetime.strptime('11/07/2013', '%d/%m/%Y'):
+        remote_data_path = '/quant/kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
+    else:
+        remote_data_path = '/quant/test_kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
+        
+>>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
     local_addr = socket.gethostbyname(socket.gethostname())
     local_data_path = '%s/temp_buffer/%s.mat' %(path, day) 
     
@@ -57,12 +67,6 @@ def get_local(day, sec_id, srv_addr, local_temp = ''):
 #  FT : LOAD MATFILES OF STOCK TBT DATA
 #--------------------------------------------------------------------------
 def ft(**kwargs):
-    #### CONFIG and CONNECT
-    # TODO: in xml file
-    if os.name=='nt':
-        ft_root_path="Q:\\kc_repository_"
-    else:
-        ft_root_path="/quant/kc_repository_"
     
     ##############################################################
     # input handling
@@ -77,7 +81,20 @@ def ft(**kwargs):
         date=kwargs["date"]
         date_newf=datetime.strftime(datetime.strptime(date, '%d/%m/%Y'),'%Y_%m_%d') 
     else:
-        raise NameError('read_dataset:ft - Bad input')        
+        raise NameError('read_dataset:ft - Bad input') 
+           
+    #### CONFIG and CONNECT
+    # TODO: in xml file
+    if os.name=='nt':
+        if datetime.strptime(date, '%d/%m/%Y')<=datetime.strptime('11/07/2013', '%d/%m/%Y'):
+            ft_root_path="Q:\\kc_repository"
+        else:
+            ft_root_path="Q:\\test_kc_repository"
+    else:
+        if datetime.strptime(date, '%d/%m/%Y')<=datetime.strptime('11/07/2013', '%d/%m/%Y'):
+            ft_root_path="/quant/kc_repository"
+        else:
+            ft_root_path="/quant/test_kc_repository"
     
     ##############################################################
     # load and format
@@ -88,7 +105,7 @@ def ft(**kwargs):
         
     if remote == True and os.name != 'nt':
         
-        get_local(date_newf,kwargs['security_id'],'172.29.0.32')
+        get_local(date,kwargs['security_id'],'172.29.0.32')
         full_path = os.path.realpath(__file__)
         path, f = os.path.split(full_path)
         
@@ -105,6 +122,7 @@ def ft(**kwargs):
         
     return st_data.to_dataframe(mat['data'],timezone=True)
 
+
 #--------------------------------------------------------------------------
 #  ftickdb : filter and LOAD MATFILES OF STOCK TBT DATA
 #--------------------------------------------------------------------------
@@ -113,6 +131,7 @@ def ftickdb(**kwargs):
     if data.shape[0]>0:
         data=data[(data['trading_after_hours']==0) & (data['trading_at_last']==0) & (data['cross']==0)]
     return data
+
 
 #--------------------------------------------------------------------------
 # histocurrency 
@@ -276,10 +295,10 @@ def bic(step_sec=300,exchange=False,**kwargs):
 
 if __name__=='__main__':
     # ft london stock
-    data=read_dataset.ft(security_id=10735,date='11/03/2013')
+    data=ft(security_id=10735,date='11/03/2013')
     # ft french stock
-    data=read_dataset.ft(security_id=110,date='11/03/2013')
+    data=ft(security_id=110,date='11/03/2013')
     # ft french stock (local)
     data=ft(security_id=110,date='11/03/2013', remote=True)
     # currency rate
-    data=read_dataset.histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])
+    data=histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])

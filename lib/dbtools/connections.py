@@ -16,7 +16,7 @@ class Connections:
     """
     
     
-    connections = "dev"     # The current active Connection        
+    connections = "production_copy"     # The current active Connection        
     bases       = {"quant": "quant", "quant_data":"quant_data", "repository":"repository"}
     connection_objects = {}
     

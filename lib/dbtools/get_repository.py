@@ -107,6 +107,7 @@ def currency(**kwargs):
     return out[0]['CCY']
 
 def get_symbol6_from_ticker(ticker):
+    ticker = str(ticker)
     ticker.replace('|', ' ')
     if ticker[-3:] == '.AG':
         parent_code = ticker[:-3]
@@ -114,6 +115,7 @@ def get_symbol6_from_ticker(ticker):
                 FROM SECURITY
                 where PARENTCODE='%s'
                 and SYMBOL6 <> 'NULL'""" % (parent_code)
+        result = Connections.exec_sql('KGR', query, as_dict = True)
     else:
         l = ticker.split('.')
         suffix = l.pop()
@@ -128,8 +130,34 @@ def get_symbol6_from_ticker(ticker):
                 and exflex.SUFFIX='%s'
                 and exhm.EXCHANGE=exflex.EXCHANGE
                 AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
-
-    result = Connections.exec_sql('KGR', query, as_dict = True)
+                
+        result = Connections.exec_sql('KGR', query, as_dict = True)
+        
+        if len(result) == 0:
+            query = """SELECT distinct sec.SYMBOL6
+                FROM SECURITY sec,
+                EXCHANGEMAPPING exhm,
+                FlextradeExchangeMapping exflex
+                where sec.SYMBOL2='%s'
+                and sec.EXCHGID=exhm.EXCHGID
+                and exflex.SUFFIX='%s'
+                and exhm.EXCHANGE=exflex.EXCHANGE
+                AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
+                
+            result = Connections.exec_sql('KGR', query, as_dict = True)
+            if len(result) == 0:
+                query = """SELECT distinct sec.SYMBOL6
+                    FROM SECURITY sec,
+                    EXCHANGEMAPPING exhm,
+                    FlextradeExchangeMapping exflex
+                    where sec.SYMBOL3='%s'
+                    and sec.EXCHGID=exhm.EXCHGID
+                    and exflex.SUFFIX='%s'
+                    and exhm.EXCHANGE=exflex.EXCHANGE
+                    AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
+                    
+                result = Connections.exec_sql('KGR', query, as_dict = True)
+    
     if len(result) == 0:
         logging.info(query)
         logging.warning("Got no SYMBOL 6 for this ticker: " + ticker)
@@ -195,27 +223,30 @@ def tradingtime(**kwargs):
     ##############################################################
     # request data
     ##############################################################
+<<<<<<< HEAD
     pref_ = ""
 #     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
+=======
+>>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
     data=exchangeinfo(security_id=lids)
     if (data.shape[0]==0) or (not np.any(data['EXCHANGETYPE']=='M')):
         return out
     data=data[data['EXCHANGETYPE']=='M']
         
     req=("SELECT * "
-    " FROM %sKGR..trading_hours_master " 
+    " FROM trading_hours_master " 
     " WHERE trading_destination_id = %d "
     " AND context_id is null "
-    " AND quotation_group = '%s'") % (pref_,data['EXCHANGE'].values[0],data['quotation_group'].values[0]) 
+    " AND quotation_group = '%s'") % (data['EXCHANGE'].values[0],data['quotation_group'].values[0]) 
     
     vals=Connections.exec_sql('KGR',req,schema = True)
     
     if not vals[0]:
         req=('SELECT * '
-            ' FROM %sKGR..trading_hours_master ' 
+            ' FROM trading_hours_master ' 
             ' WHERE trading_destination_id = %d '
             ' AND context_id is null '
-            ' AND quotation_group is null') % (pref_,data['EXCHANGE'])
+            ' AND quotation_group is null') % (data['EXCHANGE'])
         vals=Connections.exec_sql('KGR',req,schema = True)
         if not vals[0]:
             raise NameError('get_repository:tradingtime - No trading hours/ exchange: '+str(data['EXCHANGE'].values[0])+' / quotation_group: '+data['quotation_group'].values[0])
@@ -262,8 +293,11 @@ def exchangeinfo(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
+<<<<<<< HEAD
     pref_ = ""
 #     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
+=======
+>>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -313,9 +347,13 @@ def exchangeid2tz(**kwargs):
     ##############################################################
     # ----------------
     # NEEDED
+<<<<<<< HEAD
     # ----------------
     pref_ = ""
 #     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
+=======
+    # ----------------  
+>>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -366,8 +404,11 @@ def tdidch2exchangeid(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
+<<<<<<< HEAD
     pref_ = ""
 #     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
+=======
+>>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -401,9 +442,9 @@ def tdidch2exchangeid(**kwargs):
         req=(" SELECT "
         " EXCHANGE,TIMEZONE " 
         " FROM " 
-        " %sKGR..EXCHANGEREFCOMPL "
+        " EXCHANGEREFCOMPL "
         " WHERE "
-        " EXCHANGE in %s ") % (pref_,str_exchnotnone)
+        " EXCHANGE in %s ") % (str_exchnotnone)
         vals=Connections.exec_sql('KGR',req)
         
         if (any([x[1] is 'America/New_York' for x in vals])) and (not secid==[]):
@@ -412,10 +453,10 @@ def tdidch2exchangeid(**kwargs):
             req=(" SELECT "
             " trading_destination_id " 
             " FROM " 
-            " %sKGR..security_market "
+            " security_market "
             " WHERE "
             " security_id = %d "
-            " and ranking=1 ") % (pref_,secid)
+            " and ranking=1 ") % (secid)
             vals=Connections.exec_sql('KGR',req)
             out=np.array([vals[0][0]]*lids.size) 
         else:
@@ -423,7 +464,52 @@ def tdidch2exchangeid(**kwargs):
             out[idxnone]=-1*lids[idxnone]
           
     return out
-
+    
+#------------------------------------------------------------------------------
+#  tdidch2exchangeid
+#------------------------------------------------------------------------------
+def mic2exchangeid(mic=None):
+    
+    if mic is None:
+        raise NameError('get_repository:tdidch2exchangeid - Bad input : td_id is missing') 
+       
+    ##############################################################
+    # input handling
+    ##############################################################
+    
+    lids=mic
+    if isinstance(lids,list):
+        lids=np.array(lids)
+    elif not isinstance(lids,np.ndarray):
+        lids=np.array([lids])
+    
+    out=np.array([np.nan]*lids.size)    
+    
+    ##############################################################
+    # request and format
+    ##############################################################
+    # ----------------
+    # NEEDED
+    # ----------------
+    str_lids="("+"".join(["'"+str(x)+"'," for x in uniqueext(lids)])
+    str_lids=str_lids[:-1]+")"
+    # ----------------
+    # PHASE 1 : request on destination
+    # ----------------
+    req=(" SELECT "
+    " MIC,EXCHANGE "
+    " FROM "
+    " EXCHANGEREFCOMPL "
+    " WHERE "
+    " MIC in %s ") % (str_lids)
+    
+    vals=Connections.exec_sql('KGR',req)
+    if not (not vals):
+        for x in vals:
+            out[np.where(lids==x[0])[0]]=x[1]
+    
+    return out  
+    
 #------------------------------------------------------------------------------
 # local_tz_from
 #------------------------------------------------------------------------------
@@ -446,19 +532,22 @@ def local_tz_from(**kwargs):
         # construct request
         str_lids="("+"".join([str(x)+',' for x in lids])
         str_lids=str_lids[:-1]+")"
+<<<<<<< HEAD
         pref_ = ""
 #         pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
+=======
+>>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
         
         req=(" select "
         " sec.SYMBOL6, exch.TIMEZONE "
         " from "
-            " %sKGR..SECURITY sec ,"
-            " %sKGR..EXCHANGEREFCOMPL exch "
+            " SECURITY sec ,"
+            " EXCHANGEREFCOMPL exch "
         " where "
             " sec.SYMBOL6 in %s "
             " and sec.EXCHGID=exch.EXCHGID "
             " and exch.EXCHANGETYPE='M' "
-            " and sec.STATUS='A' ") % (pref_,pref_,str_lids)
+            " and sec.STATUS='A' ") % (str_lids)
             
     else:
         raise NameError('get_repository:tz_from - Bad input data')

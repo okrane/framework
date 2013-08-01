@@ -15,7 +15,7 @@ import lib.dbtools.get_repository as get_repository
 import lib.tca.compute_stats as compute_stats
 import lib.tca.mapping as mapping
 import lib.tca.tools as tools
-    
+
 #--------------------------------------------------------------------------
 # GLOBAL needed
 #--------------------------------------------------------------------------    
@@ -134,4 +134,4 @@ def sequence_info(**kwargs):
 
 if __name__=='__main__':
     # ft london stock
-    data=sequence(occurence_id='FY2000007382301')    
+    data=sequence_info(occurence_id='FY2000007382301')    

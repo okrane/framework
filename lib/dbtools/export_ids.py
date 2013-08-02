@@ -136,11 +136,12 @@ def generate_file(day, all=False, export_path='C:\\'):
 
     for cheuvreux_secids, dict in dict_s6.iteritems():
         if cheuvreux_secids == 'None':
-            for key, val in dict.iteritems():
-                l.append(line_to_append(val))
-        else:
             if all:
-                l.append(line_to_append(dict))
+                for key, val in dict.iteritems():
+                    l.append(line_to_append(val))
+        else:
+            l.append(line_to_append(dict))
+
     
     if all:
         for el in gl_list:
@@ -166,5 +167,5 @@ def generate_file(day, all=False, export_path='C:\\'):
 
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
-    generate_file(day, export_path = '/home/flexsys/ids_matching/')
+    generate_file(day, export_path = 'C:\\')
     

@@ -167,5 +167,5 @@ def generate_file(day, all=False, export_path='C:\\'):
 
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
-    generate_file(day, export_path = 'C:\\')
+    generate_file(day, export_path = '/home/flexsys/ids_matching/')
     

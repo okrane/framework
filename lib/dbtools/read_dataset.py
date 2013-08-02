@@ -131,45 +131,40 @@ def ftickdb(**kwargs):
 #--------------------------------------------------------------------------
 # histocurrency 
 #--------------------------------------------------------------------------
-def histocurrencypair(**kwargs):
+def histocurrencypair(date = None, last_date_from = None, start_date = None, end_date = None, currency = None, currency_ref = None):
     
-    out=pd.DataFrame()
+    out = pd.DataFrame()
     
     ##############################################################
     # input handling
     ##############################################################
     #---- date info
-    if "date" in kwargs.keys():
-        to_newf=datetime.strftime(datetime.strptime(kwargs["date"], '%d/%m/%Y'),'%Y%m%d')
-        from_newf=to_newf
-    elif all([x in kwargs.keys() for x in ["start_date","end_date"]]):
-        from_newf=datetime.strftime(datetime.strptime(kwargs["start_date"], '%d/%m/%Y'),'%Y%m%d')
-        to_newf=datetime.strftime(datetime.strptime(kwargs["end_date"], '%d/%m/%Y'),'%Y%m%d')           
-    else:
-        raise NameError('read_dataset:histocurrencypair - Bad input for dates') 
-        
+    if date is not None:
+        start_date = end_date = date
+        req_n = 1
+    elif last_date_from is not None:
+        req_n = 2
+    elif start_date is not None or end_date is not None:
+        if start_date is None or end_date is None:
+            raise NameError('read_dataset:histocurrencypair - Bad input for dates')        
+        req_n = 1
     #---- currencyref info
-    if "currency_ref" in kwargs.keys(): 
+    if currency_ref is not None: 
         raise NameError('read_dataset:histocurrencypair - currency_ref not available NOW') 
-        # TODO:  autre que euro pour la ref
-#            curr_ref=kwargs["currency_ref"]   
-#            if isinstance(curr_ref,basestring):
-#                curr_ref=[curr_ref]
-#            elif (not isinstance(curr_ref,list)) or (not isinstance(curr_ref,np.ndarray)):
-#                raise NameError('read_dataset:histocurrencypair - Bad input for currency ref') 
     else:
         curr_ref=['EUR']
+        
     str_curr_ref="("+"".join(["'"+x+"'," for x in curr_ref])
     str_curr_ref=str_curr_ref[:-1]+")"
     
     #---- currency info
-    if "currency" in kwargs.keys():
-        curr=kwargs["currency"]   
-        if isinstance(curr,basestring):
-            curr=[curr]
-        elif (not isinstance(curr,list)) and (not isinstance(curr,np.ndarray)):
+    if currency is not None:
+        curr = currency 
+        if isinstance(currency, basestring):
+            curr=[currency]
+        elif (not isinstance(currency, list)) and (not isinstance(curr, np.ndarray)):
             raise NameError('read_dataset:histocurrencypair - Bad input for currency ref')
-        str_curr="("+"".join(["'"+x+"'," for x in curr])
+        str_curr = "("+"".join(["'"+x+"'," for x in curr])
         str_curr=str_curr[:-1]+")" 
     else:
         curr=[]
@@ -178,29 +173,43 @@ def histocurrencypair(**kwargs):
     ##############################################################
     # request and format
     ##############################################################
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
         
-    ####  construct request    
-    req=(" SELECT "
-        " DATE,CCY,CCYREF,VALUE "
-        " FROM "
-            " %sKGR..HISTOCURRENCYTIMESERIES "
-        " WHERE "
-            " DATE>= '%s' "
-            " and DATE<= '%s' "
-            " and SOURCEID=1 "
-            " and ATTRIBUTEID=43 "
-            " and CCYREF in %s ") % (pref_,from_newf,to_newf,str_curr_ref)
+    ####  Build request
+    if req_n == 1:
+        req=("""SELECT 
+                DATE,CCY,CCYREF,VALUE
+                FROM
+                    KGR..HISTOCURRENCYTIMESERIES
+                WHERE
+                    DATE>= '%s'
+                    and DATE<= '%s'
+                    and SOURCEID=1
+                    and ATTRIBUTEID=43
+                    and CCYREF in %s""" ) % (start_date, end_date, str_curr_ref)
     
-    if not curr==[]:
+    elif req_n == 2:
+        req=( """SELECT TOP(%d)
+              DATE,CCY,CCYREF,VALUE
+              FROM
+              KGR..HISTOCURRENCYTIMESERIES
+              WHERE
+                DATE<= '%s'
+                and SOURCEID = 1
+                and ATTRIBUTEID = 43
+                and CCYREF in %s """) % (len(curr), last_date_from, str_curr_ref)    
+    
+    if not curr == []:
         req=req+((" and CCY in %s ") % (str_curr))
-    
+    req += 'ORDER BY DATE DESC  '
+          
     #### EXECUTE REQUEST 
     vals=Connections.exec_sql('KGR',req)
     
     ####  OUTPUT 
     if not vals:
-        return out   
+        return out  
+     
+    
     
     out=pd.DataFrame.from_records(vals,columns=['date','ccy','ccyref','rate'],index=['date'])
     out=out.sort_index()
@@ -295,4 +304,6 @@ if __name__=='__main__':
     # ft french stock (local)
     data=ft(security_id=110,date='11/03/2013', remote=True)
     # currency rate
-    data=histocurrencypair(start_date='01/05/2013',end_date='10/05/2013',currency=['GBX','SEK'])
+    print histocurrencypair(start_date='20130501',end_date='20130502',currency=['GBX','SEK'])
+    # currency rate
+    print histocurrencypair(last_date_from='20130803', currency=['GBX','SEK'])

@@ -35,16 +35,16 @@ def get_local(date, sec_id, srv_addr, local_temp = ''):
         full_path = os.path.realpath(__file__)
         local_temp, f = os.path.split(full_path)
         
-<<<<<<< HEAD
+
     remote_data_path = '/quant/kc_repository_/get_tick/ft/%s/%s.mat' %(sec_id, day)
     
-=======
-    if datetime.strptime(date, '%d/%m/%Y')<=datetime.strptime('11/07/2013', '%d/%m/%Y'):
-        remote_data_path = '/quant/kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
-    else:
-        remote_data_path = '/quant/test_kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
-        
->>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
+# =======
+#     if datetime.strptime(date, '%d/%m/%Y')<=datetime.strptime('11/07/2013', '%d/%m/%Y'):
+#         remote_data_path = '/quant/kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
+#     else:
+#         remote_data_path = '/quant/test_kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
+#         
+# >>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
     local_addr = socket.gethostbyname(socket.gethostname())
     local_data_path = '%s/temp_buffer/%s.mat' %(path, day) 
     

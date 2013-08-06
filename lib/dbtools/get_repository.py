@@ -223,11 +223,10 @@ def tradingtime(**kwargs):
     ##############################################################
     # request data
     ##############################################################
-<<<<<<< HEAD
+
     pref_ = ""
 #     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
-=======
->>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
+
     data=exchangeinfo(security_id=lids)
     if (data.shape[0]==0) or (not np.any(data['EXCHANGETYPE']=='M')):
         return out
@@ -293,11 +292,10 @@ def exchangeinfo(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
-<<<<<<< HEAD
+
     pref_ = ""
 #     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
-=======
->>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
+
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -347,13 +345,10 @@ def exchangeid2tz(**kwargs):
     ##############################################################
     # ----------------
     # NEEDED
-<<<<<<< HEAD
     # ----------------
     pref_ = ""
 #     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
-=======
-    # ----------------  
->>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
+
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -404,11 +399,10 @@ def tdidch2exchangeid(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
-<<<<<<< HEAD
+
     pref_ = ""
 #     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
-=======
->>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
+
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -532,11 +526,10 @@ def local_tz_from(**kwargs):
         # construct request
         str_lids="("+"".join([str(x)+',' for x in lids])
         str_lids=str_lids[:-1]+")"
-<<<<<<< HEAD
+
         pref_ = ""
 #         pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
-=======
->>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
+
         
         req=(" select "
         " sec.SYMBOL6, exch.TIMEZONE "

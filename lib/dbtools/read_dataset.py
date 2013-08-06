@@ -16,6 +16,8 @@ from lib.data.matlabutils import *
 import lib.data.st_data as st_data
 import lib.stats.slicer as slicer
 import lib.stats.formula as formula
+from lib.logger import *
+from lib.io.toolkit import get_traceback
 
 if os.name != 'nt':
     import socket
@@ -112,10 +114,17 @@ def ft(**kwargs):
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
         if remote == True and os.name != 'nt':
             os.remove(filename)
-    except:
-        raise NameError('read_dataset:ft - This file does not exist <'+filename+'>')  
+        print 'read_dataset:ft - File LOAD <'+filename+'>'
         
-    return st_data.to_dataframe(mat['data'],timezone=True)
+        return st_data.to_dataframe(mat['data'],timezone=True)
+    except IOError:
+        get_traceback()
+#         raise NameError('read_dataset:ft - This file does not exist <'+filename+'>')
+        logging.warning('read_dataset:ft - This file does not exist <'+filename+'>')
+        
+        return pd.DataFrame()
+        
+    
 
 
 #--------------------------------------------------------------------------
@@ -215,6 +224,7 @@ def histocurrencypair(date = None, last_date_from = None, start_date = None, end
     out=out.sort_index()
     return out
 
+
 #--------------------------------------------------------------------------
 # lastrate2ref 
 #--------------------------------------------------------------------------
@@ -295,6 +305,91 @@ def bic(step_sec=300,exchange=False,**kwargs):
     
     return out       
 
+
+#--------------------------------------------------------------------------
+# lastrate2ref 
+#--------------------------------------------------------------------------
+def trading_daily(start_date=None,end_date=None,security_id=[],include_agg=False,exchange_id=None):
+    """
+    trading_daily
+    """
+    ### ATTENTION : ne fonctionne que pour l'europe
+    ##############################################################
+    # input handling
+    ##############################################################
+    #--- dates
+    if (start_date is None) or (end_date is None):
+        raise NameError('read_dataset:trading_daily - Dates is mandatory')
+        
+    start_date=datetime.strftime(datetime.strptime(start_date,'%d/%m/%Y'),'%Y%m%d')
+    end_date=datetime.strftime(datetime.strptime(end_date,'%d/%m/%Y'),'%Y%m%d')
+    
+    #--- security_id
+    if isinstance(security_id,list):
+        security_id=np.array(security_id)
+    elif not isinstance(security_id,np.ndarray):
+        security_id=np.array([security_id])
+        
+    ##############################################################
+    # construct the request
+    ##############################################################
+    #---- select
+    select_req=" SELECT tddaily.*,exchref.EXCHANGETYPE "
+    #---- from
+    from_req=(" FROM Market_data..trading_daily tddaily "
+    " LEFT JOIN KGR..EXCHANGEREFCOMPL exchref ON ( "
+    "    exchref.EXCHANGE=tddaily.trading_destination_id "
+    " ) ")
+    #---- order
+    order_by_req=" ORDER BY tddaily.date,tddaily.security_id,tddaily.trading_destination_id "
+    #---- where
+    where_req=" WHERE tddaily.date>='"+start_date+"' AND tddaily.date<='"+end_date+"'"
+    if security_id.shape[0]>0:
+        str_lids="("+"".join([str(x)+',' for x in uniqueext(security_id)])
+        str_lids=str_lids[:-1]+")"
+        where_req=where_req+" AND tddaily.security_id in %s" % (str_lids)
+                
+    check_include_agg=True
+    if exchange_id is not None:
+        if isinstance(exchange_id,basestring) and exchange_id=="main":
+            where_req=where_req+" AND exchref.EXCHANGETYPE='M' "
+        elif isinstance(exchange_id,basestring) and exchange_id=="agg":
+            where_req=where_req+" AND tddaily.trading_destination_id is NULL "
+            check_include_agg=False
+        else:
+            if isinstance(exchange_id,list):
+                exchange_id=np.array(exchange_id)
+            elif not isinstance(exchange_id,np.ndarray):
+                exchange_id=np.array([exchange_id])
+            else:
+                raise NameError('read_dataset:trading_daily - exchange_id')
+            
+            str_lids="("+"".join([str(x)+',' for x in uniqueext(exchange_id)])
+            str_lids=str_lids[:-1]+")"
+            where_req=where_req+" AND tddaily.trading_destination_id in %s" % (str_lids)
+            
+    if check_include_agg and (not include_agg):
+        where_req=where_req+" AND tddaily.trading_destination_id is not NULL "
+        
+    req=select_req+from_req+where_req+order_by_req
+    
+    vals=Connections.exec_sql("MARKET_DATA",req,schema = True)
+    
+    ##############################################################
+    # output
+    ##############################################################    
+    out=pd.DataFrame()
+    if not (not vals):
+        out=pd.DataFrame.from_records(vals[0],columns=vals[1])
+        out['date']=[datetime.strptime(x,'%Y-%m-%d') for x in out['date']]
+        out=out.set_index('date')
+        
+    return out
+    
+    
+    
+    
+    
 
 if __name__=='__main__':
     # ft london stock

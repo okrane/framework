@@ -21,7 +21,7 @@ from lib.dbtools.connections import Connections
 def sequence_info(db_name = "Mars", **kwargs):
      
     #### DEFAULT OUTPUT    
-    data=[]
+    data=pd.DataFrame()
     
     #client = MongoClient(connect_info)
     client = Connections.getClient(db_name.upper())
@@ -35,13 +35,13 @@ def sequence_info(db_name = "Mars", **kwargs):
         ids=kwargs["sequence_id"]
         if isinstance(ids, basestring):
             ids=[ids] 
-        req_=occ_db.find({"ClOrdID": {"$in" : ids}})
+        req_=occ_db.find({"p_cl_ord_id": {"$in" : ids}})
     # get all the sequences from occurence ids
     elif "occurence_id" in kwargs.keys():  
         ids=kwargs["occurence_id"]
         if isinstance(ids,basestring):
             ids=[ids]
-        req_=occ_db.find({"occ_ID": {"$in" : ids}})
+        req_=occ_db.find({"p_occ_id": {"$in" : ids}})
     # get all the sequences from date start end
     elif all(x in ["start_date","end_date"] for x in kwargs.keys()):
         sday=dt.datetime.strptime(kwargs["start_date"]+'-00:00:01', '%d/%m/%Y-%H:%M:%S')
@@ -50,9 +50,7 @@ def sequence_info(db_name = "Mars", **kwargs):
     else:
         client.close();
         raise NameError('get_algodata:sequence_info - Bad input data')
-        
-    print 'Mongo request time <%3.2f> secs ' %(time.clock()-t0)
-    
+          
     #### Create the data
     documents=[]
     columns=[]
@@ -60,7 +58,7 @@ def sequence_info(db_name = "Mars", **kwargs):
         documents.append(v)
         columns.extend(v.keys())
         columns=list(set(columns))
-    
+           
     #### CONNECTIONS
     client.close();
     
@@ -72,10 +70,11 @@ def sequence_info(db_name = "Mars", **kwargs):
     #data=data.tz_localize('GMT')
     data=data.sort_index()  
 
+    print 'sequence_info time : Mongo + insert into dataframe <%3.2f> secs ' %(time.clock()-t0)
     
     #### HANDLING COLNAMES
     needed_colnames=[ # - id/order infos
-    u'_id',u'occ_ID', u'ClOrdID',u'OrigClOrdID',
+    u'_id',u'p_cl_ord_id',u'p_occ_id',
     # - user/client infos
     u'ClientID',u'TargetSubID',u'Account', u'MsgType',
     #- security symbol
@@ -116,25 +115,7 @@ def sequence_info(db_name = "Mars", **kwargs):
         if np.any(np.isnan(tmp)):
             raise NameError('get_algodata:sequence_info - Side : strange values')
         data['Side']=tmp
-        
-#    #### add rate2euro info
-#    rate2euro=np.array([np.nan]*data.shape[0])
-#    uni_curr=np.unique(data['Currency'].values)
-#    uni_curr=uni_curr[np.nonzero(map(lambda x : (not isinstance(x,float)) or (not np.isnan(x)),uni_curr))[0]]
-#    
-#    if uni_curr.shape[0]:
-#        data_curr=read_dataset.histocurrencypair(currency=uni_curr,
-#                                         start_date=dt.datetime.strftime(data.index.min().to_datetime(),'%d/%m/%Y'),
-#                                         end_date=dt.datetime.strftime(data.index.max().to_datetime(),'%d/%m/%Y'))
-#        if data_curr.shape[0]>0:
-#            dates_curr=[x.date() for x in data_curr.index]
-#            for i in range(0,data.shape[0]):
-#                idx_tmp=np.nonzero((map(lambda x,y: (x==data.index[i].date()) and (y==data.ix[i]['Currency']),dates_curr,data_curr['ccy'].values)))[0]
-#                if idx_tmp.shape[0]==1:
-#                    rate2euro[i]=data_curr.ix[idx_tmp[0]]['rate']
-#                    
-#    data['rate2euro']=rate2euro
-
+    
     return data
 
 #--------------------------------------------------------------------------
@@ -143,7 +124,7 @@ def sequence_info(db_name = "Mars", **kwargs):
 def occurence_info(db_name = "Mars", **kwargs): 
     
     #### DEFAULT OUTPUT    
-    data=[]
+    data=pd.DataFrame()
     
     #client = MongoClient(connect_info)
     client = Connections.getClient(db_name.upper())
@@ -155,7 +136,7 @@ def occurence_info(db_name = "Mars", **kwargs):
         ids=kwargs["occurence_id"]
         if isinstance(ids,basestring):
             ids=[ids] 
-        req_=occ_db.find({"MsgType":"D","occ_ID": {"$in" : ids}})
+        req_=occ_db.find({"MsgType":"D","p_occ_id": {"$in" : ids}})
     elif all(x in ["start_date","end_date"] for x in kwargs.keys()):
         sday=dt.datetime.strptime(kwargs["start_date"]+'-00:00:01', '%d/%m/%Y-%H:%M:%S')
         eday=dt.datetime.strptime(kwargs["end_date"]+'-23:59:59', '%d/%m/%Y-%H:%M:%S')
@@ -177,17 +158,21 @@ def occurence_info(db_name = "Mars", **kwargs):
     if not documents:
         return data
     data=pd.DataFrame.from_records(documents, columns=columns,index='SendingTime')
-    # data=data.tz_localize('GMT')
     
     #### HANDLING COLNAMES
+    fields_algoorders=fieldList(cname='AlgoOrders')
+    
     needed_colnames=[ # - id/order infos
-    u'_id',u'occ_ID',
+    u'_id',u'p_occ_id',
     # - user/client infos
     u'ClientID',u'TargetSubID',u'Account',
     #- security symbol
     u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',
     #- info at occurence level
     u'Side',u'occ_nb_replace',u'occ_duration']
+    # add occ_fe_    
+    add_occ_fe=fields_algoorders[np.nonzero([x[:min(7,len(x))]=='occ_fe_' for x in fields_algoorders])[0]]
+    needed_colnames=needed_colnames+add_occ_fe.tolist()
     
     # - drop colnames
     for x in data.columns.tolist():
@@ -216,7 +201,7 @@ def occurence_info(db_name = "Mars", **kwargs):
 def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, merge_order_colnames=None): 
     
     #### DEFAULT OUTPUT    
-    data=[]
+    data=pd.DataFrame()
     
     #### CONNECTIONS and DB
     client = Connections.getClient(db_name.upper())
@@ -230,12 +215,12 @@ def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, merge
         ids=sequence_id
         if isinstance(ids,basestring):
             ids=[ids] 
-        req_=deal_db.find({"ClOrdID": {"$in" : ids}}).sort([("TransactTime",ASCENDING), ("ExecID",ASCENDING)])
+        req_=deal_db.find({"p_cl_ord_id": {"$in" : ids}}).sort([("TransactTime",ASCENDING), ("p_exec_id",ASCENDING)])
     elif (start_date is not None) and (end_date is not None):
         sday=dt.datetime.strptime(start_date+'-00:00:01', '%d/%m/%Y-%H:%M:%S')
         eday=dt.datetime.strptime(end_date+'-23:59:59', '%d/%m/%Y-%H:%M:%S')
         # req_=deal_db.find({"TransactTime": {"$gte":sday , "$lt":eday }}).sort([("TransactTime",ASCENDING), ("ExecID",ASCENDING)]) 
-        req_=deal_db.find({"TransactTime": {"$gte":sday , "$lt":eday }})    
+        req_=deal_db.find({"TransactTime": {"$gte":sday , "$lt":eday }}).sort([("TransactTime",ASCENDING), ("p_exec_id",ASCENDING)])    
     else:
         raise NameError('get_algodata:deal - Bad input data')  
     
@@ -260,8 +245,9 @@ def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, merge
     #### HANDLING COLNAMES
     ################################################    
     
+    # TODO: rajouter les infos de rate_to_euro etc une fosi integrer
     needed_colnames=[ # - id/order infos
-    "ExecID","ClOrdID",
+    "p_exec_id","p_cl_ord_id",
      # - deal infos
     "Side","Symbol","LastPx","LastShares","LastMkt","ExecType","Currency"]
     # - drop colnames
@@ -292,7 +278,7 @@ def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, merge
     #### HANDLING COLNAMES
     ################################################    
     if (merge_order_colnames is not None):
-        data_seq=sequence_info(sequence_id=matlabutils.uniqueext(data['ClOrdID'].values).tolist())
+        data_seq=sequence_info(sequence_id=matlabutils.uniqueext(data['p_cl_ord_id'].values).tolist())
         if not all([x in data_seq.columns.tolist() for x in merge_order_colnames]):
             raise NameError('get_algodata:deal - bad merge_order_colnames')    
         # initialize columns
@@ -301,7 +287,7 @@ def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, merge
         # add
         if data_seq.shape[0]>0:
             for idx in range(0,data_seq.shape[0]):
-                idx_in=np.nonzero(data['ClOrdID'].values==data_seq.ix[idx]['ClOrdID'])[0]        
+                idx_in=np.nonzero(data['p_cl_ord_id'].values==data_seq.ix[idx]['p_cl_ord_id'])[0]        
                 for x in merge_order_colnames:
                     data[x][idx_in]=data_seq.ix[idx][x]
                     
@@ -323,7 +309,7 @@ def fieldList(cname=None, db_name="Mars", **kwargs):
     for v in req_:
         out.append(v)
     
-    return out[0]['list_columns']
+    return np.array(out[0]['list_columns'])
 
 
     

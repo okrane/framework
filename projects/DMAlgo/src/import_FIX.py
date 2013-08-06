@@ -68,21 +68,7 @@ class ConversionRate:
 
         for d in dates_datetime:
             try:
-                rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].ix[d.strftime("%Y-%m-%d")]["rate"]
-            except KeyError, e:
-                logging.error('Could not get date for this date: ' + d.strftime("%Y-%m-%d"))
-                new_date = d-timedelta(days=1)
-                try:
-                    rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].ix[new_date.strftime("%Y-%m-%d")]["rate"]
-                except Exception, e:
-                    rate = None
-                    import traceback
-                    import StringIO
-                    fp = StringIO.StringIO()
-                    traceback.print_exc(file = fp)
-                    logging.error(fp.getvalue())
-                    logging.error("Impossible to get the currency: " + str(curr) + " at the date: " + str(d))
-                    logging.error("The required rate has been set to None")
+                rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].iloc[-1]["rate"]
             except Exception, e:
                 rate = None
                 import traceback
@@ -105,7 +91,7 @@ class ConversionRate:
     def _get_all(dates_datetime):
         connection_name_backup = connections.Connections.connections
         connections.Connections.change_connections('production')
-        ConversionRate.data = read_dataset.histocurrencypair(last_date_from   = dates_datetime[len(dates_datetime) - 1].strftime("%d/%m/%Y"),
+        ConversionRate.data = read_dataset.histocurrencypair(last_date_from   = dates_datetime[len(dates_datetime) - 1].strftime("%Y%m%d"),
                                                              currency         = ConversionRate.default_currencies)
         connections.Connections.change_connections(connection_name_backup)
         logging.info(str(ConversionRate.data))
@@ -480,16 +466,28 @@ class DatabasePlug:
             typed_orders    = self.checker.verify_all(orders)
             to_return.append(typed_orders)
             
-            if self.mode != "write":
+            if self.mode == "write":
                 job_id = 'AO%s' %day
+                logging.info("Remove the documents where this job_id is present " + str(job_id))
                 self.client[self.database]['AlgoOrders'].remove({'job_id':job_id})
                 self.store_db(typed_orders, "AlgoOrders", job_id)
                 
                 for order in typed_orders:
-                    if 'rate_to_euro' in order:
-                        self.client[self.database]['OrderDeals'].update({'ClOrdID' : order['ClOrdID']}, {'$set': {'rate_to_euro'    : order['rate_to_euro']} }, multi=True)
-                    if 'cheuvreux_secid' in order:
-                        self.client[self.database]['OrderDeals'].update({'ClOrdID' : order['ClOrdID']}, {'$set': {'cheuvreux_secid' : order['cheuvreux_secid']} }, multi=True)
+                    req_for_update = {}
+                    if 'nb_exec' in order.keys() and order['nb_exec'] > 0:
+                        
+                        if 'rate_to_euro' in order:
+                            req_for_update['rate_to_euro'] = order['rate_to_euro']
+                            
+                        if 'cheuvreux_secid' in order:
+                            req_for_update['cheuvreux_secid'] = order['cheuvreux_secid']
+                        
+                        if len(req_for_update.keys()) > 0:    
+                            self.client[self.database]['OrderDeals'].update(
+                                                                            {'p_cl_ord_id' : order['p_cl_ord_id']}, 
+                                                                            {'$set': req_for_update }, 
+                                                                            multi=True
+                                                                            )
                         
             self.checker.add_json()
             self.send_missing_ids(day) 
@@ -594,9 +592,7 @@ class DatabasePlug:
         l_symbol     = []
         job_id = 'AO%s' %day
         
-        if self.mode == "write":
-            logging.info("Remove the documents where this job_id is present " + str(job_id))
-            self.client[self.database]['AlgoOrders'].remove({'job_id':job_id})
+
             
         logging.info('Get ' + str(len(d_orders)) + ' orders to add !')
         u_orders = []
@@ -605,6 +601,10 @@ class DatabasePlug:
             i = 0
             for order in d_orders:
                 i+=1
+                #ATTETNION
+                ############################### DEBUG
+                if order['ClOrdID'] != 'FYLCoAA0218' : continue
+                ########################################
                 logging.info('Order ID : %s' %order['ClOrdID'])
                 l_events = self.order_life(order          = order, 
                                           day            = day, 
@@ -709,7 +709,6 @@ class DatabasePlug:
                         mkt_data    = lines[0]
                     except Exception,e :
                         self.missing_enrichment[order["ClOrdID"]] = [cmd, order]
-                        logging.error("Cannot get data from algos for the following strategy: " +  str(order["StrategyName"]))
                         logging.error("This order could not been enriched from the front end: " + str(order) )
                         get_traceback()
                         mkt_data = None  
@@ -1223,11 +1222,11 @@ class DatabasePlug:
         
         ssh.close()
         return [order_life, dico_tags]
-    
+                    
 if __name__ == '__main__':
     import sys    
-    print ConversionRate.getRate('GBp', '20130724')
-    sys.exit()
+#     print ConversionRate.getRate('GBx', '20130803')
+#     sys.exit()
     if len(sys.argv) <= 6:
         print "Usage Examples: "
         print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev I"
@@ -1236,14 +1235,15 @@ if __name__ == '__main__':
         print "python2.7 import_FIX.py HPP PARFLTLAB02 dev O CLNT1"
         print "python2.7 import_FIX.py HPP WATFLT01 preprod I CLNT1"
         print "python2.7 import_FIX.py HPP WATFLT01 preprod O CLNT1"
-        
+    
+    
         database_server    = 'TEST'
         database    = 'DB_test1'
         server_flex = 'WATFLT01'
         environment = 'preprod'
         io          = 'I'
         source      = 'CLNT1'
-        
+    connections.Connections.change_connections('dev')    
     dates       =  ['20130603','20130604','20130605','20130606','20130607',
                     '20130610','20130611','20130612','20130613','20130614',
                     '20130617','20130618','20130619','20130620','20130621',
@@ -1253,17 +1253,17 @@ if __name__ == '__main__':
 
 
     
-    database_server     = 'HPP'
+    database_server     = 'MARS'
     database            = 'Mars'
     environment         = 'prod'
     source              = 'CLNT1'
 
-#     dates               = [date]
+    dates               = ['20130725']
     
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill()
+                 mode               = "write").fill(order_deals=False)
     

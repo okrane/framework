@@ -30,11 +30,11 @@ def ExcludeAuction(x):
 # StrategyName
 #------------------------------------------------------------------------------
 def StrategyName(id, sweep_lit = None, database = 'Mars'):
-    client     = Connections.getClient("MARS")
+    client     = Connections.getClient(database)
     collection = client[database]["map_tagFIX"]
     req        = {"tag_name" : "StrategyName", "tag_value" : str(id)}
     
-    if sweep_lit is not None:
+    if isinstance(sweep_lit,basestring):
         req["SweepLit"] = sweep_lit
         
     result     = collection.find(req).sort([("validity_date",-1)])

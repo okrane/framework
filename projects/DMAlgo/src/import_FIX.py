@@ -474,13 +474,20 @@ class DatabasePlug:
                 
                 for order in typed_orders:
                     req_for_update = {}
-                    
-                    if 'rate_to_euro' in order:
-                        req_for_update['rate_to_euro'] = order['rate_to_euro']
-                    if 'cheuvreux_secid' in order:
-                        req_for_update['cheuvreux_secid'] = order['cheuvreux_secid']
+                    if 'nb_exec' in order.keys() and order['nb_exec'] > 0:
                         
-                    self.client[self.database]['OrderDeals'].update({'p_cl_ord_id' : order['p_cl_ord_id']}, {'$set': req_for_update }, multi=True)
+                        if 'rate_to_euro' in order:
+                            req_for_update['rate_to_euro'] = order['rate_to_euro']
+                            
+                        if 'cheuvreux_secid' in order:
+                            req_for_update['cheuvreux_secid'] = order['cheuvreux_secid']
+                        
+                        if len(req_for_update.keys()) > 0:    
+                            self.client[self.database]['OrderDeals'].update(
+                                                                            {'p_cl_ord_id' : order['p_cl_ord_id']}, 
+                                                                            {'$set': req_for_update }, 
+                                                                            multi=True
+                                                                            )
                         
             self.checker.add_json()
             self.send_missing_ids(day) 
@@ -594,6 +601,10 @@ class DatabasePlug:
             i = 0
             for order in d_orders:
                 i+=1
+                #ATTETNION
+                ############################### DEBUG
+                if order['ClOrdID'] != 'FYLCoAA0218' : continue
+                ########################################
                 logging.info('Order ID : %s' %order['ClOrdID'])
                 l_events = self.order_life(order          = order, 
                                           day            = day, 
@@ -698,7 +709,6 @@ class DatabasePlug:
                         mkt_data    = lines[0]
                     except Exception,e :
                         self.missing_enrichment[order["ClOrdID"]] = [cmd, order]
-                        logging.error("Cannot get data from algos for the following strategy: " +  str(order["StrategyName"]))
                         logging.error("This order could not been enriched from the front end: " + str(order) )
                         get_traceback()
                         mkt_data = None  
@@ -1248,7 +1258,7 @@ if __name__ == '__main__':
     environment         = 'prod'
     source              = 'CLNT1'
 
-    dates               = ['20130711']
+    dates               = ['20130725']
     
     DatabasePlug(database_server    = database_server, 
                  database           = database,

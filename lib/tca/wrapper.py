@@ -24,6 +24,7 @@ class Singleton(object):
         return cls._instance
     
 DEFAULT_FIGSIZE = (13,7)
+
 def autolabel_barh(rects):
     # attach some text labels
     for rect in rects:
@@ -61,18 +62,16 @@ class DataProcessor(object):
     def get_stat_dma(self):
         if 'turnover_euro' not in self.data_seq:
             self.get_stat_turnover_euro()
-        f               = lambda x: x.loc['TargetSubID' ] == 'ON1' or x.loc['TargetSubID' ] == 'ON2' or x.loc['TargetSubID' ] == 'ON3'
-        self.ind_dma    = self.data_seq.apply(func = f, axis = 1, raw=False )
-        
-        self.data_seq['is_dma'] = self.ind_dma.values
-        
-    def plot_algo(self):  
-        # Strategy Name
-        self.get_stat_dma()
-        fig = plt.figure(figsize = DEFAULT_FIGSIZE)
-        axes = plt.gca()
-        axes.grid(True)
+        f                = lambda x: x.loc['TargetSubID' ] == 'ON1' or x.loc['TargetSubID' ] == 'ON2' or x.loc['TargetSubID' ] == 'ON3'
+        self.ind_dma     = self.data_seq.apply(func = f, axis = 1, raw=False )
 
+        self.data_seq['is_dma'] = self.ind_dma.values
+    def plot_algo_volume(self):
+        self.get_stat_dma()
+        
+        value_per_algo_dma      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['occ_ID'].count().order()
+        value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['occ_ID'].count().order()
+        
         value_per_algo_dma      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['turnover_euro'].sum().order()
         value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['turnover_euro'].sum().order()
         
@@ -82,37 +81,62 @@ class DataProcessor(object):
                 
         value_per_algo_dma = value_per_algo_dma.order()
         
-        ind                     = arange(len(value_per_algo_all.index)) 
+        
         
         value_per_algo_values_d = [round(p/1000000,2) for p in value_per_algo_dma.values]
         value_per_algo_values_a = [round(p/1000000,2) for p in value_per_algo_all.values]
         
-        maxi                    = max(value_per_algo_values_a)
+        xlabel                  = 'Volume/Algo (,000,000 Euros)'
         total_all               = sum(value_per_algo_values_a)
         total_dma               = sum(value_per_algo_values_d)
+        title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Turnover: ' + str(round(total_all,1)) + ' MEuros\n DMA Turnover: ' + str(round(total_dma,1)) + ' MEuros'
+        return self.plot_algo_dma_vs_all(title, value_per_algo_values_d, value_per_algo_values_a, value_per_algo_all.index, xlabel)
+    
+    def plot_algo_occ(self):
+        self.get_stat_dma()
+        
+        nbr_dma_occ      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['occ_ID'].count().order()
+        nbr_all_occ      = self.data_seq.groupby('strategy_name_mapped')['occ_ID'].count().order()
+
+        
+        for index in nbr_all_occ.index:
+            if index not in nbr_dma_occ.index:
+                nbr_dma_occ = nbr_dma_occ.set_value(index,  0)
+                
+        nbr_dma_occ = nbr_dma_occ.order()
+
+        
+        xlabel                  = 'Nbr Occ/Algo'
+        total_all               = sum(nbr_all_occ)
+        total_dma               = sum(nbr_dma_occ)
+        title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Occurrence: ' + str(int(total_all))  + ' \n DMA Occurrence: ' + str(int(total_dma))
+        return self.plot_algo_dma_vs_all(title, nbr_dma_occ, nbr_all_occ, nbr_all_occ.index, xlabel)        
+      
+    def plot_algo_dma_vs_all(self, title, value_dma, value_all, index_all, xlabel ):  
+        # Strategy Name
+        fig = plt.figure(figsize = DEFAULT_FIGSIZE)
+        axes = plt.gca()
+        axes.grid(True)
+
+        maxi                    = max(value_all)
+
         height                  = 0.8
         
-        p_all                   = plt.barh( ind, value_per_algo_values_a, height = height, color=kc_main_colors()['blue_2'], alpha=0.85)
-        p_dma                   = plt.barh( ind, value_per_algo_values_d, height = height, color=kc_main_colors()['blue_1'], alpha=0.95)
+        ind                     = arange(len(index_all)) 
+        
+        p_all                   = plt.barh( ind, value_all, height = height, color=kc_main_colors()['blue_2'], alpha=0.85)
+        p_dma                   = plt.barh( ind, value_dma, height = height, color=kc_main_colors()['blue_1'], alpha=0.95)
         
         
-        plt.xlabel('Volume/Algo (,000,000 Euros)')
-        plt.title('From ' + self.start_date_str + ' To '+ self.start_date_str + '\nTotal Turnover: ' + str(round(total_all,1)) + ' MEuros\n DMA Turnover: ' + str(round(total_dma,1)) + ' MEuros', size = 'large')
-        plt.yticks(height/2 + ind, map(str, value_per_algo_all.index) )
-        
-       
-        
-        plt.xticks(
-                   arange(start = 0, 
-                          stop = maxi, 
-                          step = round(maxi, 3-len(str(round(maxi))))/10
-                          )
-                   )
+        plt.xlabel(xlabel)
+        plt.title(title, size = 'large')
+        plt.yticks(height/2 + ind, map(str, index_all) )
         
         autolabel_barh(p_all)
         
         plt.legend([p_all, p_dma], ['OTHER', 'ALGO DMA'], loc=4)
-        return plt
+          
+        return fig
 
     #------------------------------------------------------------------------------
     #  Intraday executed curve
@@ -143,7 +167,7 @@ class DataProcessor(object):
         uni_strat=np.sort(np.unique(grouped_data[group_var].values).tolist())
         colors_strat=cm.spectral(np.linspace(0, 1.0, len(uni_strat)))
         # ----- PLOT 
-        plt.figure()
+        h = plt.figure()
         plt.hold(True)
         prev_date=''
         prev_date_cum=0
@@ -153,30 +177,46 @@ class DataProcessor(object):
             idx_uni_strat=np.nonzero(uni_strat==grouped_data[group_var].ix[i])[0][0]
             if (not date==prev_date):
                 plt.gca().fill([date-timedelta(seconds=step_sec),date,date,date-timedelta(seconds=step_sec)],
-                       [0,0,grouped_data['mturnover_euro'].ix[i],grouped_data['mturnover_euro'].ix[i]],
+                       [0,0,grouped_data['turnover_euro'].ix[i],grouped_data['turnover_euro'].ix[i]],
                        facecolor=colors_strat[idx_uni_strat],alpha = 0.5)
                        
-                prev_date_cum=grouped_data['mturnover_euro'].ix[i]
+                prev_date_cum=grouped_data['turnover_euro'].ix[i]
                 # ,edgecolor='none'
             else:
                 plt.gca().fill([date-timedelta(seconds=step_sec),date,date,date-timedelta(seconds=step_sec)],
-                       [prev_date_cum,prev_date_cum,prev_date_cum+grouped_data['mturnover_euro'].ix[i],prev_date_cum+grouped_data['mturnover_euro'].ix[i]],
+                       [prev_date_cum,prev_date_cum,prev_date_cum+grouped_data['turnover_euro'].ix[i],prev_date_cum+grouped_data['turnover_euro'].ix[i]],
                        facecolor=colors_strat[idx_uni_strat],alpha = 0.5)
                        
-                prev_date_cum=prev_date_cum+grouped_data['mturnover_euro'].ix[i]     
+                prev_date_cum=prev_date_cum+grouped_data['turnover_euro'].ix[i]     
             prev_date=date
         
         plt.hold(False)
         plt.legend(uni_strat)
         
-        return plt
+        return h
     
     
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
-    Connections.change_connections("dev")
-    day = datetime.now() - timedelta(days=6)
-    p = DataProcessor(start_date = day, end_date = day)
-#     p.plot_algo().show()
-    p.plot_intraday_exec_curve(step_sec=60*60, group_var='ExDestination').show()
+#     Connections.change_connections("dev")
+    
+    
+    day = datetime.now() - timedelta(days=7)
+    
+    # One DAY
+    daily = DataProcessor(start_date = day, end_date = day)
+    daily.plot_algo_volume().show()
+    daily.plot_algo_occ().show()
+    
+    # Weekly
+    weekly = DataProcessor(start_date = day, end_date = day + timedelta(days=7))
+    weekly.plot_algo_volume().show()
+    weekly.plot_algo_occ().show()
+    
+    # Monthly
+    monthly = DataProcessor(start_date = day - timedelta(days=21), end_date = day + timedelta(days=7))
+    monthly.plot_algo_volume().show()
+    monthly.plot_algo_occ().show()
+    
+#     p.plot_intraday_exec_curve(step_sec=60*60, group_var='ExDestination').show()
     

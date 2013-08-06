@@ -1,4 +1,5 @@
 import lib.io.smart_converter as converter
+from lib.io.fix import FixTranslator
 from lib.io.serialize import *
 import simplejson
 from datetime import datetime
@@ -36,7 +37,7 @@ def test_converter():
             assert isinstance(new_dict[el], my_type)
   
 def test_fix_translator():
-    ft = converter.FixTranslator()
+    ft = FixTranslator()
     assert ft.translate_tag(5) == "AdvTransType"
     assert ft.translate_tag('5') == "AdvTransType"
     assert ft.translate_tag("AdvTransType") == '5'
@@ -59,6 +60,23 @@ def test_fix_translator():
     print ft.pretty_print_csv(s+'\n'+k, to_print=False, sep='\t')
     
     print ft.pretty_print_csv(test, to_print=False, sep='\t')
+    import paramiko
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect('172.25.152.73', 
+                username = 'flexsys', 
+                password = 'flexsys1')
+    cmd = 'prt_fxlog ./logs/trades/20130730/FLINKI_CLNT120130730I.fix 3' 
+    
+    (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
+    s = stdout_grep.read()
+    ssh.close()
+    
+    csv = ft.pretty_print_csv(s, to_print=False, sep=';')
+    file = open("file.csv", "w")
+    file.write(csv)
+    file.close()
+    
 if __name__== "__main__":
-#     test_converter()
+    test_converter()
     test_fix_translator()

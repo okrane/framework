@@ -147,7 +147,7 @@ def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, impo
     reason = ''
     
     OrigOrderID = d_msg['ClOrdID']
-    logging.warning("Looking for other reason for order : %s" %OrigOrderID)
+    logging.info("Looking for other reason for order : %s" %OrigOrderID)
     
     if import_type == 'Client':
         IN_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
@@ -266,7 +266,7 @@ class DatabasePlug:
         
         self.get_all_strategy_name()
        
-    def store_db(self, orders, collection_name, job_id, mode='insert'):
+    def store_db(self, orders, collection_name, job_id):
         database = self.client[self.database]
         collection = database[collection_name]
         
@@ -280,14 +280,9 @@ class DatabasePlug:
                 if el['collection_name'] == collection_name:
                     fields = el['list_columns']
         to_add = False
-        
         for order in orders:
-            order.update({'job_id': job_id})
-            if mode == 'insert':    
-                collection.insert(order, manipulate=False)
-            elif mode == 'update':
-                collection.save(order)
-
+            order.update({'job_id': job_id})  
+            collection.insert(order, manipulate=False)
             for k in order.keys():
                 if k not in fields:
                     fields.append(k)
@@ -405,6 +400,41 @@ class DatabasePlug:
         order['p_cl_ord_id'] = day + order['ClOrdID'] + order['server']
         return order
     
+    def deals_enrichment_from_algo(self, typed_orders, job_id):
+        logging.info("Add information to the deals")
+        for order in typed_orders:
+            req_for_update = {}
+            if 'nb_exec' in order.keys() and order['nb_exec'] > 0:
+                
+                if 'rate_to_euro' in order:
+                    req_for_update['rate_to_euro'] = order['rate_to_euro']
+                    
+                if 'cheuvreux_secid' in order:
+                    req_for_update['cheuvreux_secid'] = order['cheuvreux_secid']
+                
+                if 'strategy_name_mapped' in order:
+                    req_for_update['strategy_name_mapped'] = order['strategy_name_mapped']
+                
+                if len(req_for_update.keys()) > 0:  
+                    logging.debug("Add update from this algo order: p_cl_ord_id = ) " + str(order['p_cl_ord_id'])) 
+                     
+                    self.client['Mars']['OrderDeals'].update({'p_cl_ord_id'    : order['p_cl_ord_id']}, 
+                                                             {'$set'           : req_for_update },
+                                                             multi = True)
+                    
+                    fields_db = list( self.client['Mars']['field_map'].find({'collection_name' : 'OrderDeals'}) )
+                    fields = []
+                    if len(fields_db) > 0:
+                        fields = fields_db[0]
+                        for el in req_for_update.keys():
+                            if el not in fields:
+                                fields.append(el)
+                    else:
+                        logging.critical('Please check the code')
+                        raise('Should not find nothing in field_map, the documents Orderdeals has to be filled before updating it')
+                    
+                    self.client['Mars']['field_map'].update({'collection_name' : 'OrderDeals'}, {'$set' : { 'list_columns' : fields } })
+                    
     def fill(self, order_deals = True, algo_orders = True):
         if order_deals:
             self.fill_order_deals()
@@ -417,17 +447,26 @@ class DatabasePlug:
         dico_tags    = {}
         trader       = ''
         self.checker        = Converter(self.list_of_dict, required_tag='deals_required')
+        
+        logging.info('---------------------------------') 
+        logging.info('-------- Fill Order Deals -------')
+        logging.info('---------------------------------')
+        
         for day in self.dates:
             self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
             job_id          = 'OD%s' %day
             orders          = []
             
+            logging.info('-------- %s -------' % day)
+            
             for s in self.conf:
+                logging.info('Get data from server: ' + str(s))
                 self.server = self.conf[s]
                 res_import  = self.import_FIXmsg(type_order, dico_tags, trader)
                 new_orders  = res_import[0]
                 dico_tags   = res_import[1]
                 
+                logging.info('Add an unique id for all order deals')
                 for order in new_orders:
                     order["job_id"] = job_id
                     order["server"] = s
@@ -437,24 +476,33 @@ class DatabasePlug:
             typed_orders        = self.checker.verify_all(orders)
             
             if self.mode == "write":
+                logging.info('Write in Database')  
+                logging.info("Remove the documents where this job_id is present " + str(job_id)) 
                 self.client[self.database]['OrderDeals'].remove({'job_id':job_id})
                 self.store_db(typed_orders, 'OrderDeals', job_id)
-            
+                logging.info('End of OrderDeals job for: ' + job_id)
+                
 
     def fill_algo_orders(self):
         to_return   = []
         self.io     = "I"
+        
+        logging.info('---------------------------------') 
+        logging.info('-------- Fill Algo Orders -------')
+        logging.info('---------------------------------')
+        
         for day in self.dates:
-            
+            logging.info('-------- %s -------' % day)
             
             self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
             orders          = []
             job_id          = 'AO%s' %day
             
             for s in self.conf:
+                logging.info('Get data from server: ' + str(s))
                 self.server = self.conf[s]
                 new_orders  = self.get_algo_orders(day)
-                
+                logging.info('Add an unique id for all algo orders')
                 for order in new_orders:
                     order["job_id"] = job_id
                     order["server"] = s 
@@ -462,33 +510,24 @@ class DatabasePlug:
                     
                 orders.extend(new_orders)          
 
-                
+            logging.info('Type orders')    
             typed_orders    = self.checker.verify_all(orders)
             to_return.append(typed_orders)
             
-            if self.mode == "write":
+            
+            if self.mode == "read":
+                logging.info('Write in Database')   
                 job_id = 'AO%s' %day
                 logging.info("Remove the documents where this job_id is present " + str(job_id))
                 self.client[self.database]['AlgoOrders'].remove({'job_id':job_id})
                 self.store_db(typed_orders, "AlgoOrders", job_id)
-                
-                for order in typed_orders:
-                    req_for_update = {}
-                    if 'nb_exec' in order.keys() and order['nb_exec'] > 0:
-                        
-                        if 'rate_to_euro' in order:
-                            req_for_update['rate_to_euro'] = order['rate_to_euro']
+
+                # Enrichment of OrderDeals
+                self.deals_enrichment_from_algo(typed_orders, job_id)
                             
-                        if 'cheuvreux_secid' in order:
-                            req_for_update['cheuvreux_secid'] = order['cheuvreux_secid']
-                        
-                        if len(req_for_update.keys()) > 0:    
-                            self.client[self.database]['OrderDeals'].update(
-                                                                            {'p_cl_ord_id' : order['p_cl_ord_id']}, 
-                                                                            {'$set': req_for_update }, 
-                                                                            multi=True
-                                                                            )
-                        
+                logging.info("The deals have been enriched: " + job_id)
+                logging.info('End of AlgoOrders job for: ' + job_id)
+                
             self.checker.add_json()
             self.send_missing_ids(day) 
             self.send_missing_tags(day)
@@ -499,6 +538,7 @@ class DatabasePlug:
             self.missing_enrichment = {}
             self.checker.flush()
         return to_return
+    
     def send_missing_tags(self, day):
         if len(self.checker.missing) > 0:
             
@@ -573,7 +613,7 @@ class DatabasePlug:
         logging.debug('Generating dico for Trader matching')
         temp_dico_trader = self.client[self.database]['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':self.server['ip_addr']})
         
-        logging.info("Add default tagFIX to trader dict")
+        logging.debug("Add default tagFIX to trader dict")
         dico_trader = {}
         for trd in temp_dico_trader:
             dico_trader[trd['tag_value']] = trd['trader_name']
@@ -592,9 +632,8 @@ class DatabasePlug:
         l_symbol     = []
         job_id = 'AO%s' %day
         
-
-            
-        logging.info('Get ' + str(len(d_orders)) + ' orders to add !')
+  
+        logging.info('Get ' + str(len(d_orders)) + ' orders to add ! Start to update with deals ...')
         u_orders = []
         
         if self.mode == "write" :
@@ -603,9 +642,9 @@ class DatabasePlug:
                 i+=1
                 #ATTETNION
                 ############################### DEBUG
-                if order['ClOrdID'] != 'FYLCoAA0218' : continue
+#                 if order['ClOrdID'] != 'FYLCoAA0218' : continue
                 ########################################
-                logging.info('Order ID : %s' %order['ClOrdID'])
+                logging.debug('Order ID : %s' %order['ClOrdID'])
                 l_events = self.order_life(order          = order, 
                                           day            = day, 
                                           dico_tags      = self.dico_tags, 
@@ -661,7 +700,8 @@ class DatabasePlug:
             file_ids = open(self.server['ip_addr'] + '.secids.symbol.json', 'r')
             l_symbol = simplejson.loads(file_ids.read())
             file_ids.close()
-
+        
+        logging.info('Algo orders have been enriched by deals')
 #         dict_secs = update_security_ids(set(l_kep_secids))
         dict_secs_symbol = update_security_ids_symbol(set(l_symbol))
 
@@ -680,7 +720,8 @@ class DatabasePlug:
         ssh.connect(self.server['ip_addr'],
                     username = self.server['list_users']['flexapp']['username'], 
                     password = self.server['list_users']['flexapp']['passwd'])
-                
+        
+        logging.info('Process other Enrichment (Front-End + KGR)')        
         # Enrichment Market Data from PROD
         for order in u_orders:
             try:
@@ -1265,5 +1306,5 @@ if __name__ == '__main__':
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill(order_deals=False)
+                 mode               = "write").fill(order_deals=True)
     

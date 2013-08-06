@@ -20,17 +20,23 @@ import lib.dbtools.get_algodata as get_algodata
 import lib.tca.get_algostats as get_algostats
 import lib.tca.compute_stats as compute_stats
 from lib.dbtools.connections import Connections
+from lib.data.ui.Explorer import Explorer
+
+
+data_seq=get_algostats.sequence_info(sequence_id='FYLCoAA0009')
 
 
 
-data_market=read_dataset.ftickdb(security_id=110,date='01/07/2013')
+Connections.change_connections('dev')
+data_occ=get_algodata.occurence_info(start_date='01/07/2013',end_date='22/07/2013')
 
 
+Connections.change_connections('dev')
+data_seq=get_algostats.sequence_info(start_date='22/07/2013',end_date='22/07/2013')
+data_seq.to_csv('C:/test.csv')
+# data_seq=get_algostats.sequence_info(sequence_id=['FY00000142856ESLO1'])
 
-
-
-
-# data_seq=get_algodata.sequence_info(sequence_id=['FYBL2SUT00008L0001'])
+# data_seq=get_algodata.sequence_info(sequence_id=['FY00000142856ESLO1'])
 # data_seq = get_algodata.sequence_info(start_date="13/06/2013",end_date="13/06/2013")
 # Explorer(data_seq)
 # 
@@ -39,11 +45,11 @@ data_market=read_dataset.ftickdb(security_id=110,date='01/07/2013')
 
 # data_deal=get_algodata.deal(sequence_id=['FYBL2SUT00008L0001'])
 # print data_deal
-Connections.change_connections('dev')
-#data_deal=get_algodata.deal(start_date='09/07/2013',end_date='09/07/2013')
-data_deal=get_algodata.deal(start_date='09/07/2013',end_date='09/07/2013',merge_order_colnames=['cheuvreux_secid','strategy_name_mapped'])
-Explorer(data_deal)
-uniqueext(data_deal['MIC'].values)
+# Connections.change_connections('dev')
+# #data_deal=get_algodata.deal(start_date='09/07/2013',end_date='09/07/2013')
+# data_deal=get_algodata.deal(start_date='09/07/2013',end_date='09/07/2013',merge_order_colnames=['cheuvreux_secid','strategy_name_mapped'])
+# Explorer(data_deal)
+# uniqueext(data_deal['MIC'].values)
 
 # 
 # data=data_deal

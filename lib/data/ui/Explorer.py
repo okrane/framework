@@ -64,7 +64,7 @@ class Explorer:
                     if column == 0:
                         label = Label(self.frame, text=df.index[row-1], bd=1, bg='white', font=self.bFont)
                     else:
-                        label = Label(self.frame, text=str(df.ix[row-1,column-1]), bd=1, bg='white', font=self.nFont)
+                        label = Label(self.frame, text=str(df.iloc[row-1,column-1]), bd=1, bg='white', font=self.nFont)
 #                     label.grid(row=row, column=column, sticky="nsew", padx=1, pady=1)
                     label.grid(row=row, column=column, sticky="nsew", padx=1, pady=1)
          

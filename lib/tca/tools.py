@@ -32,7 +32,7 @@ def extract_benchtime(data=None,lasttick_datetime=None,tdhours=pd.DataFrame()):
     ## needed 
     #######################    
     excl_auction=mapping.ExcludeAuction(data['ExcludeAuction'])
-    strategy_name=mapping.StrategyName(data['StrategyName'],data['SweepLit'])
+    strategy_name=mapping.StrategyName(data['StrategyName'],sweep_lit=data['SweepLit'])
     
     #######################
     ## compute
@@ -44,7 +44,7 @@ def extract_benchtime(data=None,lasttick_datetime=None,tdhours=pd.DataFrame()):
             (data['exec_qty']==(data['OrderQty']-data['occ_prev_exec_qty']))):
                 # fullfiled vwap end time is the one set by the client if it is set or the end of trading
                 if isinstance(data['EndTime'],datetime):
-                    bench_endtime=max(bench_endtime,utc.localize(data['EndTime']))
+                    bench_endtime=max(bench_endtime,data['EndTime'].astimezone(tz=pytz.utc))
                 elif isinstance(lasttick_datetime,datetime):
                     bench_endtime=max(bench_endtime,lasttick_datetime+timedelta(seconds=5))
                     

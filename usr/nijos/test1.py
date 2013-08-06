@@ -15,7 +15,7 @@ IMPORT
 import numpy as np
 import scipy 
 import matplotlib.pyplot as plt
-import datetime as dt
+from datetime import *
 import time
 from scipy.io  import matlab
 import pandas as pd
@@ -24,18 +24,23 @@ import lib.data.st_data as st_data
 import lib.dbtools.get_repository as get_repository
 import lib.dbtools.read_dataset as read_dataset
 from lib.data.ui.Explorer import Explorer
+import lib.dbtools.get_algodata as get_algodata
+import lib.tca.get_algostats as get_algostats
+from lib.dbtools.connections import Connections
+
+# data_seq=pd.read_csv('C:/test.csv')
 
 """ 
 -------------------------------------------------------------------------------
 USE OF MATLABUTILS
 -------------------------------------------------------------------------------
 """ 
-data=read_dataset.ftickdb(security_id=110,date='17/05/2013')
-data=read_dataset.bic(security_id=110,date='17/05/2013')
+#data=read_dataset.ftickdb(security_id=110,date='17/05/2013')
+#data=read_dataset.bic(security_id=110,date='17/05/2013')
 
 
 
-    
+data=read_dataset.trading_daily(start_date='10/07/2013',end_date='15/07/2013')
 
 
 

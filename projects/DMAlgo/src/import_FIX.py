@@ -9,7 +9,7 @@ import xml.etree.ElementTree as ET
 import paramiko
 import pymongo as mongo
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from lib.dbtools import connections
 from pandas import *
 from lib.data.pyData import convertStr
@@ -18,9 +18,11 @@ import lib.dbtools.read_dataset as read_dataset
 from lib.logger import *
 from lib.io.toolkit import *
 from bson.json_util import default
+from lib.dbtools.get_repository import get_symbol6_from_ticker
 from lib.io.smart_converter import *
+from paramiko import ssh_exception
 logging.getLogger("paramiko").setLevel(logging.WARNING)
-
+from lib.tca import mapping
     
 
 
@@ -37,6 +39,7 @@ class ConversionRate:
     
     @staticmethod    
     def getRates(curr, dates):
+        curr = curr.upper()
         do_get_all = False
         # Initialize if needed
         if ConversionRate.data is None:
@@ -65,7 +68,7 @@ class ConversionRate:
 
         for d in dates_datetime:
             try:
-                rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].ix[d.strftime("%Y-%m-%d")]["rate"]
+                rate = ConversionRate.data[ConversionRate.data['ccy'] == curr].iloc[-1]["rate"]
             except Exception, e:
                 rate = None
                 import traceback
@@ -73,7 +76,6 @@ class ConversionRate:
                 fp = StringIO.StringIO()
                 traceback.print_exc(file = fp)
                 logging.error(fp.getvalue())
-                logging.error(e)
                 logging.error("Impossible to get the currency: " + str(curr) + " at the date: " + str(d))
                 logging.error("The required rate has been set to None")
                 
@@ -89,9 +91,8 @@ class ConversionRate:
     def _get_all(dates_datetime):
         connection_name_backup = connections.Connections.connections
         connections.Connections.change_connections('production')
-        ConversionRate.data = read_dataset.histocurrencypair(start_date = dates_datetime[0].strftime("%d/%m/%Y"),
-                                                             end_date   = dates_datetime[len(dates_datetime) - 1].strftime("%d/%m/%Y"),
-                                                             currency   = ConversionRate.default_currencies)
+        ConversionRate.data = read_dataset.histocurrencypair(last_date_from   = dates_datetime[len(dates_datetime) - 1].strftime("%Y%m%d"),
+                                                             currency         = ConversionRate.default_currencies)
         connections.Connections.change_connections(connection_name_backup)
         logging.info(str(ConversionRate.data))
 
@@ -146,7 +147,7 @@ def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, impo
     reason = ''
     
     OrigOrderID = d_msg['ClOrdID']
-    logging.warning("Looking for other reason for order : %s" %OrigOrderID)
+    logging.info("Looking for other reason for order : %s" %OrigOrderID)
     
     if import_type == 'Client':
         IN_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
@@ -206,6 +207,12 @@ def update_security_ids(l_kep_secids):
         
     return dict_secs
 
+def update_security_ids_symbol(tickers):
+    dict = {}
+    for ticker in tickers:
+        dict[ticker] = get_symbol6_from_ticker(ticker)
+        
+    return dict
 
 class DatabasePlug:
     def __init__(self, database_server, database, environment, source, dates, mode = 'write'):
@@ -217,14 +224,18 @@ class DatabasePlug:
         self.dates              = dates
         self.dates_datetime     = date_to_datetime(dates)
         self.mode               = mode
+        self.missing_ids_reject = []
         self.missing_ids        = []
         self.strategy_name      = {}
         self.dico_tags          = {}
+        self.missing_enrichment = {}
+        self.ssh_attempts       = 0
         
         # Constants
         self.ignore_tags            = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
-        self.missing_id_receivers   = ["alababidi@keplercheuvreux.com"]
-        self.missing_tags_receivers = ["alababidi@keplercheuvreux.com"]
+        self.missing_id_receivers   = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
+        self.missing_tags_receivers = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
+        self.missing_enri_receivers = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
         
         # Parameters
         import os
@@ -255,19 +266,29 @@ class DatabasePlug:
         
         self.get_all_strategy_name()
        
-    def store_db(self, orders, collection_name, job_id, mode='insert'):
+    def store_db(self, orders, collection_name, job_id):
         database = self.client[self.database]
         collection = database[collection_name]
         
         if mode == 'insert':
             logging.info("insert %s Orders into database" %str(len(orders)) )
-        
+            
+        l = list(self.client['Mars']['field_map'].find({'collection_name':collection_name}))
+        fields = []
+        if len(l) > 0:
+            for el in l:
+                if el['collection_name'] == collection_name:
+                    fields = el['list_columns']
+        to_add = False
         for order in orders:
-            order.update({'job_id': job_id})
-            if mode == 'insert':    
-                collection.insert(order, manipulate=False)
-            elif mode == 'update':
-                collection.save(order)
+            order.update({'job_id': job_id})  
+            collection.insert(order, manipulate=False)
+            for k in order.keys():
+                if k not in fields:
+                    fields.append(k)
+                    to_add = True
+        if to_add:
+            self.client['Mars']['field_map'].update({'collection_name' : collection_name}, {'collection_name' : collection_name, 'list_columns' : fields})
         logging.info("End Of insertion to the database")
 
     def get_dico_header(self, day):
@@ -365,58 +386,164 @@ class DatabasePlug:
                                 except:
                                     logging.warning("An order has been removed")
                                     continue  
-        return (dict_order, dico_tags)          
-    def fill(self):
-        self.fill_algo_orders()
-#         self.fill_order_deals()
+        return (dict_order, dico_tags)      
+      
+    def define_unique_id(self, order, my_type):
+        day = datetime.strftime(order['TransactTime'], format='%Y%m%d')
+        
+        if my_type == 'OrderDeals':
+            order['p_exec_id'] = day + str(order['ExecID']) + order['server']
+            
+        if my_type == 'AlgoOrders':
+            order['p_occ_id'] = day + order['occ_ID'] + order['server']
+            
+        order['p_cl_ord_id'] = day + order['ClOrdID'] + order['server']
+        return order
+    
+    def deals_enrichment_from_algo(self, typed_orders, job_id):
+        logging.info("Add information to the deals")
+        for order in typed_orders:
+            req_for_update = {}
+            if 'nb_exec' in order.keys() and order['nb_exec'] > 0:
+                
+                if 'rate_to_euro' in order:
+                    req_for_update['rate_to_euro'] = order['rate_to_euro']
+                    
+                if 'cheuvreux_secid' in order:
+                    req_for_update['cheuvreux_secid'] = order['cheuvreux_secid']
+                
+                if 'strategy_name_mapped' in order:
+                    req_for_update['strategy_name_mapped'] = order['strategy_name_mapped']
+                
+                if len(req_for_update.keys()) > 0:  
+                    logging.debug("Add update from this algo order: p_cl_ord_id = ) " + str(order['p_cl_ord_id'])) 
+                     
+                    self.client['Mars']['OrderDeals'].update({'p_cl_ord_id'    : order['p_cl_ord_id']}, 
+                                                             {'$set'           : req_for_update },
+                                                             multi = True)
+                    
+                    fields_db = list( self.client['Mars']['field_map'].find({'collection_name' : 'OrderDeals'}) )
+                    fields = []
+                    if len(fields_db) > 0:
+                        fields = fields_db[0]
+                        for el in req_for_update.keys():
+                            if el not in fields:
+                                fields.append(el)
+                    else:
+                        logging.critical('Please check the code')
+                        raise('Should not find nothing in field_map, the documents Orderdeals has to be filled before updating it')
+                    
+                    self.client['Mars']['field_map'].update({'collection_name' : 'OrderDeals'}, {'$set' : { 'list_columns' : fields } })
+                    
+    def fill(self, order_deals = True, algo_orders = True):
+        if order_deals:
+            self.fill_order_deals()
+        if  algo_orders:
+            self.fill_algo_orders()
+        
     def fill_order_deals(self):
-        self.io     = "O"
+        self.io      = "O"
         type_order   = ''
-        dico_tags   = {}
+        dico_tags    = {}
+        trader       = ''
+        self.checker        = Converter(self.list_of_dict, required_tag='deals_required')
+        
+        logging.info('---------------------------------') 
+        logging.info('-------- Fill Order Deals -------')
+        logging.info('---------------------------------')
+        
         for day in self.dates:
             self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
             job_id          = 'OD%s' %day
+            orders          = []
             
+            logging.info('-------- %s -------' % day)
             
-            # IMPORT LES LOGS FIX
-            res_import  = self.import_FIXmsg(type_order, dico_tags, trader)
-            c_orders    = res_import[0]
-            dico_tags   = res_import[1]
+            for s in self.conf:
+                logging.info('Get data from server: ' + str(s))
+                self.server = self.conf[s]
+                res_import  = self.import_FIXmsg(type_order, dico_tags, trader)
+                new_orders  = res_import[0]
+                dico_tags   = res_import[1]
+                
+                logging.info('Add an unique id for all order deals')
+                for order in new_orders:
+                    order["job_id"] = job_id
+                    order["server"] = s
+                    order           = self.define_unique_id(order, my_type='OrderDeals')
+                orders.extend(new_orders)                
+                
+            typed_orders        = self.checker.verify_all(orders)
             
             if self.mode == "write":
+                logging.info('Write in Database')  
+                logging.info("Remove the documents where this job_id is present " + str(job_id)) 
                 self.client[self.database]['OrderDeals'].remove({'job_id':job_id})
-                self.store_db(c_orders, 'OrderDeals', job_id)
-            
+                self.store_db(typed_orders, 'OrderDeals', job_id)
+                logging.info('End of OrderDeals job for: ' + job_id)
+                
 
     def fill_algo_orders(self):
         to_return   = []
         self.io     = "I"
+        
+        logging.info('---------------------------------') 
+        logging.info('-------- Fill Algo Orders -------')
+        logging.info('---------------------------------')
+        
         for day in self.dates:
+            logging.info('-------- %s -------' % day)
+            
             self.logPath    = './logs/trades/%s/FLINKI_%s%s%s.fix' %(day, self.source, day, self.io)
             orders          = []
-            for s in self.conf:
-                self.server = self.conf[s]
-                orders.extend(self.get_algo_orders(day))
-            
             job_id          = 'AO%s' %day
-            for order in orders:
-                order["job_id"] = job_id
+            
+            for s in self.conf:
+                logging.info('Get data from server: ' + str(s))
+                self.server = self.conf[s]
+                new_orders  = self.get_algo_orders(day)
+                logging.info('Add an unique id for all algo orders')
+                for order in new_orders:
+                    order["job_id"] = job_id
+                    order["server"] = s 
+                    order = self.define_unique_id(order, my_type='AlgoOrders')
+                    
+                orders.extend(new_orders)          
+
+            logging.info('Type orders')    
             typed_orders    = self.checker.verify_all(orders)
             to_return.append(typed_orders)
             
-            if self.mode == "write":
+            
+            if self.mode == "read":
+                logging.info('Write in Database')   
                 job_id = 'AO%s' %day
+                logging.info("Remove the documents where this job_id is present " + str(job_id))
                 self.client[self.database]['AlgoOrders'].remove({'job_id':job_id})
                 self.store_db(typed_orders, "AlgoOrders", job_id)
-        self.checker.add_json()
-        self.send_missing_ids() 
-        self.send_missing_tags()  
+
+                # Enrichment of OrderDeals
+                self.deals_enrichment_from_algo(typed_orders, job_id)
+                            
+                logging.info("The deals have been enriched: " + job_id)
+                logging.info('End of AlgoOrders job for: ' + job_id)
+                
+            self.checker.add_json()
+            self.send_missing_ids(day) 
+            self.send_missing_tags(day)
+            self.send_missing_enrichment(day)
+            
+            self.missing_ids        = []
+            self.missing_ids_reject = []
+            self.missing_enrichment = {}
+            self.checker.flush()
         return to_return
-    def send_missing_tags(self):
+    
+    def send_missing_tags(self, day):
         if len(self.checker.missing) > 0:
             
             dict = {}
-            title = "<h2>Some tags are missing:</h2>\n"
+            title = "<h2>Some tags are missing for this date: %s</h2>\n" % day
             m = "<table border='1' cellpadding='1' cellspacing='1' width='580'>\n"
             m += "<TH>Missing tag(s)</TH><TH>ClOrdID</TH><TH>Files</TH>\n" 
             for el in self.checker.missing:
@@ -452,22 +579,41 @@ class DatabasePlug:
                 summary += "<li>" + key + " \t=\t " + str(val) + "</li>\n"
             summary += "</ul>"     
             msg = title + summary + m
-            send_email(_to = self.missing_tags_receivers, _subject = "Missing tags", _message = msg)
+            send_email(_to = self.missing_tags_receivers, _subject = "[MongoDatabase]Missing tags", _message = msg)
       
-    def send_missing_ids(self):
+    def send_missing_ids(self, day):
         if len(self.missing_ids) > 0:
-            m = "<h2>Those sedol ids cannot be retrieved in KGR :</h2>\n"
+            m = "<h2>Those Symbol ids cannot be retrieved in KGR for this date: %s</h2>\n" % day
             m += "<ul>"
             for el in set(self.missing_ids):
                 m += "<li>" + str(el) + "</li>\n"
             m += "</ul>"
-            send_email(_to = self.missing_id_receivers, _subject = "Missing ids", _message = m)
+            m += "<h2>Those Symbol has been rejected: %s</h2>\n" % day
+            m += "<ul>"
+            for el in set(self.missing_ids_reject):
+                m += "<li>" + str(el) + "</li>\n"
+            m += "</ul>"
+            send_email(_to = self.missing_id_receivers, _subject = "[MongoDatabase]Missing ids", _message = m)
             
+    def send_missing_enrichment(self, day):
+        if len(self.missing_enrichment.keys()) > 0:
+            m = "<h2>Could not add data to those orders for this date: %s</h2>\n" % day
+            m += "<table border='1' cellpadding='1' cellspacing='1' width='580'>\n"
+            
+            for el in self.missing_enrichment:
+                m += "\t<tr>"
+                m += "\t\t<td>" + str(el) + "</td>\n"
+                m += "\t\t<td>" + str(self.missing_enrichment[el][0]) + "</td>\n"
+                m += "\t\t<td><pre>" + str(self.missing_enrichment[el][1]).replace(',', '\n') + "</pre></td>\n"
+                m += "\t</tr>"
+            m += "</table>\n"
+            send_email(_to = self.missing_enri_receivers, _subject = "[MongoDatabase]Missing Enrichment", _message = m) 
+               
     def get_algo_orders(self, day):
         logging.debug('Generating dico for Trader matching')
         temp_dico_trader = self.client[self.database]['map_tagFIX'].find({'tagFIX':'9249', 'ip_server':self.server['ip_addr']})
         
-        logging.info("Add default tagFIX to trader dict")
+        logging.debug("Add default tagFIX to trader dict")
         dico_trader = {}
         for trd in temp_dico_trader:
             dico_trader[trd['tag_value']] = trd['trader_name']
@@ -483,46 +629,26 @@ class DatabasePlug:
         self.dico_tags = res_import[1]
          
         l_kep_secids = []
+        l_symbol     = []
         job_id = 'AO%s' %day
         
-        if self.mode == "write":
-            logging.info("Remove the documents where this job_id is present " + str(job_id))
-            self.client[self.database]['AlgoOrders'].remove({'job_id':job_id})
-            
-        logging.info('Get ' + str(len(d_orders)) + ' orders to add !')
+  
+        logging.info('Get ' + str(len(d_orders)) + ' orders to add ! Start to update with deals ...')
         u_orders = []
         
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(self.server['ip_addr'],
-                    username = self.server['list_users']['flexapp']['username'], 
-                    password = self.server['list_users']['flexapp']['passwd'])
-        
-        if self.mode != "write" :
-            import lib.io.serialize as serialize
-            import simplejson
-            u_orders = serialize.DateTimeJSONEncoder().encode(u_orders)
-            l_kep_secids = simplejson.dumps(l_kep_secids, separators=(',',':'))
-             
-            file_orders = open(self.server['ip_addr'] + '.orders.json', 'r')
-            u_orders = simplejson.loads(file_orders.read(), object_hook = serialize.as_datetime)
-            file_orders.close()
-             
-            file_ids = open(self.server['ip_addr'] + '.secids.json', 'r')
-            l_kep_secids = simplejson.loads(file_ids.read())
-            file_ids.close()
-        else:
+        if self.mode == "write" :
             i = 0
             for order in d_orders:
                 i+=1
-                
-                logging.info('Order ID : %s' %order['ClOrdID'])
-                
+                #ATTETNION
+                ############################### DEBUG
+#                 if order['ClOrdID'] != 'FYLCoAA0218' : continue
+                ########################################
+                logging.debug('Order ID : %s' %order['ClOrdID'])
                 l_events = self.order_life(order          = order, 
                                           day            = day, 
                                           dico_tags      = self.dico_tags, 
-                                          dico_trader    = dico_trader, 
-                                          ssh            = ssh)
+                                          dico_trader    = dico_trader)
                 
                 u_order          = l_events[0]
                 self.dico_tags   = l_events[1]
@@ -535,14 +661,18 @@ class DatabasePlug:
 #                         import simplejson
 #                         temp = serialize.DateTimeJSONEncoder().encode(ord)
 #                         print temp
-                if 'SecurityID' in u_order[0].keys():
-                    l_kep_secids.append(u_order[0]['SecurityID'])
-                    
+
+                for ord in u_order:
+                    if 'SecurityID' in ord.keys():
+                        l_kep_secids.append(u_order[0]['SecurityID'])
+                    if 'Symbol' in ord.keys():
+                        l_symbol.append(ord['Symbol'])
             import lib.io.serialize as serialize
             import simplejson
             
             j_orders = serialize.DateTimeJSONEncoder().encode(u_orders)
             j_kep_secids = simplejson.dumps(l_kep_secids, separators=(',',':'))
+            j_kep_secids_ticker = simplejson.dumps(l_symbol, separators=(',',':'))
             
             file_orders = open(self.server['ip_addr'] + '.orders.json', 'w')
             file_orders.write(j_orders)
@@ -551,13 +681,30 @@ class DatabasePlug:
             file_ids = open(self.server['ip_addr'] + '.secids.json', 'w')
             file_ids.write(j_kep_secids)
             file_ids.close()
+            
+            file_ids = open(self.server['ip_addr'] + '.secids.symbol.json', 'w')
+            file_ids.write(j_kep_secids_ticker)
+            file_ids.close()
+        else:
+            import lib.io.serialize as serialize
+            import simplejson
+             
+            file_orders = open(self.server['ip_addr'] + '.orders.json', 'r')
+            u_orders = simplejson.loads(file_orders.read(), object_hook = serialize.as_datetime)
+            file_orders.close()
+             
+            file_ids = open(self.server['ip_addr'] + '.secids.json', 'r')
+            l_kep_secids = simplejson.loads(file_ids.read())
+            file_ids.close 
+             
+            file_ids = open(self.server['ip_addr'] + '.secids.symbol.json', 'r')
+            l_symbol = simplejson.loads(file_ids.read())
+            file_ids.close()
         
-        dict_secs = update_security_ids(set(l_kep_secids))
-        if len(dict_secs) == 0:
-            logging.critical("IMPOSSIBLE TO GET DATA FROM KGR")
-            logging.critical("Shutdown")
-            import sys
-            sys.exit()
+        logging.info('Algo orders have been enriched by deals')
+#         dict_secs = update_security_ids(set(l_kep_secids))
+        dict_secs_symbol = update_security_ids_symbol(set(l_symbol))
+
         # GET WHETHER THERE IS DATA FROM ALGO
         # - GET COLUMN NUMBER IN MKT
         result      = self.get_dico_header(day)
@@ -567,7 +714,14 @@ class DatabasePlug:
         l_docs = []
         logging.info('Add information from prod to ' + str(len(u_orders)) + ' orders !')   
         job_id          = 'AO%s' %day
-                
+        
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(self.server['ip_addr'],
+                    username = self.server['list_users']['flexapp']['username'], 
+                    password = self.server['list_users']['flexapp']['passwd'])
+        
+        logging.info('Process other Enrichment (Front-End + KGR)')        
         # Enrichment Market Data from PROD
         for order in u_orders:
             try:
@@ -595,8 +749,8 @@ class DatabasePlug:
                             logging.error("Several lines found for the folowing client order id: " + str(client_order_id))
                         mkt_data    = lines[0]
                     except Exception,e :
-                        logging.error("Cannot get data from algos for the following strategy: " +  str(order["StrategyName"]))
-                        logging.error("This order could not been processed: " + str(order) )
+                        self.missing_enrichment[order["ClOrdID"]] = [cmd, order]
+                        logging.error("This order could not been enriched from the front end: " + str(order) )
                         get_traceback()
                         mkt_data = None  
                     
@@ -614,28 +768,50 @@ class DatabasePlug:
                                     
                 # Strategy Name mapping
                 if "StrategyName"  in order.keys():
-                    order['strategy_name_mapped'] = self.get_strategy_name(order["StrategyName"])
+                    sweep_lit = None
+                    
+                    if "SweepLit" in order.keys():
+                        sweep_lit = order["SweepLit"]
+                        
+                    order['strategy_name_mapped'] = mapping.StrategyName(id = order["StrategyName"], sweep_lit=sweep_lit)
                 else:
                     logging.error("StrategyName is unknown for this order: " + str(order) )                   
                 # Tag to add
                 order["job_id"] = job_id
                 
                 # Verifications
-                if "SecurityID" not in order.keys():
-                    logging.error("The key SecurityID is not present in this order :" +str(order))           
-                
-                if str(order['SecurityID']) in dict_secs.keys():
-                    order.update(dict_secs[str(order['SecurityID'])])
+#                 if "SecurityID" not in order.keys():
+#                     logging.error("The key SecurityID is not present in this order :" +str(order))           
+#                 
+#                 if str(order['SecurityID']) in dict_secs.keys():
+#                     order.update(dict_secs[str(order['SecurityID'])])
+#                 else:
+#                     self.missing_ids.append(str(order['SecurityID']))
+#                     logging.error("The general Ids could not be found for this SecurityID: " + str(order["SecurityID"]) + " and this order:" + str(order))
+#                 
+#                 if "cheuvreux_secid" in order.keys() and order["cheuvreux_secid"] is None:
+#                     self.missing_ids.append(str(order['SecurityID']))
+#                     logging.error("The cheuvreux Sec Id could not be found: " + str(order))
+
+                if "Symbol" in order.keys():
+                    try:
+                        order["cheuvreux_secid"] = dict_secs_symbol[order["Symbol"]]
+                    except:
+                        order["cheuvreux_secid"] = ''
+                                                
+                    if len(order["cheuvreux_secid"]) == 0:
+                        del order["cheuvreux_secid"]
+                        logging.error("chevreux_secid is unknown for this order: " + str(order) )
+                        
+                        if "BridgeRejection" in order.keys(): # Means rejected
+                            self.missing_ids_reject.append(str(order['Symbol']))
+                        else:
+                            self.missing_ids.append(str(order['Symbol']))
+                        
                 else:
-                    self.missing_ids.append(str(order['SecurityID']))
-                    logging.error("The general Ids could not be found for this SecurityID: " + str(order["SecurityID"]) + " and this order:" + str(order))
-                
-                if "cheuvreux_secid" in order.keys() and order["cheuvreux_secid"] is None:
-                    if  order['SecurityID'] == 'B1QH830':
-                        pass
-                    self.missing_ids.append(str(order['SecurityID']))
-                    logging.error("The cheuvreux Sec Id could not be found: " + str(order))
-                
+                    logging.error("Symbol is unknown for this order: " + str(order) )
+                    
+                    
                 try:   
                     rate = ConversionRate.getRate(order['Currency'], day )
                     if rate is not None: 
@@ -645,6 +821,18 @@ class DatabasePlug:
                 except KeyError, e:
                     get_traceback()
                     logging.error("This order has no currency: " + str(order))
+                    
+            except ssh_exception.SSHException, e:
+                get_traceback()
+                logging.error("SSH Connection problem" )
+                self.ssh_attempts += 1
+                if self.ssh_attempts < 3:
+                    import time
+                    time.sleep(60)
+                    logging.warning("Will run again algo order filling" )
+                    return self.get_algo_orders(day)
+                else:
+                    logging.error("This order could not be enriched: " + str(order))
             except Exception,e:
                 get_traceback()
                 logging.error("This order could not be enriched: " + str(order))
@@ -667,6 +855,7 @@ class DatabasePlug:
             logging.error("This Strategy does not exist " + str(num))
             self.strategy_name[int(num)] = None
         return self.strategy_name[int(num)]
+    
     def import_FIXmsg(self, type_order, dico_tags={}, trader=''):
         
         # - io :
@@ -757,7 +946,7 @@ class DatabasePlug:
                 return (elt.get('name'), elt.get('type'))
         
         return
-    def order_life(self, order, day,  dico_tags, dico_trader, ssh, import_type='Client'):
+    def order_life(self, order, day,  dico_tags, dico_trader, import_type='Client'):
     
         # - Open SSH connection 
         ssh = paramiko.SSHClient()
@@ -899,7 +1088,7 @@ class DatabasePlug:
             if replaced:
                 
                 loop_count = 0
-                while not done and loop_count<100 and replaced == True:
+                while not done and loop_count < 150 and replaced == True:
                     
                     replaced = False
                     loop_count += 1
@@ -936,7 +1125,7 @@ class DatabasePlug:
         
                     (stdin, stdout_grep, stderr)= ssh.exec_command(cmd)
                     rpl_checked = False
-                    
+                    cc_msg = None
                     for str_msg in stdout_grep:
                         str_msg = str_msg.replace('|\n','')
                         res_trans = self.line_translator(str_msg, dico_tags)
@@ -1007,7 +1196,7 @@ class DatabasePlug:
                         if not done:
                             reason = '%s Front End handling' %reason
                     
-                    eff_endtime = cc_msg['SendingTime']
+                    eff_endtime = order['SendingTime']
                     g_eff_endtime = eff_endtime
                     
                     if eff_endtime != 'none':
@@ -1074,9 +1263,11 @@ class DatabasePlug:
         
         ssh.close()
         return [order_life, dico_tags]
-    
+                    
 if __name__ == '__main__':
     import sys    
+#     print ConversionRate.getRate('GBx', '20130803')
+#     sys.exit()
     if len(sys.argv) <= 6:
         print "Usage Examples: "
         print "python2.7 import_FIX.py PARFLTLAB02 PARFLTLAB02 dev I"
@@ -1085,14 +1276,15 @@ if __name__ == '__main__':
         print "python2.7 import_FIX.py HPP PARFLTLAB02 dev O CLNT1"
         print "python2.7 import_FIX.py HPP WATFLT01 preprod I CLNT1"
         print "python2.7 import_FIX.py HPP WATFLT01 preprod O CLNT1"
-        
+    
+    
         database_server    = 'TEST'
         database    = 'DB_test1'
         server_flex = 'WATFLT01'
         environment = 'preprod'
         io          = 'I'
         source      = 'CLNT1'
-        
+    connections.Connections.change_connections('dev')    
     dates       =  ['20130603','20130604','20130605','20130606','20130607',
                     '20130610','20130611','20130612','20130613','20130614',
                     '20130617','20130618','20130619','20130620','20130621',
@@ -1102,17 +1294,17 @@ if __name__ == '__main__':
 
 
     
-    database_server     = 'HPP'
+    database_server     = 'MARS'
     database            = 'Mars'
     environment         = 'prod'
     source              = 'CLNT1'
 
-#     dates               = [date]
+    dates               = ['20130725']
     
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill()
+                 mode               = "write").fill(order_deals=True)
     

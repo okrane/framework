@@ -28,7 +28,80 @@ def vol_gk(o, h, l, c, nb_trades, duration):
     if any(id_nan):
         out[np.nonzero(id_nan)[0]]=np.nan
     return out
-        
+       
+#--------------------------------------------------------------------------
+#  A CHECKER
+#-------------------------------------------------------------------------- 
+#def slippage(df=None,bench=None,units='bp',exclude_dark=True,constr=True,agg=True):
+#    
+#    if not isinstance(df,pd.DataFrame):
+#        raise ValueError('formula:slippage_bp, bad input df')
+#        
+#    ##-------------------------    
+#    ##--- value bench
+#    ##-------------------------
+#    
+#    if bench.lower()=='vwap':
+#        ##--- create suffix
+#        suffix=''
+#        if not agg:
+#            suffix+='_main'
+#        if constr:
+#            suffix+='_contr'
+#        ##--- value bench
+#        if exclude_dark:
+#            value_bench=df['turnover_lit'+suffix]/df['volume_lit'+suffix]
+#        else:
+#            value_bench=(df['turnover_lit'+suffix]+df['turnover_dark'+suffix])/(df['volume_lit'+suffix]+df['volume_dark'+suffix])
+#            
+#    elif bench.lower()=='is':
+#        value_bench=df['arrival_price']
+#        
+#    else:
+#        raise ValueError('formula:slippage_bp, bad input bench')
+#        
+#    ##-------------------------    
+#    ##--- output
+#    ##-------------------------
+#    if units=='bp':
+#        out=10000*df['Side']*(value_bench-df['exec_turnover']/df['exec_volume'])/value_bench
+#    elif units=='spread':
+#        out=df['Side']*(value_bench-df['exec_turnover']/df['exec_volume'])/df['vwas']
+#    else:
+#        raise ValueError('formula:slippage_bp, bad input bench')    
+#    return out
+#
+#    
+#        
+#    indicators={'data' : 0,
+#                'volume_lit' : 0,
+#                'volume_lit_main' : 0, # include in volume_lit
+#                'volume_opening' : 0, # include in volume_lit
+#                'volume_closing' : 0, # include in volume_lit
+#                'volume_intraday' : 0, # include in volume_lit
+#                'volume_other_auctions' : 0, # include in volume_lit
+#                'volume_dark' : 0,
+#                'volume_lit_constr' : 0,
+#                'volume_lit_main_constr' : 0, # include in volume_lit_constr
+#                'volume_dark_constr' : 0,
+#                'turnover_lit' : 0,
+#                'turnover_lit_main' : 0, # include in turnover_lit
+#                'turnover_dark' : 0,
+#                'turnover_lit_constr' : 0,
+#                'turnover_lit_main_constr' : 0, # include in turnover_lit_constr
+#                'turnover_dark_constr' : 0,
+#                'nb_trades_lit_cont' : 0,
+#                'nb_trades_lit_cont_main' : 0,
+#                'open' : np.nan,
+#                'high' : np.nan,
+#                'low' : np.nan,
+#                'close' : np.nan,
+#                'vwas' : np.nan,
+#                'vwas_main' : np.nan,
+#                'vol_GK':np.nan}
+
+    
+      
 
 if __name__ == "__main__":
     import lib.dbtools.read_dataset as read_dataset

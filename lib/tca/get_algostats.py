@@ -15,7 +15,7 @@ import lib.dbtools.get_repository as get_repository
 import lib.tca.compute_stats as compute_stats
 import lib.tca.mapping as mapping
 import lib.tca.tools as tools
-    
+
 #--------------------------------------------------------------------------
 # GLOBAL needed
 #--------------------------------------------------------------------------    
@@ -24,16 +24,18 @@ utc=pytz.UTC
 #--------------------------------------------------------------------------
 # sequence_info
 #--------------------------------------------------------------------------
-def sequence_info(**kwargs):    
+def sequence_info(sequence_id=None,occurence_id=None,start_date=None,end_date=None):    
     ###########################################################################
     #### extract algo DATA
     ###########################################################################
     # get all the sequences from sequence ids
-    if "sequence_id" in kwargs.keys():
-        data=get_algodata.sequence_info(sequence_id=kwargs["sequence_id"])
+    if sequence_id is not None:
+        data=get_algodata.sequence_info(sequence_id=sequence_id)
     # get all the sequences from occurence ids
-    elif "occurence_id" in kwargs.keys():  
-        data=get_algodata.sequence_info(occurence_id=kwargs["occurence_id"])
+    elif occurence_id is not None:  
+        data=get_algodata.sequence_info(occurence_id=occurence_id)
+    elif (start_date is not None)  and (end_date is not None): 
+        data=get_algodata.sequence_info(start_date=start_date,end_date=end_date)
     else:
         raise NameError('get_algostats:sequence - Bad inputs')
     
@@ -56,10 +58,12 @@ def sequence_info(**kwargs):
     
     for i in range(0,len(uni_vals)):  
         
+        print "get_algostats:sequence_info - advancement "+str(i)+" on "+str(len(uni_vals))
+        
         #-----------------
         # extract security info 
         #-----------------    
-        sec_id=int(uni_vals[i][0])
+        sec_id=int(float(uni_vals[i][0]))
         datestr=uni_vals[i][1]
         exchange_id_main=get_repository.exchangeidmain(security_id=sec_id)[0]
         # thours=get_repository.tradingtime(security_id=sec_id,date=datestr)
@@ -80,7 +84,7 @@ def sequence_info(**kwargs):
             ##########
             # default
             ##########            
-            tmp_add=pd.DataFrame([data.ix[idx][['ClOrdID','occ_ID']].to_dict()])
+            tmp_add=pd.DataFrame([data.ix[idx][['p_cl_ord_id','p_occ_id']].to_dict()])
             
             ##########
             # needed information
@@ -97,7 +101,7 @@ def sequence_info(**kwargs):
             ##########
             # extract sequence deals
             ##########
-            data_deal=get_algodata.deal(sequence_id=data.ix[idx]['ClOrdID'])
+            data_deal=get_algodata.deal(sequence_id=data.ix[idx]['p_cl_ord_id'])
             # TODO: renormalize auction deals/referential information
             
             ##########
@@ -118,7 +122,7 @@ def sequence_info(**kwargs):
             ##########
             # TODO: exec stats
             tmp_=compute_stats.aggexec(data_order=tmp_add,data_deal=data_deal)
-            tmp_add=tmp_add.merge(tmp_, how="left",on=['ClOrdID','occ_ID'])
+            tmp_add=tmp_add.merge(tmp_, how="left",on=['p_cl_ord_id','p_occ_id'])
             
             ##########
             # joint
@@ -128,10 +132,10 @@ def sequence_info(**kwargs):
             dataggseq=dataggseq.append(tmp_add)  
             
     
-    data=data.reset_index().merge(dataggseq, how="left",on=['ClOrdID','occ_ID']).set_index('SendingTime')
+    data=data.reset_index().merge(dataggseq, how="left",on=['p_cl_ord_id','p_occ_id']).set_index('SendingTime')
     
     return data
 
 if __name__=='__main__':
     # ft london stock
-    data=sequence(occurence_id='FY2000007382301')    
+    data=sequence_info(occurence_id='FY2000007382301')    

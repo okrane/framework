@@ -20,20 +20,71 @@ import lib.dbtools.get_algodata as get_algodata
 import lib.tca.get_algostats as get_algostats
 import lib.tca.compute_stats as compute_stats
 from lib.dbtools.connections import Connections
+from lib.data.ui.Explorer import Explorer
 
 
-data_seq = get_algodata.sequence_info(start_date="13/06/2013",end_date="13/06/2013")
-
-# test
-data_order=get_algodata.sequence_info(sequence_id=['FY2000007221801'])
-data_deal=get_algodata.deal(sequence_id=['FY2000007221801'])
-a=compute_stats.aggexec(data_order=data_order,data_deal=data_deal)
-b=compute_stats.aggexec(data_order=data_order,data_deal=data_deal)
+data_seq=get_algostats.sequence_info(sequence_id='FYLCoAA0009')
 
 
-#data=get_algostats.sequence(occurence_id='FY2000007382301')
-data_occ=get_algodata.sequence_info(occurence_id=['FY2000007221801','FY2000007089101'])
-data_occ=get_algostats.sequence_info(occurence_id=['FY2000007221801','FY2000007089101'])
+
+Connections.change_connections('dev')
+data_occ=get_algodata.occurence_info(start_date='01/07/2013',end_date='22/07/2013')
+
+
+Connections.change_connections('dev')
+data_seq=get_algostats.sequence_info(start_date='22/07/2013',end_date='22/07/2013')
+data_seq.to_csv('C:/test.csv')
+# data_seq=get_algostats.sequence_info(sequence_id=['FY00000142856ESLO1'])
+
+# data_seq=get_algodata.sequence_info(sequence_id=['FY00000142856ESLO1'])
+# data_seq = get_algodata.sequence_info(start_date="13/06/2013",end_date="13/06/2013")
+# Explorer(data_seq)
+# 
+# data_occ=get_algodata.occurence_info(occurence_id=['FYLCoAA0016'])
+
+
+# data_deal=get_algodata.deal(sequence_id=['FYBL2SUT00008L0001'])
+# print data_deal
+# Connections.change_connections('dev')
+# #data_deal=get_algodata.deal(start_date='09/07/2013',end_date='09/07/2013')
+# data_deal=get_algodata.deal(start_date='09/07/2013',end_date='09/07/2013',merge_order_colnames=['cheuvreux_secid','strategy_name_mapped'])
+# Explorer(data_deal)
+# uniqueext(data_deal['MIC'].values)
+
+# 
+# data=data_deal
+# data_seq=get_algodata.sequence_info(sequence_id=uniqueext(data_deal['ClOrdID'].values).tolist())
+# merge_order_colnames=['cheuvreux_secid','strategy_name_mapped']
+# all([x in data_seq.columns.tolist() for x in merge_order_colnames])
+# # initialize columns
+# for x in merge_order_colnames:
+#     data[x]=None 
+# # initialize columns
+# if data_seq.shape[0]>0:
+#     for idx in range(0,data_seq.shape[0]):
+#         idx_in=np.where(data['ClOrdID'].values==data_seq.ix[idx]['ClOrdID'])[0]        
+#         for x in merge_order_colnames:
+#             data[x][idx_in]=data_seq.ix[idx][x]        
+# 
+# 
+# 
+# # data_deal=get_algodata.deal(sequence_id=['FYBL2SUT00008L0001'])
+# Explorer(data_deal)
+
+
+
+# 
+# # test
+# data_order=get_algodata.sequence_info(sequence_id=['FY000015064401'])
+# data_deal=get_algodata.deal(sequence_id=['FY2000007221801'])
+# a=compute_stats.aggexec(data_order=data_order,data_deal=data_deal)
+# b=compute_stats.aggexec(data_order=data_order,data_deal=data_deal)
+# 
+# 
+# #data=get_algostats.sequence(occurence_id='FY2000007382301')
+# data_occ=get_algodata.sequence_info(occurence_id=['FY2000007221801','FY2000007089101'])
+# Connections.change_connections('dev')
+# data_occ=get_algostats.sequence_info(occurence_id=['FY2000007221801','FY2000007089101'])
 
 #data_occ=get_algodata.occurence_info(occurence_id=['FY2000007221801','FY2000007089101'])
 #data_occ=get_algostats.sequence_info(occurence_id=['FY2000007221801','FY2000007089101'])
@@ -64,6 +115,10 @@ data_occ=get_algostats.sequence_info(occurence_id=['FY2000007221801','FY20000070
 #
 #req=(" SELECT top 1 * from Market_data..trading_daily ")
 #vals=Connections.exec_sql('MARKET_DATA',req,schema = True)
+#
+
+
+#
 #
 
 

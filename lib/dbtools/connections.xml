@@ -30,6 +30,8 @@
 			<connections driver="Mongo"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
 				<SERVER NAME="DB_TEST">172.29.0.32:27017|DB_test|python_script|pythonpass</SERVER>
 				<SERVER NAME="MARS">172.29.0.32:27017|Mars|python_write|pythonpasswrite</SERVER>
+				<!-- <SERVER NAME="MARS">127.0.0.1:27017|Mars|python_write|pythonpasswrite</SERVER>  -->
+				<SERVER NAME="FIXEDINCOME">172.29.0.32:27017|FixedIncome|python|python</SERVER>
             </connections>
             <bases>
                 <base key="quant" name="quant"/>

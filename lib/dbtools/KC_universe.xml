@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<universe name='KC_v1'>
+	<env name='dev' >
+		<server name='PARFLTLAB' ip_addr='172.29.0.30' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+		<server name='PARFLTLAB02' ip_addr='172.29.0.31' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+		<server name='PARFLT03' ip_addr='172.29.0.33' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+		<server name='PARFLT04' ip_addr='172.29.0.34' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+	</env >
+	<env name='HPP'>
+		<server name='PARFLT02' ip_addr='172.29.0.32' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+			<user username='python_script' passwd='pythonpass' />
+		</server>
+	</env>
+	<env name='preprod' >
+		<server name='WATFLT01' ip_addr='172.25.152.73' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+	</env >
+	<env name='prod'>
+		<server name='LUIFLT01' ip_addr='81.255.55.50' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+		<server name='WATFLT01' ip_addr='172.25.152.73' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+	</env>
+</universe>

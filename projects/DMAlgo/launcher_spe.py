@@ -23,10 +23,10 @@ if __name__ == '__main__':
                             '20130509', '20130510']
 
     
-    dates               = sorted(dates)
+    dates               = sorted(dates)[20:22]
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill()
+                 mode               = "read").fill(order_deals=False)

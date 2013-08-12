@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from lib.dbtools.connections import Connections
+import simplejson
 #import pytz
 
 #------------------------------------------------------------------------------
@@ -25,6 +26,33 @@ def ExcludeAuction(x):
     else:
         raise NameError('mapping:ExcludeAuction - Bad inputs')
     return out
+
+def OrdStatus(char):
+    global ord_status_dict
+    
+    if 'ord_status_dict' in globals():
+        if isinstance(ord_status_dict, dict) and len(ord_status_dict) > 0:
+            return ord_status_dict[char]
+        
+    
+    import os
+    full_path           = os.path.realpath(__file__)    
+    path, f             = os.path.split(full_path)
+    
+    file = open(path + '/../io/fix_types.json', 'r')
+    input = file.read()
+    file.close()
+
+    list_of_dict = simplejson.loads(input)["fix"]["fields"]["field"]
+    ord_status_dict = {}
+    
+    for el in list_of_dict:
+        if el['number'] == '39':
+            for e in el['value']:
+                ord_status_dict[e['enum']] = e['description']
+    
+    return ord_status_dict[char]
+    
     
 #------------------------------------------------------------------------------
 # StrategyName
@@ -48,3 +76,9 @@ if __name__ == "__main__":
     print StrategyName(id = 9, sweep_lit='BL')
     print StrategyName(id = 9, sweep_lit='yes')
     print StrategyName(id = 9, sweep_lit='CF')
+    print OrdStatus('0')
+    print OrdStatus('1')
+    print OrdStatus('3')
+    print OrdStatus('5')
+    print OrdStatus('A')
+    print OrdStatus('E')

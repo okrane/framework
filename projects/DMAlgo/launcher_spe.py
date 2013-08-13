@@ -23,7 +23,7 @@ if __name__ == '__main__':
                             '20130509', '20130510']
 
     
-    dates               = sorted(dates)[20:22]
+    dates               = sorted(dates)
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 

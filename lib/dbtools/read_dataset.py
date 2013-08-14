@@ -187,11 +187,7 @@ def histocurrencypair(date = None, last_date_from = None, start_date = None, end
     ##############################################################
     # request and format
     ##############################################################
-<<<<<<< HEAD
-    pref_ = ""
-#     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
-=======
->>>>>>> 2627a12a7c13b976b7d682ded5baeb911c012c18
+
         
     ####  Build request
     if req_n == 1:

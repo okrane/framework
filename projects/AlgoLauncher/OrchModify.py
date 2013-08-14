@@ -426,7 +426,7 @@ class Orchestrator(Application):
                     if mode == 'switch':
                         print "waiting for the modified strategy to begin ..."
                         log(log_file, "waiting for the modified strategy to begin ...")
-                        time.sleep(10)
+                        time.sleep(120)
                     
                     self.CancelAlgo(first_order, day, user)
                     first  = 1
@@ -434,7 +434,7 @@ class Orchestrator(Application):
                     if mode == 'switch':
                         print "waiting for the initial strategy to begin ..."
                         log(log_file, "waiting for the modified strategy to begin ...")
-                        time.sleep(10)
+                        time.sleep(120)
                     
                     self.ModifyAlgo(v, day, user)
                     

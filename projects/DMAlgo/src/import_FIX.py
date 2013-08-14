@@ -186,6 +186,9 @@ class DatabasePlug:
         self.ssh_attempts       = 0
         
         # Constants
+
+        self.ignore_tags            = [8, 21, 22, 9, 34, 49, 56, 10, 47, 369]
+
         self.missing_id_receivers   = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
         self.missing_tags_receivers = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
         self.missing_enri_receivers = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]

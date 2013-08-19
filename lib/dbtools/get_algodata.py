@@ -121,7 +121,7 @@ def sequence_info(db_name = "Mars", **kwargs):
 #--------------------------------------------------------------------------
 # occurence_info
 #--------------------------------------------------------------------------        
-def occurence_info(db_name = "Mars", **kwargs): 
+def occurrence_info(db_name = "Mars", **kwargs): 
     
     #### DEFAULT OUTPUT    
     data=pd.DataFrame()
@@ -311,5 +311,5 @@ def fieldList(cname=None, db_name="Mars", **kwargs):
     
     return np.array(out[0]['list_columns'])
 
-
+def 
     

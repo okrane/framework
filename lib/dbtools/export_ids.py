@@ -22,7 +22,7 @@ def send(local, remote):
    full_path            = os.path.realpath(__file__)    
    path, f              = os.path.split(full_path)        
 
-   universe_file        = os.path.join(os.getcwd(), 'KC_universe.xml')
+   universe_file        = os.path.join(path, 'KC_universe.xml')
    conf                 = get_conf('dev', universe_file)
    server               = conf['PARFLT03']
    ip                   = server['ip_addr']
@@ -203,8 +203,7 @@ def generate_file(day, all=False, export_path=None):
             l.append('; %s; %s; ; ; ; ; ; %s;\n' % (ticker, ticker_ag, el))
     
     if export_path is None:
-        import os
-        export_path = os.getcwd()
+        export_path = path
     
     
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')    

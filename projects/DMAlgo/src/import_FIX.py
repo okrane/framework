@@ -21,9 +21,10 @@ from bson.json_util import default
 from lib.dbtools.get_repository import get_symbol6_from_ticker
 from lib.io.smart_converter import *
 from paramiko import ssh_exception
+from pickle import TRUE
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 from lib.tca import mapping
-    
+from lib.io.fix import FixTranslator  
 
 
 class ConversionRate:
@@ -141,53 +142,7 @@ def update_colmap(l_field, client, collection):
     return 0
 
 
-def check_EoL(d_msg, reason, day, socket, dico_fix, dico_tags, ignore_tags, import_type='Client'):
-    
-    done = False
-    reason = ''
-    
-    OrigOrderID = d_msg['ClOrdID']
-    logging.info("Looking for other reason for order : %s" %OrigOrderID)
-    
-    if import_type == 'Client':
-        IN_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
-        ER_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sO.fix' %(day, day)
-    elif import_type == 'Street':
-        IN_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sI.fix' %(day, day)
-        ER_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sO.fix' %(day, day)
-    
-    cmd = "prt_fxlog %s 3 | egrep '41=%s'" %(IN_file, OrigOrderID)
-    (stdin, stdout_grep, stderr) = socket.exec_command(cmd)
-    
 
-    if stdout_grep.readlines() == 1:
-        
-        line = stdout_grep.readlines()[0]
-        line = line.replace('|\n','')
-        [line, dico_tags] = line_translator(line, dico_fix, dico_tags, ignore_tags)
-        
-        if line == {}:
-            return [reason, done]
-        
-        if line['MsgType'] == 'G':
-            reason = 'replaced not acked '
-            cmd = "prt_fxlog %s 3 | egrep '11=%s'" %(ER_file, line['ClOrdID'])
-            
-            (stdin, stdout_grep, stderr) = socket.exec_command(cmd)
-            
-            for er_line in stdout_grep:
-                er_line = er_line.replace('|\n','')
-            
-            [er_line, dico_tags] = line_translator(er_line, dico_fix, dico_tags, ignore_tags)
-            
-            if 'ExecType' not in er_line.keys():
-                pass
-            
-            if er_line['ExecType'] == '3':
-                reason = '%s and Done for day' %reason
-                done = True
-                
-    return [reason, done]
 
 def update_security_ids(l_kep_secids):
     logging.info( "UPDATE CHEUVREUX SECURITY IDS AND MARKET DATA")
@@ -227,17 +182,20 @@ class DatabasePlug:
         self.missing_ids_reject = []
         self.missing_ids        = []
         self.strategy_name      = {}
-        self.dico_tags          = {}
         self.missing_enrichment = {}
         self.ssh_attempts       = 0
         
         # Constants
-        self.ignore_tags            = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
+
+        self.ignore_tags            = [8, 21, 22, 9, 34, 49, 56, 10, 47, 369]
+
         self.missing_id_receivers   = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
         self.missing_tags_receivers = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
         self.missing_enri_receivers = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
         
         # Parameters
+        self.fix_translator = FixTranslator()
+        
         import os
         full_path           = os.path.realpath(__file__)    
         path, f             = os.path.split(full_path)        
@@ -247,7 +205,7 @@ class DatabasePlug:
         self.conf           = self.get_conf(self.environment, self.universe_file)
         
         
-        file = open(path + '/../cfg/fix_types.json', 'r')
+        file = open(path + '/../../../lib/io/fix_types.json', 'r')
         input = file.read()
         file.close()
     
@@ -265,13 +223,59 @@ class DatabasePlug:
         logging.info("Connected to database: " + self.database_server)
         
         self.get_all_strategy_name()
-       
+        
+    def check_EoL(self, d_msg, day, socket, import_type='Client'):
+    
+        done = False
+        reason = ''
+        
+        OrigOrderID = d_msg['ClOrdID']
+        logging.info("Looking for other reason for order : %s" %OrigOrderID)
+        
+        if import_type == 'Client':
+            IN_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sI.fix' %(day, day)
+            ER_file = '/home/flexsys/logs/trades/%s/FLINKI_CLNT1%sO.fix' %(day, day)
+        elif import_type == 'Street':
+            IN_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sI.fix' %(day, day)
+            ER_file = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sO.fix' %(day, day)
+        
+        cmd = "prt_fxlog %s 3 | egrep '41=%s'" %(IN_file, OrigOrderID)
+        (stdin, stdout_grep, stderr) = socket.exec_command(cmd)
+        
+    
+        if stdout_grep.readlines() == 1:
+            
+            line = stdout_grep.readlines()[0]
+            line = line.replace('|\n','')
+            line = self.fix_translator.line_translator(line)
+            
+            if line == {}:
+                return [reason, done]
+            
+            if line['MsgType'] == 'G':
+                reason = 'replaced not acked '
+                cmd = "prt_fxlog %s 3 | egrep '11=%s'" %(ER_file, line['ClOrdID'])
+                
+                (stdin, stdout_grep, stderr) = socket.exec_command(cmd)
+                
+                for er_line in stdout_grep:
+                    er_line = er_line.replace('|\n','')
+                
+                er_line = lself.fix_translator.line_translator(line)
+                
+                if 'ExecType' not in er_line.keys():
+                    pass
+                
+                if er_line['ExecType'] == '3':
+                    reason = '%s and Done for day' %reason
+                    done = True
+                    
+        return [reason, done]   
     def store_db(self, orders, collection_name, job_id):
         database = self.client[self.database]
         collection = database[collection_name]
-        
-        if mode == 'insert':
-            logging.info("insert %s Orders into database" %str(len(orders)) )
+
+        logging.info("insert %s Orders into database" %str(len(orders)) )
             
         l = list(self.client['Mars']['field_map'].find({'collection_name':collection_name}))
         fields = []
@@ -349,44 +353,7 @@ class DatabasePlug:
                 dict_server['list_users']   = l_users
                 conf[serv_name]             = dict_server
                 
-        return conf
-    def line_translator(self, line, dico_tags):
-        line                = line.rsplit('|')
-        dict_order          = {}
-        last_correct_date   = None
-        for item in line:
-            item = item.rsplit('=')
-            if len(item) == 2:
-                if item[1] != ' ' and item[1] != '':
-                    if int(item[0]) not in self.ignore_tags:
-                        if int(item[0]) not in dico_tags.keys():
-                            dico_info = self.get_FIX(int(item[0]))
-                            dico_tags[int(item[0])] = dico_info
-                        
-                        nameD = dico_tags[int(item[0])][0]
-                        typeD = dico_tags[int(item[0])][1]
-                        if typeD != 'UTCTIMESTAMP':
-                            
-                            temp =convert_str(item[1])
-                            if temp is None:
-                                logging.warning("This variable is equal to None : "+ str(nameD))
-                            else:
-                                dict_order[nameD] = temp
-                        else:
-                            try:
-                                data = datetime.strptime(item[1], '%Y%m%d-%H:%M:%S')
-                                dict_order[nameD] = data.replace(tzinfo=pytz.timezone('UTC'))
-                                last_correct_date = data
-                            except ValueError, e:
-                                try :
-                                    #sometimes instead of getting a date at this format, we get only the time : '%H:%M:%S'
-                                    data = datetime.strptime(last_correct_date.strftime("%Y%m%d") + "-" +item[1], '%Y%m%d-%H:%M:%S')
-                                    dict_order[nameD] = data.replace(tzinfo=pytz.timezone('UTC'))
-                                    logging.warning("This datetime: "+str(item[1]) +"has been found to UTC ")
-                                except:
-                                    logging.warning("An order has been removed")
-                                    continue  
-        return (dict_order, dico_tags)      
+        return conf    
       
     def define_unique_id(self, order, my_type):
         day = datetime.strftime(order['TransactTime'], format='%Y%m%d')
@@ -425,15 +392,16 @@ class DatabasePlug:
                     fields_db = list( self.client['Mars']['field_map'].find({'collection_name' : 'OrderDeals'}) )
                     fields = []
                     if len(fields_db) > 0:
-                        fields = fields_db[0]
+                        fields = fields_db[0]['list_columns']
                         for el in req_for_update.keys():
                             if el not in fields:
                                 fields.append(el)
+                        self.client['Mars']['field_map'].update({'collection_name' : 'OrderDeals'}, {'$set' : { 'list_columns' : fields } })
                     else:
-                        logging.critical('Please check the code')
-                        raise('Should not find nothing in field_map, the documents Orderdeals has to be filled before updating it')
+                        self.client['Mars']['field_map'].insert({'collection_name' : 'OrderDeals', 'list_columns' : []  })
+                        return self.deals_enrichment_from_algo(typed_orders, job_id)
                     
-                    self.client['Mars']['field_map'].update({'collection_name' : 'OrderDeals'}, {'$set' : { 'list_columns' : fields } })
+                    
                     
     def fill(self, order_deals = True, algo_orders = True):
         if order_deals:
@@ -444,7 +412,6 @@ class DatabasePlug:
     def fill_order_deals(self):
         self.io      = "O"
         type_order   = ''
-        dico_tags    = {}
         trader       = ''
         self.checker        = Converter(self.list_of_dict, required_tag='deals_required')
         
@@ -462,9 +429,7 @@ class DatabasePlug:
             for s in self.conf:
                 logging.info('Get data from server: ' + str(s))
                 self.server = self.conf[s]
-                res_import  = self.import_FIXmsg(type_order, dico_tags, trader)
-                new_orders  = res_import[0]
-                dico_tags   = res_import[1]
+                new_orders  = self.import_FIXmsg(type_order, trader)
                 
                 logging.info('Add an unique id for all order deals')
                 for order in new_orders:
@@ -515,13 +480,13 @@ class DatabasePlug:
             to_return.append(typed_orders)
             
             
-            if self.mode == "read":
+            if self.mode == "write":
                 logging.info('Write in Database')   
                 job_id = 'AO%s' %day
                 logging.info("Remove the documents where this job_id is present " + str(job_id))
                 self.client[self.database]['AlgoOrders'].remove({'job_id':job_id})
                 self.store_db(typed_orders, "AlgoOrders", job_id)
-
+                
                 # Enrichment of OrderDeals
                 self.deals_enrichment_from_algo(typed_orders, job_id)
                             
@@ -566,7 +531,6 @@ class DatabasePlug:
 
                     m += "<td width='60%'>" + str("\n".join(files)) + "</td>\n"
                 except Exception, e:
-                    print el["Dict"]
                     get_traceback()
                     m += "<td></td>\n"
                     m += "<td>" + '\n'.join(map(str,el["Dict"].items())) + "</td>\n"
@@ -624,9 +588,7 @@ class DatabasePlug:
         
         # IMPORT LES LOGS FIX
         # - Single Day import
-        res_import = self.import_FIXmsg(type_order, self.dico_tags, trader)
-        d_orders = res_import[0]
-        self.dico_tags = res_import[1]
+        d_orders = self.import_FIXmsg(type_order, trader)
          
         l_kep_secids = []
         l_symbol     = []
@@ -647,11 +609,9 @@ class DatabasePlug:
                 logging.debug('Order ID : %s' %order['ClOrdID'])
                 l_events = self.order_life(order          = order, 
                                           day            = day, 
-                                          dico_tags      = self.dico_tags, 
                                           dico_trader    = dico_trader)
                 
-                u_order          = l_events[0]
-                self.dico_tags   = l_events[1]
+                u_order          = l_events
                 u_orders.extend(u_order)
                 
 #                 for ord in u_order:
@@ -662,11 +622,22 @@ class DatabasePlug:
 #                         temp = serialize.DateTimeJSONEncoder().encode(ord)
 #                         print temp
 
-                for ord in u_order:
-                    if 'SecurityID' in ord.keys():
+                #Same symbol and security ID
+                done_sec = False
+                done_sym = False
+                
+                for ord in l_events:
+                    if not done_sec and 'SecurityID' in ord.keys():
                         l_kep_secids.append(u_order[0]['SecurityID'])
-                    if 'Symbol' in ord.keys():
-                        l_symbol.append(ord['Symbol'])
+                        done_sec = True
+                        
+                    if not done_sym and  'Symbol' in ord.keys():
+                        l_symbol.append(u_order[0]['Symbol'])
+                        done_sym = True
+                        
+                    if done_sec and done_sym:
+                        break
+                    
             import lib.io.serialize as serialize
             import simplejson
             
@@ -775,7 +746,12 @@ class DatabasePlug:
                         
                     order['strategy_name_mapped'] = mapping.StrategyName(id = order["StrategyName"], sweep_lit=sweep_lit)
                 else:
-                    logging.error("StrategyName is unknown for this order: " + str(order) )                   
+                    logging.error("StrategyName is unknown for this order: " + str(order) )  
+                    
+                # Order status mapping
+                if 'OrdStatus' in order.keys():
+                    order['order_status_mapped'] = mapping.OrdStatus(char = order["OrdStatus"])   
+
                 # Tag to add
                 order["job_id"] = job_id
                 
@@ -856,7 +832,7 @@ class DatabasePlug:
             self.strategy_name[int(num)] = None
         return self.strategy_name[int(num)]
     
-    def import_FIXmsg(self, type_order, dico_tags={}, trader=''):
+    def import_FIXmsg(self, type_order, trader=''):
         
         # - io :
         #    I for parent order (incoming orders)
@@ -877,12 +853,12 @@ class DatabasePlug:
                 if type_order not in ['D', 'G', 'F']:
                     logging.warning( "error no valid type order ! (only D, G or F are allowed)" )
                 else:
-                    if trader =='':
+                    if trader == '':
                         cmd = 'prt_fxlog %s 3 | grep 35=%s' %(path, type_order)
                     else:
                         cmd = "prt_fxlog %s 3 | egrep '35=%s.*57=%s'" %(path, type_order, trader)
                     
-                    [orders, dico_tags] = self.run_and_append(orders, dico_tags, ssh, cmd)
+                    orders = self.run_and_append(orders, ssh, cmd)
             else:
                 l_FIXtype = ['D', 'G', 'F']
                 for tp in l_FIXtype:
@@ -891,7 +867,7 @@ class DatabasePlug:
                     else:
                         cmd = "prt_fxlog %s 3 | egrep '35=%s.*57=%s'" %(path, tp, trader)
                         
-                    [orders, dico_tags] = self.run_and_append(orders, dico_tags, ssh, cmd)
+                    orders = self.run_and_append(orders, ssh, cmd)
                     
         elif self.io == 'O':
             if str(type_order) != '':
@@ -904,7 +880,7 @@ class DatabasePlug:
                     else:
                         cmd = "prt_fxlog %s 3 | egrep '35=8.*50=%s.*150=%s'" %(path, trader, str(type_order))
                     
-                    [orders, dico_tags] = self.run_and_append(orders, dico_tags, ssh, cmd)
+                    orders = self.run_and_append(orders, ssh, cmd)
             else:
                 l_FIXtype = ['1', '2']
                 for tp in l_FIXtype:
@@ -913,30 +889,28 @@ class DatabasePlug:
                     else:
                         cmd = "prt_fxlog %s 3 | egrep '35=8.*57=%s.*150=%s'" %(path, trader, str(tp))
                     
-                    [orders, dico_tags] = self.run_and_append(orders, dico_tags, ssh, cmd) 
+                    orders = self.run_and_append(orders, ssh, cmd) 
         else:
             logging.warning( "wrong connection IO only 'I' or 'O' accepted !")
         
-        return [orders, dico_tags]
+        return orders
     
-    def run_and_append(self, orders, dico_tags, ssh, cmd):
+    def run_and_append(self, orders, ssh, cmd):
         (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
         
         for line in stdout_grep:
             line        = line.replace('|\n','')
             
-            res_trans   = self.line_translator(line, dico_tags)
-            
-            dico_tags   = res_trans[1]
+            order       = self.fix_translator.line_translator(line)
             
             is_DMA      = False
-            if "OnBehalfOfSubID" in res_trans[0].keys() :
-                is_DMA = (res_trans[0]['OnBehalfOfSubID'] == "DMA")
+            if "OnBehalfOfSubID" in order.keys() :
+                is_DMA = (order['OnBehalfOfSubID'] == "DMA")
             
-            if res_trans[0] != {} and len(res_trans[0]) > 1 and not is_DMA:
-                orders.append(res_trans[0])
+            if order != {} and len(order) > 1 and not is_DMA:
+                orders.append(order)
                 
-        return [orders, dico_tags]
+        return orders
     def get_FIX(self, fix_number):
         struct = ET.parse(self.dico_FIX)
         raw_data = struct.getroot()
@@ -946,7 +920,7 @@ class DatabasePlug:
                 return (elt.get('name'), elt.get('type'))
         
         return
-    def order_life(self, order, day,  dico_tags, dico_trader, import_type='Client'):
+    def order_life(self, order, day,  dico_trader, import_type='Client'):
     
         # - Open SSH connection 
         ssh = paramiko.SSHClient()
@@ -1005,15 +979,13 @@ class DatabasePlug:
             
             for str_msg in stdout_grep:
                 
-                str_msg = str_msg.replace('|\n','')
-                res_trans = self.line_translator(str_msg,dico_tags)
+                str_msg   = str_msg.replace('|\n','')
+                res_trans = self.fix_translator.line_translator(str_msg)
                 
-                if res_trans[0] != {}:
-                    p_msg = res_trans[0]
+                if res_trans != {}:
+                    p_msg = res_trans
                 else:
                     continue
-                
-                dico_tags = res_trans[1]
                 
                 if 'ExecType' not in p_msg.keys():
                     continue
@@ -1072,7 +1044,7 @@ class DatabasePlug:
                 g_eff_endtime = p_eff_endtime
                 
             if not done and not replaced :
-                [p_reason, done] = check_EoL(order, p_reason, day, ssh, self.dico_FIX, dico_tags, self.ignore_tags, import_type)
+                [p_reason, done] = self.check_EoL(order, day, ssh, import_type)
                 
                 if not done:
                     p_reason = 'Front End handling'
@@ -1099,9 +1071,7 @@ class DatabasePlug:
                     for str_msg in stdout_grep:
                         str_msg = str_msg.replace('|\n','')
                     
-                    res_trans = self.line_translator(str_msg, dico_tags)
-                    c_msg = res_trans[0]
-                    dico_tags = res_trans[1]
+                    c_msg = self.fix_translator.line_translator(str_msg)
                     
                     nb_exec = 0
                     exec_qty = 0
@@ -1128,14 +1098,10 @@ class DatabasePlug:
                     cc_msg = None
                     for str_msg in stdout_grep:
                         str_msg = str_msg.replace('|\n','')
-                        res_trans = self.line_translator(str_msg, dico_tags)
+                        cc_msg = self.fix_translator.line_translator(str_msg)
                         
-                        if res_trans[0] != {}:
-                            cc_msg = res_trans[0]
-                        else:
+                        if cc_msg == {}:
                             continue
-                        
-                        dico_tags = res_trans[1]
                         
                         if str(cc_msg['ExecType']) == '0':
                             reason = 'new acked'
@@ -1191,7 +1157,7 @@ class DatabasePlug:
                             reason = 'pending replace'
                     
                     if not done and not replaced :
-                        [reason, done] = check_EoL(c_msg, reason, day, ssh, self.dico_FIX, dico_tags, self.ignore_tags, import_type)
+                        [reason, done] = self.check_EoL(c_msg, day, ssh, import_type)
                         
                         if not done:
                             reason = '%s Front End handling' %reason
@@ -1262,7 +1228,7 @@ class DatabasePlug:
             logging.warning( 'invalid order type : only NewOrderSingle (D) are allowed !')
         
         ssh.close()
-        return [order_life, dico_tags]
+        return order_life
                     
 if __name__ == '__main__':
     import sys    

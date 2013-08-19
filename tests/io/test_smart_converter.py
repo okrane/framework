@@ -38,6 +38,7 @@ def test_converter():
   
 def test_fix_translator():
     ft = FixTranslator()
+    
     assert ft.translate_tag(5) == "AdvTransType"
     assert ft.translate_tag('5') == "AdvTransType"
     assert ft.translate_tag("AdvTransType") == '5'

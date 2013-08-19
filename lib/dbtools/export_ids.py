@@ -16,6 +16,37 @@ from lib.logger import *
 from lib.io.toolkit import *
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 from lib.tca import mapping
+import os
+
+def send(local, remote):
+   full_path            = os.path.realpath(__file__)    
+   path, f              = os.path.split(full_path)        
+
+   universe_file        = os.path.join(path, 'KC_universe.xml')
+   conf                 = get_conf('dev', universe_file)
+   server               = conf['PARFLT03']
+   ip                   = server['ip_addr']
+   username             = server['list_users']['flexapp']['username']
+   password             = server['list_users']['flexapp']['passwd']
+   
+   transport = paramiko.Transport((ip, 22))
+   transport.connect(username=username, password=password)
+   sftp = paramiko.SFTPClient.from_transport(transport)
+   sftp.put(local, remote)
+   sftp.close()
+
+def check(sftp, path):
+    parts = path.split('/')
+    for n in range(2, len(parts) + 1):
+        path = '/'.join(parts[:n])
+        print 'Path:', path,
+        sys.stdout.flush()
+        try:
+            s = sftp.stat(path)
+            print 'mode =', oct(s.st_mode)
+        except IOError as e:
+            print e
+
 
 def get_conf(referential, dico_universe):
 
@@ -42,7 +73,7 @@ def get_conf(referential, dico_universe):
             
     return conf
 
-def generate_file(day, all=False, export_path='C:\\'):
+def generate_file(day, all=False, export_path=None):
     new_dict = {}
     gl_list  = [] 
     
@@ -73,9 +104,25 @@ def generate_file(day, all=False, export_path='C:\\'):
         gl_list.append(l_line[4])
             
     ssh.close()
-    logging.info( "UPDATE CHEUVREUX SECURITY IDS AND MARKET DATA")
-    query   = "select SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6, SECID, PARENTCODE from SECURITY where STATUS = 'A'  and SECID in ('%s')" % "','".join(map(str,set(gl_list)))
-    result  = connections.Connections.exec_sql('KGR', query, as_dict = True)
+    
+    unique_ids  = set(gl_list) 
+    len_ids     = len(unique_ids)
+    
+    result      = []
+    subdivision = 100
+    l = []
+    i = 0
+    for e in unique_ids:
+        l.append(e)
+        if i % subdivision == 0 or i == len_ids -1 :
+            try:
+                query   = "select SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6, SECID, PARENTCODE from SECURITY where STATUS = 'A'  and SECID in ('%s')" % "','".join(map(str, l))
+                result.extend(connections.Connections.exec_sql('KGR', query, as_dict = True))
+            except:
+                print get_traceback()
+                print query
+            l       = []
+        i += 1
     
     dict_secs       = {}
     dict_s6         = {}
@@ -154,18 +201,31 @@ def generate_file(day, all=False, export_path='C:\\'):
             else:
                 ticker_ag   = ''
             l.append('; %s; %s; ; ; ; ; ; %s;\n' % (ticker, ticker_ag, el))
-            
-    file = open(export_path + day +'-export.csv', 'w')
+    
+    if export_path is None:
+        export_path = path
+    
+    
+    day = datetime.strftime(datetime.now(), format= '%Y%m%d')    
+    csv_path = export_path + '/' + day + '-export.csv'       
+    file = open(csv_path, 'w')
     file.writelines(l)
     file.close()
     
     to_json = simplejson.dumps(dict_secs, separators=(',',':'), indent='\t')
-    file_orders = open(export_path + day + '-export.json', 'w')
+
+    json_path = export_path + '/' + day + '-export.json'
+    
+    file_orders = open(json_path, 'w')
     file_orders.write(to_json)
     file_orders.close()
+    
+    send(csv_path, '/home/flexapp/logs/volume_curves/'+ day + '-export.csv')
     return new_dict
 
+
+   
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
-    generate_file(day, export_path = '/home/flexsys/ids_matching/')
+    generate_file(day)
     

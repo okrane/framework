@@ -7,7 +7,7 @@ import simplejson
 import os, sys
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 
-def convert_str(s, date_format = "%Y-%m-%d %H:%M:%S"):
+def convert_str(s, date_format = ["%Y-%m-%d %H:%M:%S", "%Y%m%d-%H:%M:%S"]):
     '''
         Attempts to convert an element to int, 
         if failed it will attempt to convert to float
@@ -25,16 +25,18 @@ def convert_str(s, date_format = "%Y-%m-%d %H:%M:%S"):
         try:
             ret = float(s)
         except ValueError:
-            # Try datetime            
-            try:
-                import datetime
-                ret = datetime.datetime.strptime(s, date_format)
-            except ValueError:
-                return s
+            # Try datetime     
+            for format in date_format:       
+                try:
+                    ret = datetime.strptime(s, format)
+                    continue
+                except ValueError:
+                    ret = s
     return ret  
 
 class FixTranslator(object):
-    def __init__(self, file_transcriptor=None, ignore_tags = []):
+    default_ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
+    def __init__(self, file_transcriptor=None, ignore_tags = None):
         if file_transcriptor is None:
             self.file = os.path.join(os.path.dirname(__file__), 'fix_types.json')
             
@@ -45,7 +47,11 @@ class FixTranslator(object):
         my_json             = simplejson.loads(content)
         self.source         = my_json['fix']['fields']['field']
         self.mapping        = {}
-        self.ignore_tags    = ignore_tags
+        
+        if ignore_tags is None:
+            self.ignore_tags    = FixTranslator.default_ignore_tags
+        else:
+            self.ignore_tags    = ignore_tags
         
     def translate_tag(self, value):
         """Two way translator tag fix <-> name
@@ -73,7 +79,9 @@ class FixTranslator(object):
         dict_order          = {}
         last_correct_date   = None
         for item in line:
+            
             item = item.rsplit('=')
+            
             if len(item) == 2:
                 if item[1] != ' ' and item[1] != '':
                     if int(item[0]) not in self.ignore_tags:  
@@ -82,7 +90,7 @@ class FixTranslator(object):
                         typeD = self.translate_tag(nameD)
 
                         if typeD != 'UTCTIMESTAMP':
-                            temp =convert_str(item[1])
+                            temp = convert_str(item[1])
                             if temp is None:
                                 logging.warning("This variable is equal to None : "+ str(nameD))
                             else:

@@ -16,6 +16,37 @@ from lib.logger import *
 from lib.io.toolkit import *
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 from lib.tca import mapping
+import os
+
+def send(local, remote):
+   full_path            = os.path.realpath(__file__)    
+   path, f              = os.path.split(full_path)        
+
+   universe_file        = os.path.join(os.getcwd(), 'KC_universe.xml')
+   conf                 = get_conf('dev', universe_file)
+   server               = conf['PARFLT03']
+   ip                   = server['ip_addr']
+   username             = server['list_users']['flexapp']['username']
+   password             = server['list_users']['flexapp']['passwd']
+   
+   transport = paramiko.Transport((ip, 22))
+   transport.connect(username=username, password=password)
+   sftp = paramiko.SFTPClient.from_transport(transport)
+   sftp.put(local, remote)
+   sftp.close()
+
+def check(sftp, path):
+    parts = path.split('/')
+    for n in range(2, len(parts) + 1):
+        path = '/'.join(parts[:n])
+        print 'Path:', path,
+        sys.stdout.flush()
+        try:
+            s = sftp.stat(path)
+            print 'mode =', oct(s.st_mode)
+        except IOError as e:
+            print e
+
 
 def get_conf(referential, dico_universe):
 
@@ -42,7 +73,7 @@ def get_conf(referential, dico_universe):
             
     return conf
 
-def generate_file(day, all=False, export_path='C:\\'):
+def generate_file(day, all=False, export_path=None):
     new_dict = {}
     gl_list  = [] 
     
@@ -170,18 +201,32 @@ def generate_file(day, all=False, export_path='C:\\'):
             else:
                 ticker_ag   = ''
             l.append('; %s; %s; ; ; ; ; ; %s;\n' % (ticker, ticker_ag, el))
-            
-    file = open(export_path + day +'-export.csv', 'w')
+    
+    if export_path is None:
+        import os
+        export_path = os.getcwd()
+    
+    
+    day = datetime.strftime(datetime.now(), format= '%Y%m%d')    
+    csv_path = export_path + '/' + day + '-export.csv'       
+    file = open(csv_path, 'w')
     file.writelines(l)
     file.close()
     
     to_json = simplejson.dumps(dict_secs, separators=(',',':'), indent='\t')
-    file_orders = open(export_path + day + '-export.json', 'w')
+
+    json_path = export_path + '/' + day + '-export.json'
+    
+    file_orders = open(json_path, 'w')
     file_orders.write(to_json)
     file_orders.close()
+    
+    send(csv_path, '/home/flexapp/logs/volume_curves/'+ day + '-export.csv')
     return new_dict
 
+
+   
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
-    generate_file(day, export_path = 'C:\\')
+    generate_file(day)
     

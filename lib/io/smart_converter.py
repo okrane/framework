@@ -4,7 +4,7 @@ import serialize
 import simplejson
 from lib.logger import *
 from lib.io.toolkit import get_traceback
-
+import os
 MAPPING = {"FLOAT"                  : FloatType,
            "INT"                    : IntType,
            "STRING"                 : StringType,
@@ -45,6 +45,9 @@ def convert_str(s, date_format = "%Y-%m-%d %H:%M:%S"):
             except ValueError:
                 return s
     return ret  
+
+
+            
 class Converter:
     def __init__(self, list_of_maps, out_file = 'types_to_add.json', required_tag = 'required'):
         self.accepted_date_formats = ["%Y-%m-%d %H:%M:%S", "%Y%m%d"]
@@ -155,4 +158,5 @@ class Converter:
         file = open(self.out_file, 'a')
         file.writelines(list_of_dict)
         file.close()
+
             

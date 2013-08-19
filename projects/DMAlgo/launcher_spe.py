@@ -29,4 +29,4 @@ if __name__ == '__main__':
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill()
+                 mode               = "write").fill(order_deals=False)

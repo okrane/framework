@@ -37,17 +37,22 @@ def get_local(date, sec_id, srv_addr, local_temp = ''):
         full_path = os.path.realpath(__file__)
         local_temp, f = os.path.split(full_path)
         
-    if datetime.strptime(date, '%d/%m/%Y')<=datetime.strptime('11/07/2013', '%d/%m/%Y'):
-        remote_data_path = '/quant/kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
-    else:
-        remote_data_path = '/quant/test_kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
-        
+
+    remote_data_path = '/quant/kc_repository_/get_tick/ft/%s/%s.mat' %(sec_id, day)
+    
+# =======
+#     if datetime.strptime(date, '%d/%m/%Y')<=datetime.strptime('11/07/2013', '%d/%m/%Y'):
+#         remote_data_path = '/quant/kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
+#     else:
+#         remote_data_path = '/quant/test_kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
+#         
+# >>>>>>> a2b650edf088e4926707c59b77efebdeb2d0973a
     local_addr = socket.gethostbyname(socket.gethostname())
     local_data_path = '%s/temp_buffer/%s.mat' %(path, day) 
     
-    print "Importing file from distant repository :"
-    print "Source : %s @ %s ==>" %(remote_data_path, srv_addr)
-    print "Target : %s @ %s <==" %(local_data_path, local_addr)
+#     print "Importing file from distant repository :"
+#     print "Source : %s @ %s ==>" %(remote_data_path, srv_addr)
+#     print "Target : %s @ %s <==" %(local_data_path, local_addr)
     
     transport = paramiko.Transport((srv_addr, 22))
     transport.connect(username = 'flexsys', password = 'flexsys1')
@@ -182,6 +187,7 @@ def histocurrencypair(date = None, last_date_from = None, start_date = None, end
     ##############################################################
     # request and format
     ##############################################################
+
         
     ####  Build request
     if req_n == 1:

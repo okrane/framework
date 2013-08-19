@@ -233,5 +233,5 @@ def generate_file(day, all=False, export_path=None, with_none = False):
    
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
-    generate_file(day,  with_none=True)
+    generate_file(day)
     

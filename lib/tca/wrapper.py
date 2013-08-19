@@ -69,8 +69,8 @@ class DataProcessor(object):
     def plot_algo_volume(self):
         self.get_stat_dma()
         
-        value_per_algo_dma      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['occ_ID'].count().order()
-        value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['occ_ID'].count().order()
+        value_per_algo_dma      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['p_occ_id'].count().order()
+        value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['p_occ_id'].count().order()
         
         value_per_algo_dma      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['turnover_euro'].sum().order()
         value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['turnover_euro'].sum().order()
@@ -95,8 +95,8 @@ class DataProcessor(object):
     def plot_algo_occ(self):
         self.get_stat_dma()
         
-        nbr_dma_occ      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['occ_ID'].count().order()
-        nbr_all_occ      = self.data_seq.groupby('strategy_name_mapped')['occ_ID'].count().order()
+        nbr_dma_occ      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['p_occ_id'].count().order()
+        nbr_all_occ      = self.data_seq.groupby('strategy_name_mapped')['p_occ_id'].count().order()
 
         
         for index in nbr_all_occ.index:
@@ -198,25 +198,33 @@ class DataProcessor(object):
     
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
-#     Connections.change_connections("dev")
+    Connections.change_connections("dev")
     
     
-    day = datetime.now() - timedelta(days=7)
+    day = datetime(year=2013, month=7, day=23)
     
     # One DAY
     daily = DataProcessor(start_date = day, end_date = day)
-    daily.plot_algo_volume().show()
-    daily.plot_algo_occ().show()
+    daily.plot_algo_volume()
+    plt.show()
+    
+    daily.plot_algo_occ()
+    plt.show()
     
     # Weekly
     weekly = DataProcessor(start_date = day, end_date = day + timedelta(days=7))
-    weekly.plot_algo_volume().show()
-    weekly.plot_algo_occ().show()
-    
+    weekly.plot_algo_volume()
+    plt.show()
+    weekly.plot_algo_occ()
+    plt.show()
+     
     # Monthly
     monthly = DataProcessor(start_date = day - timedelta(days=21), end_date = day + timedelta(days=7))
-    monthly.plot_algo_volume().show()
-    monthly.plot_algo_occ().show()
-    
-#     p.plot_intraday_exec_curve(step_sec=60*60, group_var='ExDestination').show()
+    monthly.plot_algo_volume()
+    plt.show()
+    monthly.plot_algo_occ()
+    plt.show()
+      
+    p.plot_intraday_exec_curve(step_sec=60*60, group_var='ExDestination')
+    plt.show()
     

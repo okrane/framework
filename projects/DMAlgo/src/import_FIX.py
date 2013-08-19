@@ -292,7 +292,7 @@ class DatabasePlug:
                     fields.append(k)
                     to_add = True
         if to_add:
-            self.client['Mars']['field_map'].update({'collection_name' : collection_name}, {'collection_name' : collection_name, 'list_columns' : fields})
+            self.client['Mars']['field_map'].upsert({'collection_name' : collection_name}, {'collection_name' : collection_name, 'list_columns' : fields})
         logging.info("End Of insertion to the database")
 
     def get_dico_header(self, day):
@@ -1250,7 +1250,7 @@ if __name__ == '__main__':
         environment = 'preprod'
         io          = 'I'
         source      = 'CLNT1'
-    connections.Connections.change_connections('dev')    
+    connections.Connections.change_connections('production')    
     dates       =  ['20130603','20130604','20130605','20130606','20130607',
                     '20130610','20130611','20130612','20130613','20130614',
                     '20130617','20130618','20130619','20130620','20130621',
@@ -1265,7 +1265,7 @@ if __name__ == '__main__':
     environment         = 'prod'
     source              = 'CLNT1'
 
-    dates               = ['20130725']
+    dates               = ['20130819']
     
     DatabasePlug(database_server    = database_server, 
                  database           = database,

@@ -24,7 +24,7 @@ def send(local, remote):
 
    universe_file        = os.path.join(path, 'KC_universe.xml')
    conf                 = get_conf('dev', universe_file)
-   server               = conf['PARFLT03']
+   server               = conf['PARFLTLAB']
    ip                   = server['ip_addr']
    username             = server['list_users']['flexapp']['username']
    password             = server['list_users']['flexapp']['passwd']
@@ -73,7 +73,7 @@ def get_conf(referential, dico_universe):
             
     return conf
 
-def generate_file(day, all=False, export_path=None):
+def generate_file(day, all=False, export_path=None, with_none = False):
     new_dict = {}
     gl_list  = [] 
     
@@ -166,7 +166,7 @@ def generate_file(day, all=False, export_path=None):
     
     
     def line_to_append(my_dict):
-        line = '%s; %s; %s; ' %(  my_dict['cheuvreux_secid'],
+        line = '%s;%s;%s;' %(  my_dict['cheuvreux_secid'],
                                   my_dict['ticker'],
                                   my_dict['tickerAG']
                                )
@@ -183,9 +183,15 @@ def generate_file(day, all=False, export_path=None):
 
     for cheuvreux_secids, dict in dict_s6.iteritems():
         if cheuvreux_secids == 'None':
-            if all:
-                for key, val in dict.iteritems():
-                    l.append(line_to_append(val))
+            if with_none:
+                dict_none = dict_s6['None']
+                for key, val in dict_none.iteritems():
+                    try:
+                        l.append(line_to_append(val))
+                    except Exception, e:
+                        logging.error(str(val))
+                        logging.error(str(key))
+                        logging.error(get_traceback())
         else:
             l.append(line_to_append(dict))
 
@@ -227,5 +233,5 @@ def generate_file(day, all=False, export_path=None):
    
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
-    generate_file(day)
+    generate_file(day,  with_none=True)
     

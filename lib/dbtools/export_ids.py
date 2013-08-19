@@ -73,9 +73,25 @@ def generate_file(day, all=False, export_path='C:\\'):
         gl_list.append(l_line[4])
             
     ssh.close()
-    logging.info( "UPDATE CHEUVREUX SECURITY IDS AND MARKET DATA")
-    query   = "select SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6, SECID, PARENTCODE from SECURITY where STATUS = 'A'  and SECID in ('%s')" % "','".join(map(str,set(gl_list)))
-    result  = connections.Connections.exec_sql('KGR', query, as_dict = True)
+    
+    unique_ids  = set(gl_list) 
+    len_ids     = len(unique_ids)
+    
+    result      = []
+    subdivision = 100
+    l = []
+    i = 0
+    for e in unique_ids:
+        l.append(e)
+        if i % subdivision == 0 or i == len_ids -1 :
+            try:
+                query   = "select SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6, SECID, PARENTCODE from SECURITY where STATUS = 'A'  and SECID in ('%s')" % "','".join(map(str, l))
+                result.extend(connections.Connections.exec_sql('KGR', query, as_dict = True))
+            except:
+                print get_traceback()
+                print query
+            l       = []
+        i += 1
     
     dict_secs       = {}
     dict_s6         = {}
@@ -167,5 +183,5 @@ def generate_file(day, all=False, export_path='C:\\'):
 
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
-    generate_file(day, export_path = '/home/flexsys/ids_matching/')
+    generate_file(day, export_path = 'C:\\')
     

@@ -396,11 +396,12 @@ class DatabasePlug:
                         for el in req_for_update.keys():
                             if el not in fields:
                                 fields.append(el)
+                        self.client['Mars']['field_map'].update({'collection_name' : 'OrderDeals'}, {'$set' : { 'list_columns' : fields } })
                     else:
-                        logging.critical('Please check the code')
-                        raise('Should not find nothing in field_map, the documents Orderdeals has to be filled before updating it')
+                        self.client['Mars']['field_map'].insert({'collection_name' : 'OrderDeals', 'list_columns' : []  })
+                        return self.deals_enrichment_from_algo(typed_orders, job_id)
                     
-                    self.client['Mars']['field_map'].update({'collection_name' : 'OrderDeals'}, {'$set' : { 'list_columns' : fields } })
+                    
                     
     def fill(self, order_deals = True, algo_orders = True):
         if order_deals:

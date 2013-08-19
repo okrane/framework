@@ -310,6 +310,3 @@ def fieldList(cname=None, db_name="Mars", **kwargs):
         out.append(v)
     
     return np.array(out[0]['list_columns'])
-
-def 
-    

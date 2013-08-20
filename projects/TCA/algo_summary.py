@@ -1,3 +1,9 @@
+import matplotlib
+
+import os
+if os.name != 'nt':
+    ### VERY IMPROTANT IN LINUX (in order to use X11)
+    matplotlib.use('Agg')
 from lib.tca.wrapper import DataProcessor
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
@@ -5,7 +11,7 @@ from lib.io.toolkit import send_email
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 import smtplib
-import os
+
 
 if __name__=='__main__':
     from lib.dbtools.connections import Connections

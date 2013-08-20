@@ -23,7 +23,7 @@ if __name__=='__main__':
     if os.name == 'nt':
         folder  = 'C:\\temp\\'
     else:
-        folder  = '~/temp/'
+        folder  = '/home/quant/temp/'
     l       = []
     
     

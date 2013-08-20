@@ -51,7 +51,7 @@ class DataProcessor(object):
         
         self.data_seq       = get_algodata.sequence_info(start_date = self.start_date_str,
                                                          end_date   = self.end_date_str)
-        self.data_occ       = get_algodata.occurence_info(start_date = self.start_date_str,
+        self.data_occ       = get_algodata.occurrence_info(start_date = self.start_date_str,
                                                           end_date   = self.end_date_str)            
     def get_deals(self, merge_order_colnames):
         self.data_deals     = get_algodata.deal(db_name, sequence_id, merge_order_colnames = merge_order_colnames, start_date = self.start_date_str,
@@ -202,7 +202,7 @@ if __name__=='__main__':
     
     
     day = datetime(year=2013, month=7, day=23)
-    
+    day = datetime.now() - timedelta(days=1)
     # One DAY
     daily = DataProcessor(start_date = day, end_date = day)
     daily.plot_algo_volume()

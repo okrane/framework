@@ -114,5 +114,5 @@ if __name__=='__main__':
         msg.attach(img)
     # Send the email via our own SMTP server.
     s = smtplib.SMTP('172.29.97.16')
-    s.sendmail(to, msg['From'], msg.as_string())
+    s.sendmail(msg['From'], to, msg.as_string())
     s.quit()

@@ -69,9 +69,6 @@ class DataProcessor(object):
     def plot_algo_volume(self):
         self.get_stat_dma()
         
-        value_per_algo_dma      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['p_occ_id'].count().order()
-        value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['p_occ_id'].count().order()
-        
         value_per_algo_dma      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['turnover_euro'].sum().order()
         value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['turnover_euro'].sum().order()
         
@@ -95,8 +92,8 @@ class DataProcessor(object):
     def plot_algo_occ(self):
         self.get_stat_dma()
         
-        nbr_dma_occ      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['p_occ_id'].count().order()
-        nbr_all_occ      = self.data_seq.groupby('strategy_name_mapped')['p_occ_id'].count().order()
+        nbr_dma_occ      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
+        nbr_all_occ      = self.data_seq.groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
 
         
         for index in nbr_all_occ.index:
@@ -205,8 +202,8 @@ if __name__=='__main__':
     day = datetime.now() - timedelta(days=1)
     # One DAY
     daily = DataProcessor(start_date = day, end_date = day)
-    daily.plot_algo_volume()
-    plt.show()
+#     daily.plot_algo_volume()
+#     plt.show()
     
     daily.plot_algo_occ()
     plt.show()

@@ -227,6 +227,7 @@ def generate_file(day, all=False, export_path=None, with_none = False):
     file_orders.close()
     
     send(csv_path, '/home/flexapp/logs/volume_curves/'+ day + '-export.csv')
+    send(csv_path, '/home/flexapp/logs/volume_curves/TRANSCOSYMBOLCHEUVREUX.csv')
     return new_dict
 
 

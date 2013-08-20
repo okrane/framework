@@ -279,7 +279,7 @@ class DatabasePlug:
             
         l = list(self.client['Mars']['field_map'].find({'collection_name':collection_name}))
         fields = []
-        if len(l) > 0 and len(l[0]) > 0:
+        if len(l) > 0 and 'list_columns' in l[0].keys():
             for el in l:
                 if el['collection_name'] == collection_name:
                     fields = el['list_columns']
@@ -293,7 +293,7 @@ class DatabasePlug:
                     to_add = True
         if to_add:
             self.client['Mars']['field_map'].remove({'collection_name' : collection_name})
-            self.client['Mars']['field_map'].insert({'collection_name' : collection_name}, {'collection_name' : collection_name, 'list_columns' : fields})
+            self.client['Mars']['field_map'].insert({'collection_name' : collection_name, 'list_columns' : fields})
         logging.info("End Of insertion to the database")
 
     def get_dico_header(self, day):
@@ -392,12 +392,13 @@ class DatabasePlug:
                     
                     fields_db = list( self.client['Mars']['field_map'].find({'collection_name' : 'OrderDeals'}) )
                     fields = []
-                    if len(fields_db) > 0 and len(fields_db[0]) > 0:
+                    if len(fields_db) > 0 and 'list_columns' in fields_db[0].keys():
                         fields = fields_db[0]['list_columns']
                         for el in req_for_update.keys():
                             if el not in fields:
                                 fields.append(el)
-                        self.client['Mars']['field_map'].update({'collection_name' : 'OrderDeals'}, {'$set' : { 'list_columns' : fields } })
+                        self.client['Mars']['field_map'].remove({'collection_name' : 'OrderDeals'})      
+                        self.client['Mars']['field_map'].insert({'collection_name' : 'OrderDeals', 'list_columns' : fields })
                     else:
                         self.client['Mars']['field_map'].insert({'collection_name' : 'OrderDeals', 'list_columns' : []  })
                         return self.deals_enrichment_from_algo(typed_orders, job_id)

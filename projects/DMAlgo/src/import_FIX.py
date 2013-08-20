@@ -279,7 +279,7 @@ class DatabasePlug:
             
         l = list(self.client['Mars']['field_map'].find({'collection_name':collection_name}))
         fields = []
-        if len(l) > 0:
+        if len(l) > 0 and len(l[0]) > 0:
             for el in l:
                 if el['collection_name'] == collection_name:
                     fields = el['list_columns']
@@ -392,7 +392,7 @@ class DatabasePlug:
                     
                     fields_db = list( self.client['Mars']['field_map'].find({'collection_name' : 'OrderDeals'}) )
                     fields = []
-                    if len(fields_db) > 0:
+                    if len(fields_db) > 0 and len(fields_db[0]) > 0:
                         fields = fields_db[0]['list_columns']
                         for el in req_for_update.keys():
                             if el not in fields:

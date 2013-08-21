@@ -116,7 +116,10 @@ class DataProcessor(object):
         
         index = []
         for suffix in place_per_algo_all.index:
-            index.append(places[places['suffix'] == suffix]['name'].iloc[0])
+            try:
+                index.append(places[places['suffix'] == suffix]['name'].iloc[0])
+            except:
+                index.append('Unknown (%s)' %suffix)    
         return self.plot_algo_dma_vs_all(title, value_per_place_values_d, value_per_place_values_a, index, xlabel)
         
         
@@ -197,7 +200,10 @@ class DataProcessor(object):
         colors_strat=cm.spectral(np.linspace(0, 1.0, len(uni_strat)))
         uni_strat_islabeled=np.array([False]*len(uni_strat))
         # ----- PLOT
-        h = plt.figure()
+        h = plt.figure(figsize = DEFAULT_FIGSIZE)
+        axes = plt.gca()
+        axes.grid(True)
+        
         plt.hold(True)
         prev_date=''
         prev_date_cum=0
@@ -232,9 +238,9 @@ class DataProcessor(object):
         return h
 
     def plot_basic_stats(self, path = ['vol.jpg', 'occ.png', 'place.png', 'detailed_vol']):
-        daily.plot_algo_volume().savefig(path[0])
-        daily.plot_algo_occ().savefig(path[1])
-        daily.plot_algo_place().savefig(path[2])
+        self.plot_algo_volume().savefig(path[0])
+        self.plot_algo_occ().savefig(path[1])
+        self.plot_algo_place().savefig(path[2])
     
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
@@ -246,18 +252,16 @@ if __name__=='__main__':
     # One DAY
     daily = DataProcessor(start_date = day, end_date = day)
     daily.plot_basic_stats()
+    daily.plot_intraday_exec_curve()
     plt.show()
     
     # Weekly
-    weekly = DataProcessor(start_date = day, end_date = day + timedelta(days=7))
+    weekly = DataProcessor(start_date = day - timedelta(days=7), end_date = day )
     weekly.plot_basic_stats()
     plt.show()
      
     # Monthly
-    monthly = DataProcessor(start_date = day - timedelta(days=21), end_date = day + timedelta(days=7))
+    monthly = DataProcessor(start_date = day - timedelta(days=28), end_date = day )
     monthly.plot_basic_stats()
-    plt.show()
-      
-    p.plot_intraday_exec_curve(step_sec=60*60, group_var='ExDestination')
     plt.show()
     

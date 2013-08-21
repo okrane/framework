@@ -237,7 +237,7 @@ class DataProcessor(object):
 
         return h
 
-    def plot_basic_stats(self, path = ['vol.jpg', 'occ.png', 'place.png', 'detailed_vol']):
+    def plot_basic_stats(self, path = ['vol.jpg', 'occ.png', 'place.png']):
         self.plot_algo_volume().savefig(path[0])
         self.plot_algo_occ().savefig(path[1])
         self.plot_algo_place().savefig(path[2])

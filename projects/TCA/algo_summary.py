@@ -82,7 +82,7 @@ if __name__=='__main__':
     
     weekly.plot_basic_stats(path=list_path[4:7])
     
-    for image in l:
+    for image in l[4:7]:
         m += '<img src="cid:%s">\n' %image
         
                 
@@ -99,9 +99,9 @@ if __name__=='__main__':
     image_name = 'Place_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
     repeat(image_name)
  
-    monthly.plot_basic_stats(path=list_path[4:7])
+    monthly.plot_basic_stats(path=list_path[7:10])
     
-    for image in l:
+    for image in l[7:10]:
         m += '<img src="cid:%s">\n' %image
 
     # Send an email
@@ -112,7 +112,7 @@ if __name__=='__main__':
     # me == the sender's email address
     # family = the list of all recipients' email addresses
     msg['From'] = 'alababidi@keplercheuvreux.com'
-    to = ['alababidi@keplercheuvreux.com']
+    to = ['alababidi@keplercheuvreux.com', 'njoseph@keplercheuvreux.com', 'svlasceanu@keplercheuvreux.com']
     msg['To'] = ' ,'.join(to)
     # Assume we know that the image files are all in PNG format
     for file in l:

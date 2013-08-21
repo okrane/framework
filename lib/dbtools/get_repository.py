@@ -106,6 +106,21 @@ def currency(**kwargs):
     out = Connections.exec_sql('KGR', query, as_dict = True)    
     return out[0]['CCY']
 
+def tag100_to_place_name():
+    pref_ = "LUIDBC01_" if Connections.connections == "dev" else ""
+
+    req=("SELECT flexexch.SUFFIX,exch.EXCHGNAME "
+    " FROM %sKGR..FlextradeExchangeMapping flexexch "
+    " LEFT JOIN %sKGR..EXCHANGEMAPPING exchmap on ( "
+    " flexexch.EXCHANGE=exchmap.EXCHANGE ) "
+    " LEFT JOIN %sKGR..EXCHANGE exch on ( "
+    " exchmap.EXCHGID=exch.EXCHGID ) ") % (pref_,pref_,pref_)
+    
+    vals=Connections.exec_sql('KGR',req)
+    
+    data=pd.DataFrame.from_records(vals,columns=['suffix','name'])
+    return data
+
 def get_symbol6_from_ticker(ticker):
     ticker = str(ticker)
     ticker.replace('|', ' ')
@@ -722,6 +737,7 @@ def local_tz_from(**kwargs):
     
     
 if __name__ == "__main__":
+    print tag100_to_place_name()
     print get_symbol6_from_ticker("MMK.VN")
     print get_symbol6_from_ticker("PSMd.AG")
     print exchangeinfo(security_id = 2)    

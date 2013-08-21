@@ -28,7 +28,7 @@ if __name__=='__main__':
     l       = []
     
     msg = MIMEMultipart()
-    msg['Subject'] = 'Algo Summary'
+    msg['Subject'] = 'Algo Summary (Beta test)'
     
     
     
@@ -101,7 +101,7 @@ if __name__=='__main__':
     # me == the sender's email address
     # family = the list of all recipients' email addresses
     msg['From'] = 'alababidi@keplercheuvreux.com'
-    to = ['njoseph@keplercheuvreux.com', 'alababidi@keplercheuvreux.com']
+    to = ['quant.algo@keplercheuvreux.com']
     msg['To'] = ' ,'.join(to)
     # Assume we know that the image files are all in PNG format
     for file in l:

@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import scipy 
 import matplotlib.cm as cm
+from lib.dbtools import get_repository
 
 
 class Singleton(object):
@@ -59,6 +60,7 @@ class DataProcessor(object):
     def get_stat_turnover_euro(self):
         self.data_seq['turnover_euro'] = self.data_seq['turnover'] * self.data_seq['rate_to_euro']
         
+        
     def get_stat_dma(self):
         if 'turnover_euro' not in self.data_seq:
             self.get_stat_turnover_euro()
@@ -66,6 +68,7 @@ class DataProcessor(object):
         self.ind_dma     = self.data_seq.apply(func = f, axis = 1, raw=False )
 
         self.data_seq['is_dma'] = self.ind_dma.values
+        
     def plot_algo_volume(self):
         self.get_stat_dma()
         
@@ -88,6 +91,35 @@ class DataProcessor(object):
         total_dma               = sum(value_per_algo_values_d)
         title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Turnover: ' + str(round(total_all,1)) + ' MEuros\n DMA Turnover: ' + str(round(total_dma,1)) + ' MEuros'
         return self.plot_algo_dma_vs_all(title, value_per_algo_values_d, value_per_algo_values_a, value_per_algo_all.index, xlabel)
+    
+    def plot_algo_place(self):
+        places = get_repository.tag100_to_place_name()
+        
+        self.get_stat_dma()
+        
+        place_per_algo_dma      = self.data_seq[self.ind_dma].groupby('ExDestination')['turnover_euro'].sum().order()
+        place_per_algo_all      = self.data_seq.groupby('ExDestination')['turnover_euro'].sum().order()
+        
+        for index in place_per_algo_all.index:
+            if index not in place_per_algo_dma.index:
+                place_per_algo_dma = place_per_algo_dma.set_value(index,  0)
+                
+        place_per_algo_dma = place_per_algo_dma.order()
+        
+        value_per_place_values_d = [round(p/1000000,2) for p in place_per_algo_dma.values]
+        value_per_place_values_a = [round(p/1000000,2) for p in place_per_algo_all.values]
+        
+        xlabel                  = 'Volume/Algo (,000,000 Euros)'
+        total_all               = sum(value_per_place_values_a)
+        total_dma               = sum(value_per_place_values_d)
+        title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Turnover: ' + str(round(total_all,1)) + ' MEuros\n DMA Turnover: ' + str(round(total_dma,1)) + ' MEuros'
+        
+        index = []
+        for suffix in place_per_algo_all.index:
+            index.append(places[places['suffix'] == suffix]['name'].iloc[0])
+        return self.plot_algo_dma_vs_all(title, value_per_place_values_d, value_per_place_values_a, index, xlabel)
+        
+        
     
     def plot_algo_occ(self):
         self.get_stat_dma()
@@ -191,7 +223,10 @@ class DataProcessor(object):
         plt.legend(uni_strat)
         
         return h
-    
+    def plot_basic_stats(self, path = ['vol.jpg', 'occ.png', 'place.png', 'detailed_vol']):
+        daily.plot_algo_volume().savefig(path[0])
+        daily.plot_algo_occ().savefig(path[1])
+        daily.plot_algo_place().savefig(path[2])
     
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
@@ -202,24 +237,17 @@ if __name__=='__main__':
     day = datetime.now() - timedelta(days=1)
     # One DAY
     daily = DataProcessor(start_date = day, end_date = day)
-#     daily.plot_algo_volume()
-#     plt.show()
-    
-    daily.plot_algo_occ()
+    daily.plot_basic_stats()
     plt.show()
     
     # Weekly
     weekly = DataProcessor(start_date = day, end_date = day + timedelta(days=7))
-    weekly.plot_algo_volume()
-    plt.show()
-    weekly.plot_algo_occ()
+    weekly.plot_basic_stats()
     plt.show()
      
     # Monthly
     monthly = DataProcessor(start_date = day - timedelta(days=21), end_date = day + timedelta(days=7))
-    monthly.plot_algo_volume()
-    plt.show()
-    monthly.plot_algo_occ()
+    monthly.plot_basic_stats()
     plt.show()
       
     p.plot_intraday_exec_curve(step_sec=60*60, group_var='ExDestination')

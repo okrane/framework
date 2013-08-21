@@ -107,14 +107,11 @@ def currency(**kwargs):
     return out[0]['CCY']
 
 def tag100_to_place_name():
-    pref_ = "LUIDBC01_" if Connections.connections == "dev" else ""
 
-    req=("SELECT flexexch.SUFFIX,exch.EXCHGNAME "
-    " FROM %sKGR..FlextradeExchangeMapping flexexch "
-    " LEFT JOIN %sKGR..EXCHANGEMAPPING exchmap on ( "
-    " flexexch.EXCHANGE=exchmap.EXCHANGE ) "
-    " LEFT JOIN %sKGR..EXCHANGE exch on ( "
-    " exchmap.EXCHGID=exch.EXCHGID ) ") % (pref_,pref_,pref_)
+    req="""SELECT flexexch.SUFFIX,exch.EXCHGNAME
+    FROM KGR..FlextradeExchangeMapping flexexch
+    LEFT JOIN KGR..EXCHANGEMAPPING exchmap on ( flexexch.EXCHANGE=exchmap.EXCHANGE )
+    LEFT JOIN KGR..EXCHANGE exch on ( exchmap.EXCHGID=exch.EXCHGID ) """
     
     vals=Connections.exec_sql('KGR',req)
     

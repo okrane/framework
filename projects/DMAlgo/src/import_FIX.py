@@ -298,8 +298,8 @@ class DatabasePlug:
 
     def get_dico_header(self, day):
         
-        mkt_data_fields = ['EXEC_SHARES' ,'ORDER_PERC','INMKT_VOLUME','INMKT_TURNOVER',
-                           'PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','IN_VWAS','ARRIVAL_PRICE',
+        mkt_data_fields = ['EXEC_SHARES', 'INMKT_VOLUME','AVG_PRICE','INMKT_TURNOVER',
+                           'PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','ARRIVAL_PRICE',
                            'FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
         
         ssh = paramiko.SSHClient()

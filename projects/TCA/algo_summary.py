@@ -28,7 +28,7 @@ if __name__=='__main__':
     l       = []
     
     msg = MIMEMultipart()
-    msg['Subject'] = 'Algo Summary (Beta test)'
+    msg['Subject'] = 'Algo Summary (Beta test, weekly/monthly are still wrong)'
     
     
     

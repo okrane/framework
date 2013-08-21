@@ -72,12 +72,15 @@ class DataProcessor(object):
     def plot_algo_volume(self):
         self.get_stat_dma()
         
-        value_per_algo_dma      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['turnover_euro'].sum().order()
+        value_per_algo_dma2     = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['turnover_euro'].sum().order()
         value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['turnover_euro'].sum().order()
         
+        value_per_algo_dma      = pd.Series()
         for index in value_per_algo_all.index:
             if index not in value_per_algo_dma.index:
-                value_per_algo_dma = value_per_algo_dma.set_value(index,  0.0)
+                value_per_algo_dma = value_per_algo_dma2.set_value(index,  0.0)
+            else:
+                value_per_algo_dma = value_per_algo_dma2.set_value(index,  value_per_algo_dma2[index])
                 
         value_per_algo_dma = value_per_algo_dma.order()
         
@@ -250,10 +253,10 @@ if __name__=='__main__':
     day = datetime(year=2013, month=7, day=23)
     day = datetime.now() - timedelta(days=1)
     # One DAY
-    daily = DataProcessor(start_date = day, end_date = day)
-    daily.plot_basic_stats()
-    daily.plot_intraday_exec_curve()
-    plt.show()
+#     daily = DataProcessor(start_date = day, end_date = day)
+#     daily.plot_basic_stats()
+#     daily.plot_intraday_exec_curve()
+#     plt.show()
     
     # Weekly
     weekly = DataProcessor(start_date = day - timedelta(days=7), end_date = day )

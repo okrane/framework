@@ -107,7 +107,7 @@ if __name__=='__main__':
     # Send an email
     title = "<h2>Sum up for %s</h2>\n" % datetime.strftime(day, '%Y%m%d' )
         
-
+    
     
     # me == the sender's email address
     # family = the list of all recipients' email addresses

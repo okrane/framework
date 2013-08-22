@@ -77,12 +77,10 @@ class DataProcessor(object):
         
         value_per_algo_dma      = pd.Series()
         for index in value_per_algo_all.index:
-            if index not in value_per_algo_dma.index:
-                value_per_algo_dma = value_per_algo_dma2.set_value(index,  0.0)
+            if index not in value_per_algo_dma2.index:
+                value_per_algo_dma = value_per_algo_dma.set_value(index,  0.0)
             else:
-                value_per_algo_dma = value_per_algo_dma2.set_value(index,  value_per_algo_dma2[index])
-                
-        value_per_algo_dma = value_per_algo_dma.order()
+                value_per_algo_dma = value_per_algo_dma.set_value(index,  value_per_algo_dma2[index])
         
         
         
@@ -100,14 +98,15 @@ class DataProcessor(object):
         
         self.get_stat_dma()
         
-        place_per_algo_dma      = self.data_seq[self.ind_dma].groupby('ExDestination')['turnover_euro'].sum().order()
+        place_per_algo_dma      = pd.Series()
+        place_per_algo_dma2     = self.data_seq[self.ind_dma].groupby('ExDestination')['turnover_euro'].sum().order()
         place_per_algo_all      = self.data_seq.groupby('ExDestination')['turnover_euro'].sum().order()
         
         for index in place_per_algo_all.index:
-            if index not in place_per_algo_dma.index:
+            if index not in place_per_algo_dma2.index:
                 place_per_algo_dma = place_per_algo_dma.set_value(index,  0)
-                
-        place_per_algo_dma = place_per_algo_dma.order()
+            else:
+                place_per_algo_dma = place_per_algo_dma.set_value(index,  place_per_algo_dma2[index])
         
         value_per_place_values_d = [round(p/1000000,2) for p in place_per_algo_dma.values]
         value_per_place_values_a = [round(p/1000000,2) for p in place_per_algo_all.values]
@@ -130,15 +129,15 @@ class DataProcessor(object):
     def plot_algo_occ(self):
         self.get_stat_dma()
         
-        nbr_dma_occ      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
+        nbr_dma_occ      = pd.Series()
+        nbr_dma_occ2     = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
         nbr_all_occ      = self.data_seq.groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
-
         
         for index in nbr_all_occ.index:
-            if index not in nbr_dma_occ.index:
+            if index not in nbr_dma_occ2.index:
                 nbr_dma_occ = nbr_dma_occ.set_value(index,  0)
-                
-        nbr_dma_occ = nbr_dma_occ.order()
+            else:
+                nbr_dma_occ = nbr_dma_occ.set_value(index,  nbr_dma_occ2[index])
 
         
         xlabel                  = 'Nbr Occ/Algo'
@@ -152,7 +151,7 @@ class DataProcessor(object):
         fig = plt.figure(figsize = DEFAULT_FIGSIZE)
         axes = plt.gca()
         axes.grid(True)
-
+        plt.hold(True)
         maxi                    = max(value_all)
 
         height                  = 0.8
@@ -170,7 +169,7 @@ class DataProcessor(object):
         autolabel_barh(p_all)
         
         plt.legend([p_all, p_dma], ['OTHER', 'ALGO DMA'], loc=4)
-          
+        plt.hold(False)  
         return fig
 
     #------------------------------------------------------------------------------
@@ -253,10 +252,10 @@ if __name__=='__main__':
     day = datetime(year=2013, month=7, day=23)
     day = datetime.now() - timedelta(days=1)
     # One DAY
-#     daily = DataProcessor(start_date = day, end_date = day)
-#     daily.plot_basic_stats()
-#     daily.plot_intraday_exec_curve()
-#     plt.show()
+    daily = DataProcessor(start_date = day, end_date = day)
+    daily.plot_basic_stats()
+    daily.plot_intraday_exec_curve()
+    plt.show()
     
     # Weekly
     weekly = DataProcessor(start_date = day - timedelta(days=7), end_date = day )

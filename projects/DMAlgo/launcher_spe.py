@@ -25,3 +25,12 @@ if __name__ == '__main__':
                  source             = source, 
                  dates              = dates,
                  mode               = "write").fill(order_deals=True)
+                 
+    Connections.change_connections("dev")
+    dates               = sorted(dates)
+    DatabasePlug(database_server    = database_server, 
+                 database           = database,
+                 environment        = environment, 
+                 source             = source, 
+                 dates              = dates,
+                 mode               = "write").fill(order_deals=True)

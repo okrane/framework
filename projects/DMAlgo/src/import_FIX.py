@@ -216,7 +216,6 @@ class DatabasePlug:
         file.close()
         
         self.list_of_dict.extend(simplejson.loads(input))
-        self.checker        = Converter(self.list_of_dict)
         
         # Open MONGODB connection
         self.client = connections.Connections.getClient(self.database_server)
@@ -475,7 +474,9 @@ class DatabasePlug:
                     
                 orders.extend(new_orders)          
 
-            logging.info('Type orders')    
+            logging.info('Typed orders') 
+            
+            self.checker    = Converter(self.list_of_dict)
             typed_orders    = self.checker.verify_all(orders)
             to_return.append(typed_orders)
             
@@ -1265,12 +1266,12 @@ if __name__ == '__main__':
     environment         = 'prod'
     source              = 'CLNT1'
 
-    dates               = ['20130821']
+    dates               = ['20130823']
     
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill(order_deals=False)
+                 mode               = "write").fill(order_deals=True, algo_orders=True)
     

@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 if os.name != 'nt':
     ### VERY IMPROTANT IN LINUX (in order to use X11)
     matplotlib.use('Agg')
-from lib.tca.wrapper import DataProcessor
+from lib.tca.wrapper import PlotEngine
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from lib.io.toolkit import send_email
@@ -34,7 +34,7 @@ if __name__=='__main__':
     
     # Daily
     m = '<h3>Daily</h3>'
-    daily = DataProcessor(start_date = day, end_date = day)
+    daily = PlotEngine(start_date = day, end_date = day)
     
     l         = []
     list_path = []
@@ -69,7 +69,7 @@ if __name__=='__main__':
         
     # Weekly
     m += '<h3>Weekly</h3>'
-    weekly = DataProcessor(start_date = day - timedelta(days=7), end_date = day)
+    weekly = PlotEngine(start_date = day - timedelta(days=7), end_date = day)
     
     image_name = 'Vol_euro_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
     repeat(image_name)
@@ -88,7 +88,7 @@ if __name__=='__main__':
                 
     # Monthly
     m += '<h3>Monthly</h3>' 
-    monthly = DataProcessor(start_date = day - timedelta(days=28), end_date = day)
+    monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day)
     
     image_name = 'Vol_euro_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
     repeat(image_name)

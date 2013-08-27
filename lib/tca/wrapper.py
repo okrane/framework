@@ -57,6 +57,8 @@ class DataProcessor(object):
     def get_deals(self, merge_order_colnames):
         self.data_deals     = get_algodata.deal(start_date = self.start_date_str,
                                                           end_date   = self.end_date_str)         
+
+class Statistic(DataProcessor):
     def get_stat_turnover_euro(self):
         self.data_seq['turnover_euro'] = self.data_seq['turnover'] * self.data_seq['rate_to_euro']
         
@@ -69,83 +71,7 @@ class DataProcessor(object):
 
         self.data_seq['is_dma'] = self.ind_dma.values
         
-    def plot_algo_volume(self):
-        self.get_stat_dma()
-        
-        value_per_algo_dma2     = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['turnover_euro'].sum().order()
-        value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['turnover_euro'].sum().order()
-        
-        value_per_algo_dma      = pd.Series()
-        for index in value_per_algo_all.index:
-            if index not in value_per_algo_dma2.index:
-                value_per_algo_dma = value_per_algo_dma.set_value(index,  0.0)
-            else:
-                value_per_algo_dma = value_per_algo_dma.set_value(index,  value_per_algo_dma2[index])
-        
-        
-        
-        value_per_algo_values_d = [round(p/1000000,2) for p in value_per_algo_dma.values]
-        value_per_algo_values_a = [round(p/1000000,2) for p in value_per_algo_all.values]
-        
-        xlabel                  = 'Volume/Algo (,000,000 Euros)'
-        total_all               = sum(value_per_algo_values_a)
-        total_dma               = sum(value_per_algo_values_d)
-        title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Turnover: ' + str(round(total_all,1)) + ' MEuros\n DMA Turnover: ' + str(round(total_dma,1)) + ' MEuros'
-        return self.plot_algo_dma_vs_all(title, value_per_algo_values_d, value_per_algo_values_a, value_per_algo_all.index, xlabel)
-    
-    def plot_algo_place(self):
-        places = get_repository.tag100_to_place_name()
-        
-        self.get_stat_dma()
-        
-        place_per_algo_dma      = pd.Series()
-        place_per_algo_dma2     = self.data_seq[self.ind_dma].groupby('ExDestination')['turnover_euro'].sum().order()
-        place_per_algo_all      = self.data_seq.groupby('ExDestination')['turnover_euro'].sum().order()
-        
-        for index in place_per_algo_all.index:
-            if index not in place_per_algo_dma2.index:
-                place_per_algo_dma = place_per_algo_dma.set_value(index,  0)
-            else:
-                place_per_algo_dma = place_per_algo_dma.set_value(index,  place_per_algo_dma2[index])
-        
-        value_per_place_values_d = [round(p/1000000,2) for p in place_per_algo_dma.values]
-        value_per_place_values_a = [round(p/1000000,2) for p in place_per_algo_all.values]
-        
-        xlabel                  = 'Volume/Algo (,000,000 Euros)'
-        total_all               = sum(value_per_place_values_a)
-        total_dma               = sum(value_per_place_values_d)
-        title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Turnover: ' + str(round(total_all,1)) + ' MEuros\n DMA Turnover: ' + str(round(total_dma,1)) + ' MEuros'
-        
-        index = []
-        for suffix in place_per_algo_all.index:
-            try:
-                index.append(places[places['suffix'] == suffix]['name'].iloc[0])
-            except:
-                index.append('Unknown (%s)' %suffix)    
-        return self.plot_algo_dma_vs_all(title, value_per_place_values_d, value_per_place_values_a, index, xlabel)
-        
-        
-    
-    def plot_algo_occ(self):
-        self.get_stat_dma()
-        
-        nbr_dma_occ      = pd.Series()
-        nbr_dma_occ2     = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
-        nbr_all_occ      = self.data_seq.groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
-        
-        for index in nbr_all_occ.index:
-            if index not in nbr_dma_occ2.index:
-                nbr_dma_occ = nbr_dma_occ.set_value(index,  0)
-            else:
-                nbr_dma_occ = nbr_dma_occ.set_value(index,  nbr_dma_occ2[index])
-
-        
-        xlabel                  = 'Nbr Occ/Algo'
-        total_all               = sum(nbr_all_occ)
-        total_dma               = sum(nbr_dma_occ)
-        title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Occurrence: ' + str(int(total_all))  + ' \n DMA Occurrence: ' + str(int(total_dma))
-        return self.plot_algo_dma_vs_all(title, nbr_dma_occ, nbr_all_occ, nbr_all_occ.index, xlabel)        
-      
+class PlotEngine(Statistic):
     def plot_algo_dma_vs_all(self, title, value_dma, value_all, index_all, xlabel ):  
         # Strategy Name
         fig = plt.figure(figsize = DEFAULT_FIGSIZE)
@@ -242,8 +168,89 @@ class DataProcessor(object):
     def plot_basic_stats(self, path = ['vol.jpg', 'occ.png', 'place.png']):
         self.plot_algo_volume().savefig(path[0])
         self.plot_algo_occ().savefig(path[1])
-        self.plot_algo_place().savefig(path[2])
+        self.plot_algo_place().savefig(path[2])   
+        
+        
+    def plot_algo_volume(self):
+        self.get_stat_dma()
+        
+        value_per_algo_dma2     = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['turnover_euro'].sum().order()
+        value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['turnover_euro'].sum().order()
+        
+        value_per_algo_dma      = pd.Series()
+        for index in value_per_algo_all.index:
+            if index not in value_per_algo_dma2.index:
+                value_per_algo_dma = value_per_algo_dma.set_value(index,  0.0)
+            else:
+                value_per_algo_dma = value_per_algo_dma.set_value(index,  value_per_algo_dma2[index])
+        
+        
+        
+        value_per_algo_values_d = [round(p/1000000,2) for p in value_per_algo_dma.values]
+        value_per_algo_values_a = [round(p/1000000,2) for p in value_per_algo_all.values]
+        
+        xlabel                  = 'Volume/Algo (,000,000 Euros)'
+        total_all               = sum(value_per_algo_values_a)
+        total_dma               = sum(value_per_algo_values_d)
+        title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Turnover: ' + str(round(total_all,1)) + ' MEuros\n DMA Turnover: ' + str(round(total_dma,1)) + ' MEuros'
+        return self.plot_algo_dma_vs_all(title, value_per_algo_values_d, value_per_algo_values_a, value_per_algo_all.index, xlabel)
     
+    def plot_algo_place(self):
+        places = get_repository.tag100_to_place_name()
+        
+        self.get_stat_dma()
+        
+        place_per_algo_dma      = pd.Series()
+        place_per_algo_dma2     = self.data_seq[self.ind_dma].groupby('ExDestination')['turnover_euro'].sum().order()
+        place_per_algo_all      = self.data_seq.groupby('ExDestination')['turnover_euro'].sum().order()
+        
+        for index in place_per_algo_all.index:
+            if index not in place_per_algo_dma2.index:
+                place_per_algo_dma = place_per_algo_dma.set_value(index,  0)
+            else:
+                place_per_algo_dma = place_per_algo_dma.set_value(index,  place_per_algo_dma2[index])
+        
+        value_per_place_values_d = [round(p/1000000,2) for p in place_per_algo_dma.values]
+        value_per_place_values_a = [round(p/1000000,2) for p in place_per_algo_all.values]
+        
+        xlabel                  = 'Volume/Algo (,000,000 Euros)'
+        total_all               = sum(value_per_place_values_a)
+        total_dma               = sum(value_per_place_values_d)
+        title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Turnover: ' + str(round(total_all,1)) + ' MEuros\n DMA Turnover: ' + str(round(total_dma,1)) + ' MEuros'
+        
+        index = []
+        for suffix in place_per_algo_all.index:
+            try:
+                index.append(places[places['suffix'] == suffix]['name'].iloc[0])
+            except:
+                index.append('Unknown (%s)' %suffix)    
+        return self.plot_algo_dma_vs_all(title, value_per_place_values_d, value_per_place_values_a, index, xlabel)
+        
+        
+    
+    def plot_algo_occ(self):
+        self.get_stat_dma()
+        
+        nbr_dma_occ      = pd.Series()
+        nbr_dma_occ2     = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
+        nbr_all_occ      = self.data_seq.groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
+        
+        for index in nbr_all_occ.index:
+            if index not in nbr_dma_occ2.index:
+                nbr_dma_occ = nbr_dma_occ.set_value(index,  0)
+            else:
+                nbr_dma_occ = nbr_dma_occ.set_value(index,  nbr_dma_occ2[index])
+
+        
+        xlabel                  = 'Nbr Occ/Algo'
+        total_all               = sum(nbr_all_occ)
+        total_dma               = sum(nbr_dma_occ)
+        title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Occurrence: ' + str(int(total_all))  + ' \n DMA Occurrence: ' + str(int(total_dma))
+        return self.plot_algo_dma_vs_all(title, nbr_dma_occ, nbr_all_occ, nbr_all_occ.index, xlabel)
+    
+    
+class AdvancedPlotEngine(PlotEngine):
+    pass       
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
     Connections.change_connections("dev")
@@ -252,18 +259,18 @@ if __name__=='__main__':
     day = datetime(year=2013, month=7, day=23)
     day = datetime.now() - timedelta(days=1)
     # One DAY
-    daily = DataProcessor(start_date = day, end_date = day)
+    daily = PlotEngine(start_date = day, end_date = day)
     daily.plot_basic_stats()
     daily.plot_intraday_exec_curve()
     plt.show()
     
     # Weekly
-    weekly = DataProcessor(start_date = day - timedelta(days=7), end_date = day )
+    weekly = PlotEngine(start_date = day - timedelta(days=7), end_date = day )
     weekly.plot_basic_stats()
     plt.show()
      
     # Monthly
-    monthly = DataProcessor(start_date = day - timedelta(days=28), end_date = day )
+    monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day )
     monthly.plot_basic_stats()
     plt.show()
     

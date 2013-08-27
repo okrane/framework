@@ -103,15 +103,20 @@ class Application(fix.Application):
                 
             elif tag_valueExec == '1':
                 LastShares = fix.LastShares()
+                LastPrice = fix.LastPx()
+                
                 ValueLastShares = message.getField( LastShares ).getString()
-                print "Partial Fill for [%s] : %s" %(ClOrderID, ValueLastShares)
-                log(LOG_FILE, "Partial Fill for [%s] : %s" %(ClOrderID, ValueLastShares))
+                ValueLastPrice = message.getField( LastPrice ).getString()
+                print "Partial Fill for [%s] : %s @ %s" %(ClOrderID, ValueLastShares, ValueLastPrice)
+                log(LOG_FILE, "Partial Fill for [%s] : %s @ %s" %(ClOrderID, ValueLastShares,ValueLastPrice))
                 
             elif tag_valueExec == '2':
                 LastShares = fix.LastShares()
+                LastPrice = fix.LastPx()
                 ValueLastShares = message.getField( LastShares ).getString()
-                print "Full Fill for [%s] : %s" %(ClOrderID, ValueLastShares)
-                log(LOG_FILE, "Full Fill for [%s] : %s" %(ClOrderID, ValueLastShares))
+                ValueLastPrice = message.getField( LastPrice ).getString()
+                print "Full Fill for [%s] : %s @ %s" %(ClOrderID, ValueLastShares, ValueLastPrice)
+                log(LOG_FILE, "Full Fill for [%s] : %s @ %s" %(ClOrderID, ValueLastShares, ValueLastPrice))
                 
             elif tag_valueExec == '6':
                 print "Pending Cancel for [%s]" %ClOrderID
@@ -460,12 +465,12 @@ if __name__ == '__main__':
     today = today.rsplit(' ')
     today = today[0].rsplit('-')
     day = '%s%s%s' %(today[0],today[1],today[2])
+    
     cfg_file = "./cfg/fixcfg_Kepler1.cfg" 
     dico_file = "./cfg/K_CSAM.xml" 
     storeFile = './cfg/store.txt'
-#     OrchesFile = './inputs/basket_REtest.txt'
-#     OrchesFile = './inputs/basket_switch_strategies.txt'
-    user = 'TU4'
+    
+    user = 'ON2'
     OrchesFile = './inputs/basket-test.txt'
     
     logfile_name = './logs/basket_test_%s.log' %day

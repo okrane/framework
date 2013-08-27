@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import scipy 
 import matplotlib.cm as cm
+from lib.dbtools import get_repository
 
 
 class Singleton(object):
@@ -51,13 +52,14 @@ class DataProcessor(object):
         
         self.data_seq       = get_algodata.sequence_info(start_date = self.start_date_str,
                                                          end_date   = self.end_date_str)
-        self.data_occ       = get_algodata.occurence_info(start_date = self.start_date_str,
+        self.data_occ       = get_algodata.occurrence_info(start_date = self.start_date_str,
                                                           end_date   = self.end_date_str)            
     def get_deals(self, merge_order_colnames):
-        self.data_deals     = get_algodata.deal(db_name, sequence_id, merge_order_colnames = merge_order_colnames, start_date = self.start_date_str,
+        self.data_deals     = get_algodata.deal(start_date = self.start_date_str,
                                                           end_date   = self.end_date_str)         
     def get_stat_turnover_euro(self):
         self.data_seq['turnover_euro'] = self.data_seq['turnover'] * self.data_seq['rate_to_euro']
+        
         
     def get_stat_dma(self):
         if 'turnover_euro' not in self.data_seq:
@@ -66,20 +68,19 @@ class DataProcessor(object):
         self.ind_dma     = self.data_seq.apply(func = f, axis = 1, raw=False )
 
         self.data_seq['is_dma'] = self.ind_dma.values
+        
     def plot_algo_volume(self):
         self.get_stat_dma()
         
-        value_per_algo_dma      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['occ_ID'].count().order()
-        value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['occ_ID'].count().order()
-        
-        value_per_algo_dma      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['turnover_euro'].sum().order()
+        value_per_algo_dma2     = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['turnover_euro'].sum().order()
         value_per_algo_all      = self.data_seq.groupby('strategy_name_mapped')['turnover_euro'].sum().order()
         
+        value_per_algo_dma      = pd.Series()
         for index in value_per_algo_all.index:
-            if index not in value_per_algo_dma.index:
+            if index not in value_per_algo_dma2.index:
                 value_per_algo_dma = value_per_algo_dma.set_value(index,  0.0)
-                
-        value_per_algo_dma = value_per_algo_dma.order()
+            else:
+                value_per_algo_dma = value_per_algo_dma.set_value(index,  value_per_algo_dma2[index])
         
         
         
@@ -92,18 +93,51 @@ class DataProcessor(object):
         title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Turnover: ' + str(round(total_all,1)) + ' MEuros\n DMA Turnover: ' + str(round(total_dma,1)) + ' MEuros'
         return self.plot_algo_dma_vs_all(title, value_per_algo_values_d, value_per_algo_values_a, value_per_algo_all.index, xlabel)
     
+    def plot_algo_place(self):
+        places = get_repository.tag100_to_place_name()
+        
+        self.get_stat_dma()
+        
+        place_per_algo_dma      = pd.Series()
+        place_per_algo_dma2     = self.data_seq[self.ind_dma].groupby('ExDestination')['turnover_euro'].sum().order()
+        place_per_algo_all      = self.data_seq.groupby('ExDestination')['turnover_euro'].sum().order()
+        
+        for index in place_per_algo_all.index:
+            if index not in place_per_algo_dma2.index:
+                place_per_algo_dma = place_per_algo_dma.set_value(index,  0)
+            else:
+                place_per_algo_dma = place_per_algo_dma.set_value(index,  place_per_algo_dma2[index])
+        
+        value_per_place_values_d = [round(p/1000000,2) for p in place_per_algo_dma.values]
+        value_per_place_values_a = [round(p/1000000,2) for p in place_per_algo_all.values]
+        
+        xlabel                  = 'Volume/Algo (,000,000 Euros)'
+        total_all               = sum(value_per_place_values_a)
+        total_dma               = sum(value_per_place_values_d)
+        title  = 'From ' + self.start_date_str + ' To '+ self.end_date_str + '\nTotal Turnover: ' + str(round(total_all,1)) + ' MEuros\n DMA Turnover: ' + str(round(total_dma,1)) + ' MEuros'
+        
+        index = []
+        for suffix in place_per_algo_all.index:
+            try:
+                index.append(places[places['suffix'] == suffix]['name'].iloc[0])
+            except:
+                index.append('Unknown (%s)' %suffix)    
+        return self.plot_algo_dma_vs_all(title, value_per_place_values_d, value_per_place_values_a, index, xlabel)
+        
+        
+    
     def plot_algo_occ(self):
         self.get_stat_dma()
         
-        nbr_dma_occ      = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['occ_ID'].count().order()
-        nbr_all_occ      = self.data_seq.groupby('strategy_name_mapped')['occ_ID'].count().order()
-
+        nbr_dma_occ      = pd.Series()
+        nbr_dma_occ2     = self.data_seq[self.ind_dma].groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
+        nbr_all_occ      = self.data_seq.groupby('strategy_name_mapped')['p_occ_id'].apply(lambda x: len(np.unique(x))).order()
         
         for index in nbr_all_occ.index:
-            if index not in nbr_dma_occ.index:
+            if index not in nbr_dma_occ2.index:
                 nbr_dma_occ = nbr_dma_occ.set_value(index,  0)
-                
-        nbr_dma_occ = nbr_dma_occ.order()
+            else:
+                nbr_dma_occ = nbr_dma_occ.set_value(index,  nbr_dma_occ2[index])
 
         
         xlabel                  = 'Nbr Occ/Algo'
@@ -117,7 +151,7 @@ class DataProcessor(object):
         fig = plt.figure(figsize = DEFAULT_FIGSIZE)
         axes = plt.gca()
         axes.grid(True)
-
+        plt.hold(True)
         maxi                    = max(value_all)
 
         height                  = 0.8
@@ -135,7 +169,7 @@ class DataProcessor(object):
         autolabel_barh(p_all)
         
         plt.legend([p_all, p_dma], ['OTHER', 'ALGO DMA'], loc=4)
-          
+        plt.hold(False)  
         return fig
 
     #------------------------------------------------------------------------------
@@ -146,8 +180,8 @@ class DataProcessor(object):
         intraday_exec_curve : 
         Plot the daily exec curve in turnover cross by group_var
         """
-        self.data_deals = get_algodata.deal(merge_order_colnames = ['rate_to_euro', 'strategy_name_mapped', 'ExDestination'], start_date = self.start_date_str,
-                                                          end_date   = self.end_date_str)
+        self.data_deals = get_algodata.deal(start_date = self.start_date_str,
+                                            end_date   = self.end_date_str)
         
         ##############################################################
         # aggregate data
@@ -159,64 +193,77 @@ class DataProcessor(object):
         # on passe en string parce que ca ne sorte pas sinon !!   
         grouped_data['tmpindex']=[datetime.strftime(x.to_datetime(),'%Y%m%d-%H:%M:%S.%f') for x in grouped_data.index]
         grouped_data=grouped_data.sort_index(by=['tmpindex',group_var]).drop(['tmpindex'],axis=1)
-    
+        
         ##############################################################
         # plot
         ##############################################################  
         # ----- NEEDED    
         uni_strat=np.sort(np.unique(grouped_data[group_var].values).tolist())
         colors_strat=cm.spectral(np.linspace(0, 1.0, len(uni_strat)))
-        # ----- PLOT 
-        h = plt.figure()
+        uni_strat_islabeled=np.array([False]*len(uni_strat))
+        # ----- PLOT
+        h = plt.figure(figsize = DEFAULT_FIGSIZE)
+        axes = plt.gca()
+        axes.grid(True)
+        
         plt.hold(True)
         prev_date=''
         prev_date_cum=0
         for i in range(grouped_data.shape[0]):
-        #for i in range(20):
+            #---
             date=grouped_data.index[i].to_datetime()
             idx_uni_strat=np.nonzero(uni_strat==grouped_data[group_var].ix[i])[0][0]
+            #--
+            args=[]
             if (not date==prev_date):
-                plt.gca().fill([date-timedelta(seconds=step_sec),date,date,date-timedelta(seconds=step_sec)],
-                       [0,0,grouped_data['turnover_euro'].ix[i],grouped_data['turnover_euro'].ix[i]],
-                       facecolor=colors_strat[idx_uni_strat],alpha = 0.5)
-                       
-                prev_date_cum=grouped_data['turnover_euro'].ix[i]
-                # ,edgecolor='none'
+                args.append([date-timedelta(seconds=step_sec),date,date,date-timedelta(seconds=step_sec)])
+                args.append([0,0,grouped_data['mturnover_euro'].ix[i],grouped_data['mturnover_euro'].ix[i]])
+                prev_date_cum=grouped_data['mturnover_euro'].ix[i]
             else:
-                plt.gca().fill([date-timedelta(seconds=step_sec),date,date,date-timedelta(seconds=step_sec)],
-                       [prev_date_cum,prev_date_cum,prev_date_cum+grouped_data['turnover_euro'].ix[i],prev_date_cum+grouped_data['turnover_euro'].ix[i]],
-                       facecolor=colors_strat[idx_uni_strat],alpha = 0.5)
-                       
-                prev_date_cum=prev_date_cum+grouped_data['turnover_euro'].ix[i]     
+                args.append([date-timedelta(seconds=step_sec),date,date,date-timedelta(seconds=step_sec)])
+                args.append([prev_date_cum,prev_date_cum,prev_date_cum+grouped_data['mturnover_euro'].ix[i],prev_date_cum+grouped_data['mturnover_euro'].ix[i]])
+                prev_date_cum=prev_date_cum+grouped_data['mturnover_euro'].ix[i] 
+            #--
+            kwargs={'facecolor':colors_strat[idx_uni_strat],'alpha':0.85}
+            if not uni_strat_islabeled[idx_uni_strat]:
+                kwargs.update({'label':uni_strat[idx_uni_strat]})
+                uni_strat_islabeled[idx_uni_strat]=True
+            #--
+            plt.gca().fill(*args,**kwargs)
             prev_date=date
-        
+            
         plt.hold(False)
-        plt.legend(uni_strat)
-        
+        plt.ylabel('Turnover (,000,000) euros')
+        plt.title('Intraday traded curve', size = 'large')
+        plt.legend()   
+
         return h
-    
+
+    def plot_basic_stats(self, path = ['vol.jpg', 'occ.png', 'place.png']):
+        self.plot_algo_volume().savefig(path[0])
+        self.plot_algo_occ().savefig(path[1])
+        self.plot_algo_place().savefig(path[2])
     
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
-#     Connections.change_connections("dev")
+    Connections.change_connections("dev")
     
     
-    day = datetime.now() - timedelta(days=7)
-    
+    day = datetime(year=2013, month=7, day=23)
+    day = datetime.now() - timedelta(days=1)
     # One DAY
     daily = DataProcessor(start_date = day, end_date = day)
-    daily.plot_algo_volume().show()
-    daily.plot_algo_occ().show()
+    daily.plot_basic_stats()
+    daily.plot_intraday_exec_curve()
+    plt.show()
     
     # Weekly
-    weekly = DataProcessor(start_date = day, end_date = day + timedelta(days=7))
-    weekly.plot_algo_volume().show()
-    weekly.plot_algo_occ().show()
-    
+    weekly = DataProcessor(start_date = day - timedelta(days=7), end_date = day )
+    weekly.plot_basic_stats()
+    plt.show()
+     
     # Monthly
-    monthly = DataProcessor(start_date = day - timedelta(days=21), end_date = day + timedelta(days=7))
-    monthly.plot_algo_volume().show()
-    monthly.plot_algo_occ().show()
-    
-#     p.plot_intraday_exec_curve(step_sec=60*60, group_var='ExDestination').show()
+    monthly = DataProcessor(start_date = day - timedelta(days=28), end_date = day )
+    monthly.plot_basic_stats()
+    plt.show()
     

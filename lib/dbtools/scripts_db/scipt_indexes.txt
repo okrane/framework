@@ -1,0 +1,14 @@
+db.OrderDeals.dropIndexes()
+db.OrderDeals.ensureIndex( { "TransactTime" : -1}, {background :true}  )
+db.OrderDeals.ensureIndex( { "p_cl_ord_id" : -1}, {background :true}  )
+db.OrderDeals.ensureIndex( { "p_exec_id" : -1}, {background :true}  )
+db.OrderDeals.ensureIndex( { "job_id" : -1}, {background :true}  )
+
+
+
+db.AlgoOrders.dropIndexes()
+db.AlgoOrders.ensureIndex( { "SendingTime" : -1}, {background :true} )
+db.AlgoOrders.ensureIndex( { "p_cl_ord_id" : -1}, {background :true} )
+db.AlgoOrders.ensureIndex( { "job_id" : -1}, {background :true} )
+db.AlgoOrders.ensureIndex( { "p_occ_id" : -1}, {background :true} )
+db.AlgoOrders.ensureIndex( { "strategy_name_mapped" : 1}, {background :true} )

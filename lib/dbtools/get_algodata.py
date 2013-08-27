@@ -121,7 +121,7 @@ def sequence_info(db_name = "Mars", **kwargs):
 #--------------------------------------------------------------------------
 # occurence_info
 #--------------------------------------------------------------------------        
-def occurence_info(db_name = "Mars", **kwargs): 
+def occurrence_info(db_name = "Mars", **kwargs): 
     
     #### DEFAULT OUTPUT    
     data=pd.DataFrame()
@@ -249,7 +249,8 @@ def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, merge
     needed_colnames=[ # - id/order infos
     "p_exec_id","p_cl_ord_id",
      # - deal infos
-    "Side","Symbol","LastPx","LastShares","LastMkt","ExecType","Currency"]
+    "Side","Symbol","LastPx","LastShares","LastMkt","ExecType","Currency",
+    "rate_to_euro","cheuvreux_secid","strategy_name_mapped"]
     # - drop colnames
     for x in data.columns.tolist():
         if x not in needed_colnames:
@@ -310,6 +311,3 @@ def fieldList(cname=None, db_name="Mars", **kwargs):
         out.append(v)
     
     return np.array(out[0]['list_columns'])
-
-
-    

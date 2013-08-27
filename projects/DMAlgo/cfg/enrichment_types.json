@@ -27,6 +27,11 @@
 	{"name":"job_id", 				"type" : "STRING",		"deals_required":true,		"required":true },
 	{"name":"p_occ_id",				"type" : "STRING",		"required":true},
 	{"name":"p_cl_ord_id",			"type" : "STRING",		"deals_required":true,		"required":true  },
+	{
+        "name":"p_exec_id",
+        "type":"STRING",
+        "deals_required":true
+    },
 	{"name":"server",			"type" : "STRING",		"deals_required":true,		"required":true  }, 
 	{
         "name":"occ_fe_prv_wexec",

@@ -216,7 +216,6 @@ class DatabasePlug:
         file.close()
         
         self.list_of_dict.extend(simplejson.loads(input))
-        self.checker        = Converter(self.list_of_dict)
         
         # Open MONGODB connection
         self.client = connections.Connections.getClient(self.database_server)
@@ -279,7 +278,7 @@ class DatabasePlug:
             
         l = list(self.client['Mars']['field_map'].find({'collection_name':collection_name}))
         fields = []
-        if len(l) > 0:
+        if len(l) > 0 and 'list_columns' in l[0].keys():
             for el in l:
                 if el['collection_name'] == collection_name:
                     fields = el['list_columns']
@@ -292,13 +291,14 @@ class DatabasePlug:
                     fields.append(k)
                     to_add = True
         if to_add:
-            self.client['Mars']['field_map'].update({'collection_name' : collection_name}, {'collection_name' : collection_name, 'list_columns' : fields})
+            self.client['Mars']['field_map'].remove({'collection_name' : collection_name})
+            self.client['Mars']['field_map'].insert({'collection_name' : collection_name, 'list_columns' : fields})
         logging.info("End Of insertion to the database")
 
     def get_dico_header(self, day):
         
-        mkt_data_fields = ['EXEC_SHARES' ,'ORDER_PERC','INMKT_VOLUME','INMKT_TURNOVER',
-                           'PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','IN_VWAS','ARRIVAL_PRICE',
+        mkt_data_fields = ['EXEC_SHARES', 'INMKT_VOLUME','AVG_PRICE','INMKT_TURNOVER',
+                           'PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','ARRIVAL_PRICE',
                            'FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
         
         ssh = paramiko.SSHClient()
@@ -307,7 +307,7 @@ class DatabasePlug:
                     username = self.server['list_users']['flexapp']['username'], 
                     password = self.server['list_users']['flexapp']['passwd'])
         
-        cmd = 'grep SYM /home/flexapp/ushare/exportprodAV1%s' %day
+        cmd = "find /home/flexapp/ushare/ -iname 'exportprod*%s' | tail -1 | xargs grep SYM" %day
         
         (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
         
@@ -369,6 +369,17 @@ class DatabasePlug:
     
     def deals_enrichment_from_algo(self, typed_orders, job_id):
         logging.info("Add information to the deals")
+        fields_db = list( self.client['Mars']['field_map'].find({'collection_name' : 'OrderDeals'}) )
+        fields = []
+        if len(fields_db) > 0 and 'list_columns' in fields_db[0].keys():
+            fields = fields_db[0]['list_columns']
+            for el in fields:
+                for new_el in ['rate_to_euro', 'cheuvreux_secid', 'strategy_name_mapped']:
+                    if new_el not in fields:
+                        fields.append(new_el)
+            self.client['Mars']['field_map'].remove({'collection_name' : 'OrderDeals'})      
+            self.client['Mars']['field_map'].insert({'collection_name' : 'OrderDeals', 'list_columns' : fields })
+            
         for order in typed_orders:
             req_for_update = {}
             if 'nb_exec' in order.keys() and order['nb_exec'] > 0:
@@ -389,18 +400,7 @@ class DatabasePlug:
                                                              {'$set'           : req_for_update },
                                                              multi = True)
                     
-                    fields_db = list( self.client['Mars']['field_map'].find({'collection_name' : 'OrderDeals'}) )
-                    fields = []
-                    if len(fields_db) > 0:
-                        fields = fields_db[0]['list_columns']
-                        for el in req_for_update.keys():
-                            if el not in fields:
-                                fields.append(el)
-                    else:
-                        logging.critical('Please check the code')
-                        raise('Should not find nothing in field_map, the documents Orderdeals has to be filled before updating it')
                     
-                    self.client['Mars']['field_map'].update({'collection_name' : 'OrderDeals'}, {'$set' : { 'list_columns' : fields } })
                     
     def fill(self, order_deals = True, algo_orders = True):
         if order_deals:
@@ -474,7 +474,9 @@ class DatabasePlug:
                     
                 orders.extend(new_orders)          
 
-            logging.info('Type orders')    
+            logging.info('Typed orders') 
+            
+            self.checker    = Converter(self.list_of_dict)
             typed_orders    = self.checker.verify_all(orders)
             to_return.append(typed_orders)
             
@@ -603,7 +605,7 @@ class DatabasePlug:
                 i+=1
                 #ATTETNION
                 ############################### DEBUG
-#                 if order['ClOrdID'] != 'FYLCoAA0218' : continue
+#                 if order['Symbol'] != 'NZYMBc.AG' : continue
                 ########################################
                 logging.debug('Order ID : %s' %order['ClOrdID'])
                 l_events = self.order_life(order          = order, 
@@ -1249,7 +1251,7 @@ if __name__ == '__main__':
         environment = 'preprod'
         io          = 'I'
         source      = 'CLNT1'
-    connections.Connections.change_connections('dev')    
+    connections.Connections.change_connections('production')    
     dates       =  ['20130603','20130604','20130605','20130606','20130607',
                     '20130610','20130611','20130612','20130613','20130614',
                     '20130617','20130618','20130619','20130620','20130621',
@@ -1264,12 +1266,12 @@ if __name__ == '__main__':
     environment         = 'prod'
     source              = 'CLNT1'
 
-    dates               = ['20130725']
+    dates               = ['20130823']
     
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill(order_deals=True)
+                 mode               = "write").fill(order_deals=True, algo_orders=True)
     

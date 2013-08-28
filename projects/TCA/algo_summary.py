@@ -12,7 +12,8 @@ from lib.io.toolkit import send_email
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 import smtplib
-
+from lib.logger.custom_logger import *
+import logging
 
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
@@ -109,8 +110,8 @@ if __name__=='__main__':
     repeat(image_name)
     
     monthly.plot_basic_stats(path=list_path[8:11])
-    monthly.plot_intraday_exec_curve().savefig(file_path)
-    for image in l[8:12]:
+#     monthly.plot_intraday_exec_curve().savefig(file_path)
+    for image in l[8:11]:
         m += '<img src="cid:%s">\n' %image
 
     # Send an email
@@ -121,8 +122,8 @@ if __name__=='__main__':
     # me == the sender's email address
     # family = the list of all recipients' email addresses
     msg['From'] = 'alababidi@keplercheuvreux.com'
-    to = ['alababidi@keplercheuvreux.com', 'njoseph@keplercheuvreux.com'] # 'svlasceanu@keplercheuvreux.com', 'gpons@keplercheuvreux.com', 
-#           'mdang@keplercheuvreux.com', 'whuang@keplercheuvreux.com', 'sreydellet@keplercheuvreux.com', 'tbiotteau@keplercheuvreux.com']
+    to = ['alababidi@keplercheuvreux.com', 'njoseph@keplercheuvreux.com', 'svlasceanu@keplercheuvreux.com', 'gpons@keplercheuvreux.com', 
+          'mdang@keplercheuvreux.com', 'whuang@keplercheuvreux.com', 'sreydellet@keplercheuvreux.com', 'tbiotteau@keplercheuvreux.com']
     msg['To'] = ' ,'.join(to)
     # Assume we know that the image files are all in PNG format
     for file in l:

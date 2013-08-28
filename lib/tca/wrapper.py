@@ -53,13 +53,16 @@ class DataProcessor(object):
         self.end_date_str   = datetime.strftime(self.end_date, "%d/%m/%Y")
         
         self.data_seq       = get_algodata.sequence_info(start_date = self.start_date_str,
-                                                         end_date   = self.end_date_str, filter = filter)
+                                                         end_date   = self.end_date_str, 
+                                                         filter     = filter)
         self.data_occ       = get_algodata.occurrence_info(start_date = self.start_date_str,
-                                                          end_date   = self.end_date_str)            
+                                                           end_date   = self.end_date_str, 
+                                                           filter     = filter)            
     def get_deals(self):
-        self.data_deals     = get_algodata.deal(start_date = self.start_date_str,
-                                                end_date   = self.end_date_str, 
-                                                filter = self.filter)  
+
+        self.data_deals     = get_algodata.deal(start_date  = self.start_date_str,
+                                                end_date    = self.end_date_str, 
+                                                filter      = self.filter)         
     def get_agg_deals(self,step_sec=60*30):
         self.data_agg_deals     = get_algostats.agg_daily_deal(start_date=self.start_date_str,
                                                                end_date=self.end_date_str,
@@ -272,22 +275,21 @@ if __name__=='__main__':
     day = datetime(year=2013, month=7, day=23)
     day = datetime.now() - timedelta(days=1)
     
-##     daily = PlotEngine(start_date = day - timedelta(days=56), end_date = day  , filter = {'Account': {'$regex' : 'LOOP.*'}})
-#    
-#    # One DAY
-#    daily = PlotEngine(start_date = day, end_date = day)
-#    daily.plot_basic_stats()
-#    daily.plot_intraday_exec_curve()
-#    plt.show()
+    daily = PlotEngine(start_date = day - timedelta(days=56), end_date = day  , filter = {'Account': {'$regex' : 'AKO.*'}})
+    
+    # One DAY
+#     daily = PlotEngine(start_date = day, end_date = day)
+    daily.plot_basic_stats()
+#     daily.plot_intraday_exec_curve()
+    plt.show()
     
     # Weekly
     weekly = PlotEngine(start_date = day - timedelta(days=7), end_date = day )
     weekly.plot_basic_stats()
-    weekly.plot_intraday_exec_curve()
     plt.show()
      
-#    # Monthly
-#    monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day )
-#    monthly.plot_basic_stats()
-#    plt.show()
+    # Monthly
+    monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day )
+    monthly.plot_basic_stats()
+    plt.show()
     

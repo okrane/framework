@@ -18,7 +18,7 @@ from lib.dbtools.connections import Connections
 #--------------------------------------------------------------------------
 # sequence_info
 #--------------------------------------------------------------------------
-def sequence_info(db_name = "Mars", **kwargs):
+def sequence_info(db_name = "Mars", sequence_id = None, start_date = None, end_date = None, occurence_id = None,  filter = None):
      
     #### DEFAULT OUTPUT    
     data=pd.DataFrame()
@@ -33,29 +33,26 @@ def sequence_info(db_name = "Mars", **kwargs):
     req = {}
 
     # get all the sequences from sequence ids
-    if "sequence_id" in kwargs.keys():
-        ids=kwargs["sequence_id"]
-        if isinstance(ids, basestring):
-            ids=[ids] 
+    if sequence_id is not None:
+        if isinstance(sequence_id, basestring):
+            ids=[sequence_id] 
         req = {"p_cl_ord_id": {"$in" : ids}}
     # get all the sequences from occurence ids
-    elif "occurence_id" in kwargs.keys():  
-        ids=kwargs["occurence_id"]
-        if isinstance(ids,basestring):
-            ids=[ids]
+    elif occurence_id is not None:
+        if isinstance(occurence_id,basestring):
+            ids=[occurence_id]
         req = {"p_occ_id": {"$in" : ids}}
     # get all the sequences from date start end
-    elif "start_date" in kwargs.keys() and "end_date" in kwargs.keys():
-        sday=dt.datetime.strptime(kwargs["start_date"]+'-00:00:01', '%d/%m/%Y-%H:%M:%S')
-        eday=dt.datetime.strptime(kwargs["end_date"]+'-23:59:59', '%d/%m/%Y-%H:%M:%S')
+    elif start_date is not None and end_date is not None:
+        sday=dt.datetime.strptime(start_date + '-00:00:01', '%d/%m/%Y-%H:%M:%S')
+        eday=dt.datetime.strptime(end_date   + '-23:59:59', '%d/%m/%Y-%H:%M:%S')
         req = {"SendingTime": {"$gte":sday , "$lt":eday }}
 #     else:
 #         client.close();
 #         raise NameError('get_algodata:sequence_info - Bad input data')
     
     # Filters
-    if "filter" in kwargs.keys() and kwargs["filter"] is not None:
-        filter = kwargs["filter"]
+    if filter is not None:
         req = {'$and' : [req, filter]}
     res = occ_db.find(req) 
     #### Create the data
@@ -128,10 +125,10 @@ def sequence_info(db_name = "Mars", **kwargs):
 #--------------------------------------------------------------------------
 # occurence_info
 #--------------------------------------------------------------------------        
-def occurrence_info(db_name = "Mars", **kwargs): 
+def occurrence_info(db_name = "Mars", start_date = None, end_date = None, occurence_id = None,  filter = None): 
     
     #### DEFAULT OUTPUT    
-    data=pd.DataFrame()
+    data = pd.DataFrame()
     
     #client = MongoClient(connect_info)
     client = Connections.getClient(db_name.upper())
@@ -139,29 +136,32 @@ def occurrence_info(db_name = "Mars", **kwargs):
     
     #### Build the request
     # if list of sequence_id then        
-    if "occurence_id" in kwargs.keys():  
-        ids=kwargs["occurence_id"]
+    if occurence_id is not None:  
+        ids = occurence_id
         if isinstance(ids,basestring):
             ids=[ids] 
-        req_=occ_db.find({"MsgType":"D","p_occ_id": {"$in" : ids}})
-    elif all(x in ["start_date","end_date"] for x in kwargs.keys()):
-        sday=dt.datetime.strptime(kwargs["start_date"]+'-00:00:01', '%d/%m/%Y-%H:%M:%S')
-        eday=dt.datetime.strptime(kwargs["end_date"]+'-23:59:59', '%d/%m/%Y-%H:%M:%S')
+        req = {"MsgType":"D","p_occ_id": {"$in" : ids}}
+    elif start_date is not None and end_date is not None:
+        sday=dt.datetime.strptime(start_date + '-00:00:01', '%d/%m/%Y-%H:%M:%S')
+        eday=dt.datetime.strptime(end_date + '-23:59:59', '%d/%m/%Y-%H:%M:%S')
         #req_=occ_db.find({"SendingTime": {"$gte":sday , "$lt":eday }})  
-        req_=occ_db.find({"MsgType":"D","SendingTime": {"$gte":sday , "$lt":eday}})  
-    else:
-        raise NameError('get_algodata:occurence_info - Bad input data')
+        req = {"MsgType":"D","SendingTime": {"$gte":sday , "$lt":eday}}
+        
+    if filter is not None:
+        req = {'$and' : [req, filter]}
+        
+    res = occ_db.find(req) 
     
     #### CONNECTIONS
-    client.close();
+    client.close()
     
     #### Create the data
     documents=[]
     columns=[]
-    for v in req_:
-            documents.append(v)
-            columns.extend(v.keys())
-            columns=list(set(columns))
+    for v in res:
+        documents.append(v)
+        columns.extend(v.keys())
+        columns=list(set(columns))
     if not documents:
         return data
     data=pd.DataFrame.from_records(documents, columns=columns,index='SendingTime')

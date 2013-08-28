@@ -11,6 +11,7 @@ import scipy
 import matplotlib.cm as cm
 from lib.dbtools import get_repository
 import lib.tca.get_algostats as get_algostats
+from lib.logger.custom_logger import *
 
 class Singleton(object):
     _instance = None

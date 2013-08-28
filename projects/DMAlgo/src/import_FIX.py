@@ -216,7 +216,6 @@ class DatabasePlug:
         file.close()
         
         self.list_of_dict.extend(simplejson.loads(input))
-        self.checker        = Converter(self.list_of_dict)
         
         # Open MONGODB connection
         self.client = connections.Connections.getClient(self.database_server)
@@ -298,8 +297,8 @@ class DatabasePlug:
 
     def get_dico_header(self, day):
         
-        mkt_data_fields = ['EXEC_SHARES' ,'ORDER_PERC','INMKT_VOLUME','INMKT_TURNOVER',
-                           'PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','IN_VWAS','ARRIVAL_PRICE',
+        mkt_data_fields = ['EXEC_SHARES', 'INMKT_VOLUME','AVG_PRICE','INMKT_TURNOVER',
+                           'PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','ARRIVAL_PRICE',
                            'FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
         
         ssh = paramiko.SSHClient()
@@ -308,7 +307,7 @@ class DatabasePlug:
                     username = self.server['list_users']['flexapp']['username'], 
                     password = self.server['list_users']['flexapp']['passwd'])
         
-        cmd = 'grep SYM /home/flexapp/ushare/exportprodAV1%s' %day
+        cmd = "find /home/flexapp/ushare/ -iname 'exportprod*%s' | tail -1 | xargs grep SYM" %day
         
         (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
         
@@ -370,6 +369,17 @@ class DatabasePlug:
     
     def deals_enrichment_from_algo(self, typed_orders, job_id):
         logging.info("Add information to the deals")
+        fields_db = list( self.client['Mars']['field_map'].find({'collection_name' : 'OrderDeals'}) )
+        fields = []
+        if len(fields_db) > 0 and 'list_columns' in fields_db[0].keys():
+            fields = fields_db[0]['list_columns']
+            for el in fields:
+                for new_el in ['rate_to_euro', 'cheuvreux_secid', 'strategy_name_mapped']:
+                    if new_el not in fields:
+                        fields.append(new_el)
+            self.client['Mars']['field_map'].remove({'collection_name' : 'OrderDeals'})      
+            self.client['Mars']['field_map'].insert({'collection_name' : 'OrderDeals', 'list_columns' : fields })
+            
         for order in typed_orders:
             req_for_update = {}
             if 'nb_exec' in order.keys() and order['nb_exec'] > 0:
@@ -389,19 +399,6 @@ class DatabasePlug:
                     self.client['Mars']['OrderDeals'].update({'p_cl_ord_id'    : order['p_cl_ord_id']}, 
                                                              {'$set'           : req_for_update },
                                                              multi = True)
-                    
-                    fields_db = list( self.client['Mars']['field_map'].find({'collection_name' : 'OrderDeals'}) )
-                    fields = []
-                    if len(fields_db) > 0 and 'list_columns' in fields_db[0].keys():
-                        fields = fields_db[0]['list_columns']
-                        for el in req_for_update.keys():
-                            if el not in fields:
-                                fields.append(el)
-                        self.client['Mars']['field_map'].remove({'collection_name' : 'OrderDeals'})      
-                        self.client['Mars']['field_map'].insert({'collection_name' : 'OrderDeals', 'list_columns' : fields })
-                    else:
-                        self.client['Mars']['field_map'].insert({'collection_name' : 'OrderDeals', 'list_columns' : []  })
-                        return self.deals_enrichment_from_algo(typed_orders, job_id)
                     
                     
                     
@@ -477,7 +474,9 @@ class DatabasePlug:
                     
                 orders.extend(new_orders)          
 
-            logging.info('Type orders')    
+            logging.info('Typed orders') 
+            
+            self.checker    = Converter(self.list_of_dict)
             typed_orders    = self.checker.verify_all(orders)
             to_return.append(typed_orders)
             
@@ -606,7 +605,7 @@ class DatabasePlug:
                 i+=1
                 #ATTETNION
                 ############################### DEBUG
-#                 if order['ClOrdID'] != 'FYLCoAA0218' : continue
+#                 if order['Symbol'] != 'NZYMBc.AG' : continue
                 ########################################
                 logging.debug('Order ID : %s' %order['ClOrdID'])
                 l_events = self.order_life(order          = order, 
@@ -1267,12 +1266,12 @@ if __name__ == '__main__':
     environment         = 'prod'
     source              = 'CLNT1'
 
-    dates               = ['20130819']
+    dates               = ['20130823']
     
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 
                  source             = source, 
                  dates              = dates,
-                 mode               = "write").fill(order_deals=True)
+                 mode               = "write").fill(order_deals=True, algo_orders=True)
     

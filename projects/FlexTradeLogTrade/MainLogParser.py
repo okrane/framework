@@ -283,12 +283,15 @@ if __name__ == '__main__':
     args = sys.argv
     environment = 'prod'
     
-    #Parameters :
-    if len(args) == 0:
+    #--------------------------------------
+    #              Parameters :
+    #--------------------------------------
+    
+    if len(args) < 1:
         mode = 'LOG'
-    #     server_flex = 'WATFLT01'
-        server_flex = 'LUIFLT01'
-    #     server_flex = 'PARFLTLAB'
+        server_flex = 'WATFLT01'
+#         server_flex = 'LUIFLT01'
+#         server_flex = 'PARFLTLAB'
         
         ClOrdID = 'FY200010731672ESLO0'
         g_st = True

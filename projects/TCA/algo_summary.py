@@ -5,7 +5,7 @@ from email.mime.text import MIMEText
 if os.name != 'nt':
     ### VERY IMPROTANT IN LINUX (in order to use X11)
     matplotlib.use('Agg')
-from lib.tca.wrapper import DataProcessor
+from lib.tca.wrapper import PlotEngine
 from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from lib.io.toolkit import send_email
@@ -25,7 +25,7 @@ if __name__=='__main__':
         folder  = 'C:\\temp\\'
     else:
         folder  = '/home/quant/temp/'
-    l       = []
+    
     
     msg = MIMEMultipart()
     msg['Subject'] = 'Algo Summary (Beta test)'
@@ -34,74 +34,85 @@ if __name__=='__main__':
     
     # Daily
     m = '<h3>Daily</h3>'
-    daily = DataProcessor(start_date = day, end_date = day)
+    daily = PlotEngine(start_date = day, end_date = day)
     
+    l         = []
+    list_path = []
     
-    daily.plot_algo_volume()
+    def  repeat(name):
+        global l
+        global list_path
+        
+        file_path = folder + image_name
+        
+        l.append(image_name)
+        list_path.append(file_path)
+        
     image_name = 'Vol_euro_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    file_path = folder + image_name
-    plt.savefig( file_path )
-    l.append(image_name)
-    m += '<img src="cid:%s">\n' %image_name
+    repeat(image_name)
     
-    daily.plot_algo_occ()
     image_name = 'Occ_euro_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
+    repeat(image_name)
+    
+    image_name = 'Place_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
+    repeat(image_name)
+    
+    image_name = 'Intraday_algo_vol_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
     file_path = folder + image_name
-    plt.savefig( file_path )
-    l.append(image_name)
-    m += '<img src="cid:%s">\n' %image_name
+    repeat(image_name)
     
+    daily.plot_basic_stats(path=list_path[0:3])
+    daily.plot_intraday_exec_curve().savefig(file_path)
     
-    
+    for image in l:
+        m += '<img src="cid:%s">\n' %image
+        
     # Weekly
     m += '<h3>Weekly</h3>'
-    weekly = DataProcessor(start_date = day - timedelta(days=7), end_date = day)
+    weekly = PlotEngine(start_date = day - timedelta(days=7), end_date = day)
     
-    
-    weekly.plot_algo_volume()
     image_name = 'Vol_euro_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    file_path = folder + image_name
-    plt.savefig( file_path )
-    l.append(image_name)
-    m += '<img src="cid:%s">\n' %image_name
+    repeat(image_name)
     
-    weekly.plot_algo_occ()
     image_name = 'Occ_euro_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    file_path = folder + image_name
-    plt.savefig( file_path )
-    l.append(image_name)
-    m += '<img src="cid:%s">\n' %image_name
+    repeat(image_name)
     
+    image_name = 'Place_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
+    repeat(image_name)
     
+    weekly.plot_basic_stats(path=list_path[4:7])
+    
+    for image in l[4:7]:
+        m += '<img src="cid:%s">\n' %image
+        
+                
     # Monthly
     m += '<h3>Monthly</h3>' 
-    monthly = DataProcessor(start_date = day - timedelta(days=28), end_date = day)
+    monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day)
     
-    
-    monthly.plot_algo_volume()
     image_name = 'Vol_euro_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    file_path = folder + image_name
-    plt.savefig( file_path )
-    l.append(image_name)
-    m += '<img src="cid:%s">\n' %image_name
-    
-    monthly.plot_algo_occ()
+    repeat(image_name)
+
     image_name = 'Occ_euro_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    file_path = folder + image_name
-    plt.savefig( file_path )
-    l.append(image_name)
-    m += '<img src="cid:%s">\n' %image_name
-    # Send an email
+    repeat(image_name)
     
+    image_name = 'Place_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
+    repeat(image_name)
+ 
+    monthly.plot_basic_stats(path=list_path[7:10])
+    
+    for image in l[7:10]:
+        m += '<img src="cid:%s">\n' %image
+
+    # Send an email
     title = "<h2>Sum up for %s</h2>\n" % datetime.strftime(day, '%Y%m%d' )
         
-    # Create the container (outer) email message.
     
     
     # me == the sender's email address
     # family = the list of all recipients' email addresses
     msg['From'] = 'alababidi@keplercheuvreux.com'
-    to = ['quant.algo@keplercheuvreux.com']
+    to = ['alababidi@keplercheuvreux.com', 'njoseph@keplercheuvreux.com', 'svlasceanu@keplercheuvreux.com', 'gpons@keplercheuvreux.com', 'mdang@keplercheuvreux.com', 'whuang@keplercheuvreux.com', 'sreydellet@keplercheuvreux.com']
     msg['To'] = ' ,'.join(to)
     # Assume we know that the image files are all in PNG format
     for file in l:

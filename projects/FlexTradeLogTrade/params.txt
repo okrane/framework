@@ -1,5 +1,7 @@
-mode=FIX
-day=20130814
+mode=LOG
+day=20130827
 get_street=yes
-ClOrdID=FYULSNODS1407b888b2e-000
-server_flex=prod.50
+ClOrdID=FY2000018114001
+server_flex=prod.73
+portfolio=BLCLNT1_51
+ticker=GTOa.AG

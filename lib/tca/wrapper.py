@@ -35,28 +35,31 @@ def autolabel_barh(rects):
         
 class DataProcessor(object):
     get_done = 0
-    def __init__(self, start_date = None, end_date = None):
+    def __init__(self, start_date = None, end_date = None, filter = None):
         """start_date and end_date are datetime"""
-        self.get_data(start_date, end_date)
+        self.get_data(start_date, end_date, filter = filter)
         DataProcessor.get_done += 1
     
-    def get_data(self, start_date = None, end_date = None):
+    def get_data(self, start_date = None, end_date = None, filter = None):
         if start_date is None and end_date is None:
             self.start_date = self.end_date = last_business_day(datetime.now())
         else:
             self.start_date = start_date
             self.end_date   = end_date
+        
+        self.filter = filter
             
         self.start_date_str = datetime.strftime(self.start_date, "%d/%m/%Y")
         self.end_date_str   = datetime.strftime(self.end_date, "%d/%m/%Y")
         
         self.data_seq       = get_algodata.sequence_info(start_date = self.start_date_str,
-                                                         end_date   = self.end_date_str)
+                                                         end_date   = self.end_date_str, filter = filter)
         self.data_occ       = get_algodata.occurrence_info(start_date = self.start_date_str,
                                                           end_date   = self.end_date_str)            
-    def get_deals(self, merge_order_colnames):
+    def get_deals(self):
         self.data_deals     = get_algodata.deal(start_date = self.start_date_str,
-                                                          end_date   = self.end_date_str)         
+                                                end_date   = self.end_date_str, 
+                                                filter = self.filter)         
 
 class Statistic(DataProcessor):
     def get_stat_turnover_euro(self):
@@ -106,9 +109,7 @@ class PlotEngine(Statistic):
         intraday_exec_curve : 
         Plot the daily exec curve in turnover cross by group_var
         """
-        self.data_deals = get_algodata.deal(start_date = self.start_date_str,
-                                            end_date   = self.end_date_str)
-        
+        self.get_deals()
         ##############################################################
         # aggregate data
         ##############################################################  
@@ -124,9 +125,9 @@ class PlotEngine(Statistic):
         # plot
         ##############################################################  
         # ----- NEEDED    
-        uni_strat=np.sort(np.unique(grouped_data[group_var].values).tolist())
-        colors_strat=cm.spectral(np.linspace(0, 1.0, len(uni_strat)))
-        uni_strat_islabeled=np.array([False]*len(uni_strat))
+        uni_strat = np.sort(np.unique(grouped_data[group_var].values).tolist())
+        colors_strat = cm.spectral(np.linspace(0, 1.0, len(uni_strat)))
+        uni_strat_islabeled = np.array([False]*len(uni_strat))
         # ----- PLOT
         h = plt.figure(figsize = DEFAULT_FIGSIZE)
         axes = plt.gca()
@@ -200,9 +201,24 @@ class PlotEngine(Statistic):
         
         self.get_stat_dma()
         
+        
+        # Get out the nan in ExDestination
+        ind_seq_dma = self.data_seq[self.ind_dma]['ExDestination'].apply(lambda x: isinstance(x, basestring))
+        ind_seq     = self.data_seq['ExDestination'].apply(lambda x: isinstance(x, basestring))
+        
+        seq = self.data_seq[ind_seq]
+        seq_dma = self.data_seq[self.ind_dma][ind_seq_dma]
+        
+        # Get out the nan in turnover_euro
+        ind_seq_dma_no_nan = seq_dma['turnover_euro'].apply(lambda x: np.isfinite(x))
+        ind_seq_no_nan     = seq['turnover_euro'].apply(lambda x: np.isfinite(x))
+        
+        seq     = seq[ind_seq_no_nan]
+        seq_dma = seq_dma[ind_seq_dma_no_nan]
+        
         place_per_algo_dma      = pd.Series()
-        place_per_algo_dma2     = self.data_seq[self.ind_dma].groupby('ExDestination')['turnover_euro'].sum().order()
-        place_per_algo_all      = self.data_seq.groupby('ExDestination')['turnover_euro'].sum().order()
+        place_per_algo_dma2     = seq_dma.groupby('ExDestination')['turnover_euro'].sum().order()
+        place_per_algo_all      = seq.groupby('ExDestination')['turnover_euro'].sum().order()
         
         for index in place_per_algo_all.index:
             if index not in place_per_algo_dma2.index:
@@ -250,7 +266,9 @@ class PlotEngine(Statistic):
     
     
 class AdvancedPlotEngine(PlotEngine):
-    pass       
+    pass 
+
+      
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
     Connections.change_connections("dev")
@@ -258,6 +276,9 @@ if __name__=='__main__':
     
     day = datetime(year=2013, month=7, day=23)
     day = datetime.now() - timedelta(days=1)
+    
+#     daily = PlotEngine(start_date = day - timedelta(days=56), end_date = day  , filter = {'Account': {'$regex' : 'LOOP.*'}})
+    
     # One DAY
     daily = PlotEngine(start_date = day, end_date = day)
     daily.plot_basic_stats()

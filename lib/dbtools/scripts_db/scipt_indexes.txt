@@ -3,7 +3,7 @@ db.OrderDeals.ensureIndex( { "TransactTime" : -1}, {background :true}  )
 db.OrderDeals.ensureIndex( { "p_cl_ord_id" : -1}, {background :true}  )
 db.OrderDeals.ensureIndex( { "p_exec_id" : -1}, {background :true}  )
 db.OrderDeals.ensureIndex( { "job_id" : -1}, {background :true}  )
-
+db.OrderDeals.ensureIndex( { "TransactTime" : -1, "p_exec_id" : -1}, {background :true} )
 
 
 db.AlgoOrders.dropIndexes()

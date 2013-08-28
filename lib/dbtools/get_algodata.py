@@ -30,31 +30,38 @@ def sequence_info(db_name = "Mars", **kwargs):
     #### Build the request
     t0=time.clock()
     
+    req = {}
+
     # get all the sequences from sequence ids
     if "sequence_id" in kwargs.keys():
         ids=kwargs["sequence_id"]
         if isinstance(ids, basestring):
             ids=[ids] 
-        req_=occ_db.find({"p_cl_ord_id": {"$in" : ids}})
+        req = {"p_cl_ord_id": {"$in" : ids}}
     # get all the sequences from occurence ids
     elif "occurence_id" in kwargs.keys():  
         ids=kwargs["occurence_id"]
         if isinstance(ids,basestring):
             ids=[ids]
-        req_=occ_db.find({"p_occ_id": {"$in" : ids}})
+        req = {"p_occ_id": {"$in" : ids}}
     # get all the sequences from date start end
-    elif all(x in ["start_date","end_date"] for x in kwargs.keys()):
+    elif "start_date" in kwargs.keys() and "end_date" in kwargs.keys():
         sday=dt.datetime.strptime(kwargs["start_date"]+'-00:00:01', '%d/%m/%Y-%H:%M:%S')
         eday=dt.datetime.strptime(kwargs["end_date"]+'-23:59:59', '%d/%m/%Y-%H:%M:%S')
-        req_=occ_db.find({"SendingTime": {"$gte":sday , "$lt":eday }})  
-    else:
-        client.close();
-        raise NameError('get_algodata:sequence_info - Bad input data')
-          
+        req = {"SendingTime": {"$gte":sday , "$lt":eday }}
+#     else:
+#         client.close();
+#         raise NameError('get_algodata:sequence_info - Bad input data')
+    
+    # Filters
+    if "filter" in kwargs.keys() and kwargs["filter"] is not None:
+        filter = kwargs["filter"]
+        req = {'$and' : [req, filter]}
+    res = occ_db.find(req) 
     #### Create the data
     documents=[]
     columns=[]
-    for v in req_:
+    for v in res:
         documents.append(v)
         columns.extend(v.keys())
         columns=list(set(columns))
@@ -198,7 +205,7 @@ def occurrence_info(db_name = "Mars", **kwargs):
 #--------------------------------------------------------------------------
 # deal
 #--------------------------------------------------------------------------        
-def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, merge_order_colnames=None): 
+def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, filter = None, merge_order_colnames=None): 
     
     #### DEFAULT OUTPUT    
     data=pd.DataFrame()
@@ -215,14 +222,18 @@ def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, merge
         ids=sequence_id
         if isinstance(ids,basestring):
             ids=[ids] 
-        req_=deal_db.find({"p_cl_ord_id": {"$in" : ids}}).sort([("TransactTime",ASCENDING), ("p_exec_id",ASCENDING)])
+        req = {"p_cl_ord_id": {"$in" : ids}}
     elif (start_date is not None) and (end_date is not None):
         sday=dt.datetime.strptime(start_date+'-00:00:01', '%d/%m/%Y-%H:%M:%S')
         eday=dt.datetime.strptime(end_date+'-23:59:59', '%d/%m/%Y-%H:%M:%S')
         # req_=deal_db.find({"TransactTime": {"$gte":sday , "$lt":eday }}).sort([("TransactTime",ASCENDING), ("ExecID",ASCENDING)]) 
-        req_=deal_db.find({"TransactTime": {"$gte":sday , "$lt":eday }}).sort([("TransactTime",ASCENDING), ("p_exec_id",ASCENDING)])    
-    else:
-        raise NameError('get_algodata:deal - Bad input data')  
+        req = {"TransactTime": {"$gte":sday , "$lt":eday }} 
+    
+    # Filters
+    if filter is not None:
+        req = {'$and' :[req, filter]}
+        
+    res = deal_db.find(req).sort([("TransactTime",ASCENDING), ("p_exec_id",ASCENDING)])
     
     #### CONNECTIONS
     client.close();
@@ -232,7 +243,8 @@ def deal(db_name="Mars", sequence_id=None, start_date=None, end_date=None, merge
     ################################################
     documents=[]
     columns=[]
-    for v in req_:
+
+    for v in res:
         documents.append(v)
         columns.extend(v.keys())
         columns=list(set(columns))

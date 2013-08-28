@@ -10,7 +10,7 @@ import numpy as np
 import scipy 
 import matplotlib.cm as cm
 from lib.dbtools import get_repository
-
+import lib.tca.get_algostats as get_algostats
 
 class Singleton(object):
     _instance = None
@@ -59,7 +59,12 @@ class DataProcessor(object):
     def get_deals(self):
         self.data_deals     = get_algodata.deal(start_date = self.start_date_str,
                                                 end_date   = self.end_date_str, 
-                                                filter = self.filter)         
+                                                filter = self.filter)  
+    def get_agg_deals(self,step_sec=60*30):
+        self.data_agg_deals     = get_algostats.agg_daily_deal(start_date=self.start_date_str,
+                                                               end_date=self.end_date_str,
+                                                               step_sec=step_sec,
+                                                               filter=self.filter)                                              
 
 class Statistic(DataProcessor):
     def get_stat_turnover_euro(self):
@@ -109,23 +114,13 @@ class PlotEngine(Statistic):
         intraday_exec_curve : 
         Plot the daily exec curve in turnover cross by group_var
         """
-        self.get_deals()
-        ##############################################################
-        # aggregate data
-        ##############################################################  
-        grouped=self.data_deals.groupby( [st_data.gridTime(date=self.data_deals.index, step_sec=step_sec, out_mode='ceil'), group_var] )
-        grouped_data=pd.DataFrame([{'date':k[0],group_var:k[1],
-                              'mturnover_euro': np.sum(v.rate_to_euro*v.price*v.volume)*1e-6} for k,v in grouped])
-        grouped_data=grouped_data.set_index('date')
-        # on passe en string parce que ca ne sorte pas sinon !!   
-        grouped_data['tmpindex']=[datetime.strftime(x.to_datetime(),'%Y%m%d-%H:%M:%S.%f') for x in grouped_data.index]
-        grouped_data=grouped_data.sort_index(by=['tmpindex',group_var]).drop(['tmpindex'],axis=1)
+        self.get_agg_deals(step_sec=step_sec)
         
         ##############################################################
         # plot
         ##############################################################  
         # ----- NEEDED    
-        uni_strat = np.sort(np.unique(grouped_data[group_var].values).tolist())
+        uni_strat = np.sort(np.unique(self.data_agg_deals[group_var].values).tolist())
         colors_strat = cm.spectral(np.linspace(0, 1.0, len(uni_strat)))
         uni_strat_islabeled = np.array([False]*len(uni_strat))
         # ----- PLOT
@@ -136,20 +131,20 @@ class PlotEngine(Statistic):
         plt.hold(True)
         prev_date=''
         prev_date_cum=0
-        for i in range(grouped_data.shape[0]):
+        for i in range(self.data_agg_deals.shape[0]):
             #---
-            date=grouped_data.index[i].to_datetime()
-            idx_uni_strat=np.nonzero(uni_strat==grouped_data[group_var].ix[i])[0][0]
+            date=self.data_agg_deals.index[i].to_datetime()
+            idx_uni_strat=np.nonzero(uni_strat==self.data_agg_deals[group_var].ix[i])[0][0]
             #--
             args=[]
             if (not date==prev_date):
                 args.append([date-timedelta(seconds=step_sec),date,date,date-timedelta(seconds=step_sec)])
-                args.append([0,0,grouped_data['mturnover_euro'].ix[i],grouped_data['mturnover_euro'].ix[i]])
-                prev_date_cum=grouped_data['mturnover_euro'].ix[i]
+                args.append([0,0,self.data_agg_deals['mturnover_euro'].ix[i],self.data_agg_deals['mturnover_euro'].ix[i]])
+                prev_date_cum=self.data_agg_deals['mturnover_euro'].ix[i]
             else:
                 args.append([date-timedelta(seconds=step_sec),date,date,date-timedelta(seconds=step_sec)])
-                args.append([prev_date_cum,prev_date_cum,prev_date_cum+grouped_data['mturnover_euro'].ix[i],prev_date_cum+grouped_data['mturnover_euro'].ix[i]])
-                prev_date_cum=prev_date_cum+grouped_data['mturnover_euro'].ix[i] 
+                args.append([prev_date_cum,prev_date_cum,prev_date_cum+self.data_agg_deals['mturnover_euro'].ix[i],prev_date_cum+self.data_agg_deals['mturnover_euro'].ix[i]])
+                prev_date_cum=prev_date_cum+self.data_agg_deals['mturnover_euro'].ix[i] 
             #--
             kwargs={'facecolor':colors_strat[idx_uni_strat],'alpha':0.85}
             if not uni_strat_islabeled[idx_uni_strat]:
@@ -277,21 +272,22 @@ if __name__=='__main__':
     day = datetime(year=2013, month=7, day=23)
     day = datetime.now() - timedelta(days=1)
     
-#     daily = PlotEngine(start_date = day - timedelta(days=56), end_date = day  , filter = {'Account': {'$regex' : 'LOOP.*'}})
-    
-    # One DAY
-    daily = PlotEngine(start_date = day, end_date = day)
-    daily.plot_basic_stats()
-    daily.plot_intraday_exec_curve()
-    plt.show()
+##     daily = PlotEngine(start_date = day - timedelta(days=56), end_date = day  , filter = {'Account': {'$regex' : 'LOOP.*'}})
+#    
+#    # One DAY
+#    daily = PlotEngine(start_date = day, end_date = day)
+#    daily.plot_basic_stats()
+#    daily.plot_intraday_exec_curve()
+#    plt.show()
     
     # Weekly
     weekly = PlotEngine(start_date = day - timedelta(days=7), end_date = day )
     weekly.plot_basic_stats()
+    weekly.plot_intraday_exec_curve()
     plt.show()
      
-    # Monthly
-    monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day )
-    monthly.plot_basic_stats()
-    plt.show()
+#    # Monthly
+#    monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day )
+#    monthly.plot_basic_stats()
+#    plt.show()
     

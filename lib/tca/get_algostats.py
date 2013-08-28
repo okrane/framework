@@ -15,6 +15,9 @@ import lib.dbtools.get_repository as get_repository
 import lib.tca.compute_stats as compute_stats
 import lib.tca.mapping as mapping
 import lib.tca.tools as tools
+import lib.io.toolkit as toolkit
+import lib.data.st_data as st_data
+
 
 #--------------------------------------------------------------------------
 # GLOBAL needed
@@ -58,11 +61,11 @@ def occurrence_info_fe(sequence_id=None,occurence_id=None,start_date=None,end_da
     data_occ['occ_fe_vwap']=((data_occ['occ_fe_inmkt_turnover']+data_occ['occ_fe_prv_turnover'])/
     (data_occ['occ_fe_inmkt_volume']+data_occ['occ_fe_prv_volume']))
     
-    data_occ['slippage_vwap_bp']=(1000*data_occ['Side']*
+    data_occ['slippage_vwap_bp']=(10000*data_occ['Side']*
     (data_occ['occ_fe_vwap']-data_occ['occ_turnover']/data_occ['occ_exec_qty'])/data_occ['occ_fe_vwap'])
     data_occ['slippage_vwap_bp'][(data_occ['occ_exec_qty']==0)  | (data_occ['occ_fe_vwap']==0)]=np.nan
     
-    data_occ['slippage_is_bp']=(1000*data_occ['Side']*
+    data_occ['slippage_is_bp']=(10000*data_occ['Side']*
     (data_occ['occ_fe_arrival_price']-data_occ['occ_turnover']/data_occ['occ_exec_qty'])/data_occ['occ_fe_arrival_price'])
     data_occ['slippage_vwap_bp'][(data_occ['occ_exec_qty']==0)  | (data_occ['occ_fe_arrival_price']==0)]=np.nan
     
@@ -182,6 +185,64 @@ def sequence_info(sequence_id=None,occurence_id=None,start_date=None,end_date=No
     data=data.reset_index().merge(dataggseq, how="left",on=['p_cl_ord_id','p_occ_id']).set_index('SendingTime')
     
     return data
+
+
+
+
+#--------------------------------------------------------------------------
+# sequence_info
+#--------------------------------------------------------------------------
+def agg_daily_deal(start_date=None,end_date=None,step_sec=60*30,filter=None,group_var='strategy_name_mapped'):    
+    ###########################################################################
+    #### INPUT
+    ###########################################################################
+    if (start_date is not None)  and (end_date is not None): 
+        sday=datetime.strptime(start_date, '%d/%m/%Y')
+        eday=datetime.strptime(end_date, '%d/%m/%Y')
+    else:
+        raise NameError('get_algostats:sequence - Bad inputs')
+    ###########################################################################
+    ####  GET DAILY DATA INFO
+    ###########################################################################
+    group_var='strategy_name_mapped'
+    out=pd.DataFrame()
+    this_day=eday
+    while this_day>=sday:
+        # - get deals
+        _date_str=datetime.strftime(this_day, '%d/%m/%Y')
+        _tmp=get_algodata.deal(start_date=_date_str,end_date=_date_str,filter=filter)
+        # - aggregate + add
+        if _tmp.shape[0]>0:
+            _tmp_grouped=_tmp.groupby( [st_data.gridTime(date=_tmp.index, step_sec=step_sec, out_mode='ceil'), group_var] )
+            _tmp_grouped=pd.DataFrame([{'date':k[0],group_var:k[1],
+                                  'mturnover_euro': np.sum(v.rate_to_euro*v.price*v.volume)*1e-6} for k,v in _tmp_grouped])
+            _tmp_grouped=_tmp_grouped.set_index('date')
+            # on passe en string parce que ca ne sorte pas sinon !!   
+            _tmp_grouped['tmpindex']=[datetime.strftime(x.to_datetime(),'%Y%m%d-%H:%M:%S.%f') for x in _tmp_grouped.index]
+            _tmp_grouped=_tmp_grouped.sort_index(by=['tmpindex',group_var]).drop(['tmpindex'],axis=1)
+            out=out.append(_tmp_grouped)
+        # - previous business day  
+        this_day=toolkit.last_business_day(date=this_day)
+        
+    ###########################################################################
+    ####  AGGREGATE
+    ###########################################################################
+    if out.shape[0]>0:
+        out['date']=[datetime.combine(eday.date(),x.to_datetime().time()) for x in out.index]
+        # - aggregate
+        _out=out.groupby( ['date', group_var] )
+        _out=pd.DataFrame([{'date':k[0],group_var:k[1],
+                            'nb_day':len(v.mturnover_euro),
+                            'mturnover_euro': np.sum(v.mturnover_euro)} for k,v in _out])
+        _out=_out.set_index('date')
+        # on passe en string parce que ca ne sorte pas sinon !!   
+        _out['tmpindex']=[datetime.strftime(x.to_datetime(),'%Y%m%d-%H:%M:%S.%f') for x in _out.index]
+        _out=_out.sort_index(by=['tmpindex',group_var]).drop(['tmpindex'],axis=1)
+        
+        out=_out
+        
+    return out
+
 
 if __name__=='__main__':
     # ft london stock

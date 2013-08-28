@@ -24,6 +24,54 @@ utc=pytz.UTC
 #--------------------------------------------------------------------------
 # sequence_info
 #--------------------------------------------------------------------------
+def occurrence_info_fe(sequence_id=None,occurence_id=None,start_date=None,end_date=None):  
+    ###########################################################################
+    #### extract algo DATA
+    ###########################################################################
+    # get all the sequences from sequence ids
+    if sequence_id is not None:
+        data_seq=get_algodata.sequence_info(sequence_id=sequence_id)
+        data_occ=get_algodata.occurrence_info(sequence_id=sequence_id)
+    # get all the sequences from occurence ids
+    elif occurence_id is not None:  
+        data_seq=get_algodata.sequence_info(occurence_id=occurence_id)
+        data_occ=get_algodata.occurrence_info(occurence_id=occurence_id)
+    elif (start_date is not None)  and (end_date is not None): 
+        data_seq=get_algodata.sequence_info(start_date=start_date,end_date=end_date)
+        data_occ=get_algodata.occurrence_info(start_date=start_date,end_date=end_date)
+    else:
+        raise NameError('get_algostats:sequence - Bad inputs')
+        
+    if data_occ.shape[0]<=0:
+        return pd.DataFrame()
+        
+    ###########################################################################
+    #### aggregate execution infos 
+    ###########################################################################    
+    data_occ_exec=compute_stats.occ_aggexec(data_order=data_seq)
+    if data_occ_exec.shape[0]>0:
+        data_occ=data_occ.reset_index().merge(data_occ_exec, how="left",on=['p_occ_id']).set_index('SendingTime')
+        
+    ###########################################################################
+    #### compute slippage
+    ###########################################################################
+    data_occ['occ_fe_vwap']=((data_occ['occ_fe_inmkt_turnover']+data_occ['occ_fe_prv_turnover'])/
+    (data_occ['occ_fe_inmkt_volume']+data_occ['occ_fe_prv_volume']))
+    
+    data_occ['slippage_vwap_bp']=(1000*data_occ['Side']*
+    (data_occ['occ_fe_vwap']-data_occ['occ_turnover']/data_occ['occ_exec_qty'])/data_occ['occ_fe_vwap'])
+    data_occ['slippage_vwap_bp'][(data_occ['occ_exec_qty']==0)  | (data_occ['occ_fe_vwap']==0)]=np.nan
+    
+    data_occ['slippage_is_bp']=(1000*data_occ['Side']*
+    (data_occ['occ_fe_arrival_price']-data_occ['occ_turnover']/data_occ['occ_exec_qty'])/data_occ['occ_fe_arrival_price'])
+    data_occ['slippage_vwap_bp'][(data_occ['occ_exec_qty']==0)  | (data_occ['occ_fe_arrival_price']==0)]=np.nan
+    
+    return data_occ
+
+ 
+#--------------------------------------------------------------------------
+# sequence_info
+#--------------------------------------------------------------------------
 def sequence_info(sequence_id=None,occurence_id=None,start_date=None,end_date=None):    
     ###########################################################################
     #### extract algo DATA
@@ -115,7 +163,6 @@ def sequence_info(sequence_id=None,occurence_id=None,start_date=None,end_date=No
                               out_datetime=False,renorm_datetime=True)
                 # tmp_add=tmp_add.join(pd.DataFrame([data.ix[idx][['ClOrdID','occ_ID']].to_dict()]))  
                 tmp_add=tmp_add.join(tmp_)
-               
             
             ##########
             # compute AGG execution stats

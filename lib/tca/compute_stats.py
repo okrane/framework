@@ -11,15 +11,46 @@ from datetime import *
 import pytz
 import lib.stats.slicer as slicer
 import lib.stats.formula as formula
+import lib.data.st_data as st_data
 
 ###------------------<------------------------------------------------------------
 ### TO ADD
 ###-----------------------------------------------------------------------------
 # add le tick_size
 
+
+
 ###------------------<------------------------------------------------------------
 ### agg exec
 ###-----------------------------------------------------------------------------
+## the call should be made after aggmarket !
+def occ_aggexec(# order information
+        data_order=pd.DataFrame(),data_deal=pd.DataFrame()
+        ):
+    ##############################################################
+    # check input 
+    ##############################################################
+    if not isinstance(data_order,pd.DataFrame):
+        raise NameError('occ_aggexec:Input - Bad input for data_order')            
+        
+    if data_order.shape[0]==0:
+        return pd.DataFrame()
+        
+    ##############################################################
+    # check input 
+    ##############################################################            
+    grouped=data_order.groupby(['p_occ_id'])
+    out=pd.DataFrame([{'p_occ_id':k,
+                       'occ_nb_strategy':len(np.unique(v.strategy_name_mapped)),
+                       'occ_strategy_name_mapped': v.strategy_name_mapped[-1] if len(np.unique(v.strategy_name_mapped))==1 else 'MULTIPLE',
+                       'occ_exec_qty':np.sum(v.exec_qty),
+                       'occ_turnover':np.sum(v.turnover),
+                       'occ_nb_exec':np.sum(v.nb_exec)} for k,v in grouped])
+    return out
+
+###----------------------------------------------------------------------------
+### agg exec
+###----------------------------------------------------------------------------
 ## the call should be made after aggmarket !
 def aggexec(# order information
         data_order=pd.DataFrame(),data_deal=pd.DataFrame()

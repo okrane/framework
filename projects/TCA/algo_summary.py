@@ -112,7 +112,7 @@ if __name__=='__main__':
     # me == the sender's email address
     # family = the list of all recipients' email addresses
     msg['From'] = 'alababidi@keplercheuvreux.com'
-    to = ['alababidi@keplercheuvreux.com', 'njoseph@keplercheuvreux.com', 'svlasceanu@keplercheuvreux.com', 'gpons@keplercheuvreux.com', 'mdang@keplercheuvreux.com', 'whuang@keplercheuvreux.com', 'sreydellet@keplercheuvreux.com']
+    to = ['alababidi@keplercheuvreux.com', 'njoseph@keplercheuvreux.com', 'svlasceanu@keplercheuvreux.com', 'gpons@keplercheuvreux.com', 'mdang@keplercheuvreux.com', 'whuang@keplercheuvreux.com', 'sreydellet@keplercheuvreux.com', 'tbiotteau@keplercheuvreux.com']
     msg['To'] = ' ,'.join(to)
     # Assume we know that the image files are all in PNG format
     for file in l:

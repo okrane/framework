@@ -76,7 +76,7 @@ def sequence_info(db_name = "Mars", **kwargs):
     needed_colnames=[ # - id/order infos
     u'_id',u'p_cl_ord_id',u'p_occ_id',
     # - user/client infos
-    u'ClientID',u'TargetSubID',u'Account', u'MsgType',
+    u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',
     #- security symbol
     u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',
     #- info at occurence level
@@ -169,10 +169,13 @@ def occurrence_info(db_name = "Mars", **kwargs):
     #- security symbol
     u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',
     #- info at occurence level
-    u'Side',u'occ_nb_replace',u'occ_duration']
-    # add occ_fe_    
-    add_occ_fe=fields_algoorders[np.nonzero([x[:min(7,len(x))]=='occ_fe_' for x in fields_algoorders])[0]]
-    needed_colnames=needed_colnames+add_occ_fe.tolist()
+    u'Side']
+#    # add occ_fe_    
+#    add_occ_fe=fields_algoorders[np.nonzero([x[:min(7,len(x))]=='occ_fe_' for x in fields_algoorders])[0]]
+#    needed_colnames=needed_colnames+add_occ_fe.tolist()
+    # add occ_  
+    add_occ=fields_algoorders[np.nonzero([x[:min(4,len(x))]=='occ_' for x in fields_algoorders])[0]]
+    needed_colnames=needed_colnames+add_occ.tolist()  
     
     # - drop colnames
     for x in data.columns.tolist():

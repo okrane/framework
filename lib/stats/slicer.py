@@ -14,6 +14,30 @@ from datetime import *
 #from lib.data.matlabutils import *
 #import lib.data.st_data as st_data
 
+#--------------------------------------------------------------------------
+# weighted statistics
+#-------------------------------------------------------------------------- 
+def weighted_statistics(x,w,mode='mean',handle_nan=True):
+    #----- test input
+    if not isinstance(x,np.ndarray) or not isinstance(w,np.ndarray):
+        raise ValueError('Input should be numpy arrays')
+    if x.shape[0]!=w.shape[0]:
+        raise ValueError('Input should have same numbers of rows')
+    #----- handle nan 
+    if handle_nan:
+        idx_ok=np.nonzero(map(lambda x : np.all(np.isfinite(x)),np.hstack((x,w))))[0]
+    else:
+        idx_ok=np.array(range(0,x.shape[0]))
+    #----- computation
+    if idx_ok.shape[0]==0:
+        return np.nan
+        
+    if mode.lower()=='mean':
+        out=np.sum(x[idx_ok]*w[idx_ok],axis=0)/np.sum(w[idx_ok])
+    else:
+        raise ValueError('Unknown mode <+'+mode+'>')
+        
+    return out
 
 #--------------------------------------------------------------------------
 # vwap

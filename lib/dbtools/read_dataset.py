@@ -84,7 +84,7 @@ def ft(**kwargs):
         date_newf=datetime.strftime(datetime.strptime(date, '%d/%m/%Y'),'%Y_%m_%d') 
     else:
         raise NameError('read_dataset:ft - Bad input') 
-           
+        
     #### CONFIG and CONNECT
     # TODO: in xml file
     if os.name=='nt':
@@ -315,10 +315,17 @@ def bic(step_sec=300,exchange=False,**kwargs):
 #--------------------------------------------------------------------------
 # lastrate2ref 
 #--------------------------------------------------------------------------
-def trading_daily(start_date=None,end_date=None,security_id=[],include_agg=False,exchange_id=None):
+def trading_daily(start_date=None,end_date=None,security_id=[],include_agg=False,exchange_id=None,out_colnames=None):
     """
     trading_daily
     """
+    # current list of columns
+    available_colnames=['security_id','trading_destination_id','volume','turnover','open_prc','high_prc','low_prc','close_prc','nb_deal','open_volume','open_turnover',
+     'close_volume','close_turnover','average_spread_numer','average_spread_denom','intraday_volume','intraday_turnover','cross_volume','cross_turnover',
+     'open_nb_deal','close_nb_deal','intraday_nb_deal','auction_volume','auction_turnover','auction_nb_deal','deal_amount_var_log','deal_amount_avg_log',
+     'dark_volume','dark_turnover','dark_nb_deal','midclose_volume','midclose_turnover','midclose_nb_deal','end_volume','end_turnover',
+     'off_volume','off_turnover','overbid_volume','overask_volume','last_before_close_prc']
+    
     ### ATTENTION : ne fonctionne que pour l'europe
     ##############################################################
     # input handling
@@ -340,7 +347,13 @@ def trading_daily(start_date=None,end_date=None,security_id=[],include_agg=False
     # construct the request
     ##############################################################
     #---- select
-    select_req=" SELECT tddaily.*,exchref.EXCHANGETYPE "
+    if out_colnames is None:
+        select_req=" SELECT tddaily.*,exchref.EXCHANGETYPE "
+    else:
+        if np.any([x not in available_colnames for x in out_colnames]):
+            raise valueError('bad out_colnames')
+        out_colnames=np.unique(out_colnames+['date','security_id','trading_destination_id'])
+        select_req='SELECT '+''.join(['tddaily.'+x+',' for x in out_colnames])+'exchref.EXCHANGETYPE '
     #---- from
     from_req=(" FROM Market_data..trading_daily tddaily "
     " LEFT JOIN KGR..EXCHANGEREFCOMPL exchref ON ( "

@@ -273,24 +273,25 @@ if __name__=='__main__':
     Connections.change_connections("dev")
     
     
-    day = datetime(year=2013, month=7, day=23)
+#     day = datetime(year=2013, month=8, day=21)
     day = datetime.now() - timedelta(days=1)
     
-    daily = PlotEngine(start_date = day - timedelta(days=56), end_date = day  , filter = {'Account': {'$regex' : 'AKO.*'}})
-    
-    # One DAY
+#     daily = PlotEngine(start_date = day - timedelta(days=56), end_date = day  , filter = {'Account': {'$regex' : 'AKO.*'}})
+#     
+#     # One DAY
 #     daily = PlotEngine(start_date = day, end_date = day)
-    daily.plot_basic_stats()
+#     daily.plot_basic_stats()
 #     daily.plot_intraday_exec_curve()
-    plt.show()
-    
-    # Weekly
-    weekly = PlotEngine(start_date = day - timedelta(days=7), end_date = day )
-    weekly.plot_basic_stats()
-    plt.show()
+#     plt.show()
+#     
+#     # Weekly
+#     weekly = PlotEngine(start_date = day - timedelta(days=7), end_date = day )
+#     weekly.plot_basic_stats()
+#     plt.show()
      
     # Monthly
     monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day )
-    monthly.plot_basic_stats()
+#     monthly.plot_basic_stats()
+    monthly.plot_intraday_exec_curve()
     plt.show()
     

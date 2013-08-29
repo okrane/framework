@@ -17,6 +17,7 @@ import lib.tca.mapping as mapping
 import lib.tca.tools as tools
 import lib.io.toolkit as toolkit
 import lib.data.st_data as st_data
+import logging
 from lib.io.toolkit import get_traceback
 
 
@@ -212,23 +213,23 @@ def agg_daily_deal(start_date=None,end_date=None,step_sec=60*30,filter=None,grou
         # - get deals
         _date_str=datetime.strftime(this_day, '%d/%m/%Y')
         _tmp=get_algodata.deal(start_date=_date_str,end_date=_date_str,filter=filter)
-        try :
+        
         # - aggregate + add
-            if _tmp.shape[0]>0:
-                _tmp_grouped=_tmp.groupby( [st_data.gridTime(date=_tmp.index, step_sec=step_sec, out_mode='ceil'), group_var] )
-                _tmp_grouped=pd.DataFrame([{'date':k[0],group_var:k[1],
+        if (_tmp.shape[0]>0) and (group_var in _tmp.columns.values):
+            _tmp_grouped=_tmp.groupby( [st_data.gridTime(date=_tmp.index, step_sec=step_sec, out_mode='ceil'), group_var] )
+            _tmp_grouped=pd.DataFrame([{'date':k[0],group_var:k[1],
                                       'mturnover_euro': np.sum(v.rate_to_euro*v.price*v.volume)*1e-6} for k,v in _tmp_grouped])
+            if _tmp_grouped.shape[0]==0:
+                logging.warning('variable <'+group_var+'> has no finite values')
+            else:
                 _tmp_grouped=_tmp_grouped.set_index('date')
                 # on passe en string parce que ca ne sorte pas sinon !!   
                 _tmp_grouped['tmpindex']=[datetime.strftime(x.to_datetime(),'%Y%m%d-%H:%M:%S.%f') for x in _tmp_grouped.index]
                 _tmp_grouped=_tmp_grouped.sort_index(by=['tmpindex',group_var]).drop(['tmpindex'],axis=1)
                 out=out.append(_tmp_grouped)
-        except:
-            import logging
-            logging.error(get_traceback())
-            print this_day
-            print _tmp
-            print _tmp_grouped
+        elif (group_var in _tmp.columns.values):
+            logging.warning('variable <'+group_var+'> is not in the database')
+            
         # - previous business day  
         this_day=toolkit.last_business_day(date=this_day)
         

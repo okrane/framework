@@ -35,7 +35,7 @@ def convert_str(s, date_format = ["%Y-%m-%d %H:%M:%S", "%Y%m%d-%H:%M:%S"]):
     return ret  
 
 class FixTranslator(object):
-    default_ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
+    default_ignore_tags = [8, 21, 22, 9, 34, 49, 56, 10, 47, 369]
     def __init__(self, file_transcriptor=None, ignore_tags = None):
         if file_transcriptor is None:
             self.file = os.path.join(os.path.dirname(__file__), 'fix_types.json')
@@ -172,7 +172,12 @@ if __name__ == '__main__':
         ft.pretty_print_jsonlike(args.String_To_Translate, to_print = True)
         sys.exit()
     else:
-        ft.pretty_print_csv(args.String_To_Translate, args.separator, to_print = True)
+        separator = args.separator
+        if args.separator in ['t', '\\t']:
+            separator = '\t'
+        elif args.separator in ['n', '\\n']:
+            separator = '\n'
+        ft.pretty_print_csv(args.String_To_Translate, separator, to_print = True)
         sys.exit()
     
 

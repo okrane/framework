@@ -174,7 +174,7 @@ if __name__ == '__main__':
     elif args.separator in ['n', '\\n']:
         separator = '\n'
         
-    string_to_read = args.String_To_Translate
+    string_to_read = args.String_To_Translate_Or_File_To_Translate
     
     if args.file:
         file == args.String_To_Translate

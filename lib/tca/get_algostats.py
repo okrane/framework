@@ -29,7 +29,7 @@ utc=pytz.UTC
 #--------------------------------------------------------------------------
 # sequence_info
 #--------------------------------------------------------------------------
-def occurrence_info_fe(sequence_id=None,occurence_id=None,start_date=None,end_date=None):  
+def occurrence_info_fe(sequence_id=None,occurrence_id=None,start_date=None,end_date=None):  
     ###########################################################################
     #### extract algo DATA
     ###########################################################################
@@ -38,9 +38,9 @@ def occurrence_info_fe(sequence_id=None,occurence_id=None,start_date=None,end_da
         data_seq=get_algodata.sequence_info(sequence_id=sequence_id)
         data_occ=get_algodata.occurrence_info(sequence_id=sequence_id)
     # get all the sequences from occurence ids
-    elif occurence_id is not None:  
-        data_seq=get_algodata.sequence_info(occurence_id=occurence_id)
-        data_occ=get_algodata.occurrence_info(occurence_id=occurence_id)
+    elif occurrence_id is not None:  
+        data_seq=get_algodata.sequence_info(occurrence_id=occurrence_id)
+        data_occ=get_algodata.occurrence_info(occurrence_id=occurrence_id)
     elif (start_date is not None)  and (end_date is not None): 
         data_seq=get_algodata.sequence_info(start_date=start_date,end_date=end_date)
         data_occ=get_algodata.occurrence_info(start_date=start_date,end_date=end_date)
@@ -77,7 +77,7 @@ def occurrence_info_fe(sequence_id=None,occurence_id=None,start_date=None,end_da
 #--------------------------------------------------------------------------
 # sequence_info
 #--------------------------------------------------------------------------
-def sequence_info(sequence_id=None,occurence_id=None,start_date=None,end_date=None):    
+def sequence_info(sequence_id=None,occurrence_id=None,start_date=None,end_date=None):    
     ###########################################################################
     #### extract algo DATA
     ###########################################################################
@@ -85,8 +85,8 @@ def sequence_info(sequence_id=None,occurence_id=None,start_date=None,end_date=No
     if sequence_id is not None:
         data=get_algodata.sequence_info(sequence_id=sequence_id)
     # get all the sequences from occurence ids
-    elif occurence_id is not None:  
-        data=get_algodata.sequence_info(occurence_id=occurence_id)
+    elif occurrence_id is not None:  
+        data=get_algodata.sequence_info(occurrence_id=occurrence_id)
     elif (start_date is not None)  and (end_date is not None): 
         data=get_algodata.sequence_info(start_date=start_date,end_date=end_date)
     else:
@@ -255,4 +255,4 @@ def agg_daily_deal(start_date=None,end_date=None,step_sec=60*30,filter=None,grou
 
 if __name__=='__main__':
     # ft london stock
-    data=sequence_info(occurence_id='FY2000007382301')    
+    data=sequence_info(occurrence_id='FY2000007382301')    

@@ -18,7 +18,7 @@ from lib.dbtools.connections import Connections
 #--------------------------------------------------------------------------
 # sequence_info
 #--------------------------------------------------------------------------
-def sequence_info(db_name = "Mars", sequence_id = None, start_date = None, end_date = None, occurence_id = None,  filter = None):
+def sequence_info(db_name = "Mars", sequence_id = None, start_date = None, end_date = None, occurrence_id = None,  filter = None):
      
     #### DEFAULT OUTPUT    
     data=pd.DataFrame()
@@ -38,9 +38,9 @@ def sequence_info(db_name = "Mars", sequence_id = None, start_date = None, end_d
             ids=[sequence_id] 
         req = {"p_cl_ord_id": {"$in" : ids}}
     # get all the sequences from occurence ids
-    elif occurence_id is not None:
-        if isinstance(occurence_id,basestring):
-            ids=[occurence_id]
+    elif occurrence_id is not None:
+        if isinstance(occurrence_id,basestring):
+            ids=[occurrence_id]
         req = {"p_occ_id": {"$in" : ids}}
     # get all the sequences from date start end
     elif start_date is not None and end_date is not None:
@@ -125,7 +125,7 @@ def sequence_info(db_name = "Mars", sequence_id = None, start_date = None, end_d
 #--------------------------------------------------------------------------
 # occurence_info
 #--------------------------------------------------------------------------        
-def occurrence_info(db_name = "Mars", start_date = None, end_date = None, occurence_id = None,  filter = None): 
+def occurrence_info(db_name = "Mars", start_date = None, end_date = None, occurrence_id = None,  filter = None): 
     
     #### DEFAULT OUTPUT    
     data = pd.DataFrame()
@@ -136,8 +136,8 @@ def occurrence_info(db_name = "Mars", start_date = None, end_date = None, occure
     
     #### Build the request
     # if list of sequence_id then        
-    if occurence_id is not None:  
-        ids = occurence_id
+    if occurrence_id is not None:  
+        ids = occurrence_id
         if isinstance(ids,basestring):
             ids=[ids] 
         req = {"MsgType":"D","p_occ_id": {"$in" : ids}}

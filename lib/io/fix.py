@@ -177,8 +177,8 @@ if __name__ == '__main__':
     string_to_read = args.String_To_Translate_Or_File_To_Translate
     
     if args.file:
-        file == args.String_To_Translate_Or_File_To_Translate
-        f = open(file, 'r')
+        my_file = args.String_To_Translate_Or_File_To_Translate
+        f = open(my_file, 'r')
         string_to_read = f.read()
         f.close()
     

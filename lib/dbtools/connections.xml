@@ -113,7 +113,8 @@
             <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
                 <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
 				<SERVER NAME="KGR">172.29.100.64:1433|KGR|python_ro|python4ever!!</SERVER>
-				<SERVER NAME="MARKET_DATA">172.29.100.64:1433|Market_data|batch_algo|25b175f3e5</SERVER>				
+				<SERVER NAME="MARKET_DATA">172.29.100.64:1433|Market_data|batch_algo|25b175f3e5</SERVER>
+                <SERVER NAME="QUANT">172.29.100.64:1433|QUANT|batch_algo|25b175f3e5</SERVER>				
             </connections> 
 			<connections driver="Mongo"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
 				<SERVER NAME="MARS">172.29.100.27:27017|Mars|python_read|pythonpassread</SERVER>

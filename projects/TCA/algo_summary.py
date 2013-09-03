@@ -105,7 +105,7 @@ if __name__=='__main__':
     image_name = 'Place_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
     repeat(image_name)
  
-    image_name = 'Intraday_algo_vol_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
+    image_name = 'Intraday_algo_vol_from_' + datetime.strftime(day- timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
     file_path = folder + image_name
     repeat(image_name)
     

@@ -35,7 +35,7 @@ def convert_str(s, date_format = ["%Y-%m-%d %H:%M:%S", "%Y%m%d-%H:%M:%S"]):
     return ret  
 
 class FixTranslator(object):
-    default_ignore_tags = [8, 21, 22, 9, 34, 49, 56, 58, 10, 47, 369]
+    default_ignore_tags = [8, 21, 22, 9, 34, 49, 56, 10, 47, 369]
     def __init__(self, file_transcriptor=None, ignore_tags = None):
         if file_transcriptor is None:
             self.file = os.path.join(os.path.dirname(__file__), 'fix_types.json')
@@ -159,20 +159,32 @@ class FixTranslator(object):
     
     
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Translate a fix Message')
-    parser.add_argument('String_To_Translate', type=types.StringType)
+    parser = argparse.ArgumentParser(description='Translate a fix string or file (not a binary file)')
+    parser.add_argument('String_To_Translate_Or_File_To_Translate', type=types.StringType)
+    parser.add_argument('-f', '--file', help='Translate a file', action="store_true")
     parser.add_argument('-c', '--csv', help='Display a csv', action="store_true")
     parser.add_argument('-j', '--json', help='Display a json like format', action="store_true")
     parser.add_argument('-s', '--separator', help='Customize the separator for csv, by default it is ";"', default=";")
     args = parser.parse_args()
 
     ft = FixTranslator()
+    separator = args.separator
+    if args.separator in ['t', '\\t']:
+        separator = '\t'
+    elif args.separator in ['n', '\\n']:
+        separator = '\n'
+        
+    string_to_read = args.String_To_Translate_Or_File_To_Translate
+    
+    if args.file:
+        my_file = args.String_To_Translate_Or_File_To_Translate
+        f = open(my_file, 'r')
+        string_to_read = f.read()
+        f.close()
     
     if args.json:
-        ft.pretty_print_jsonlike(args.String_To_Translate, to_print = True)
-        sys.exit()
+        s = ft.pretty_print_jsonlike(string_to_read, to_print = True)
     else:
-        ft.pretty_print_csv(args.String_To_Translate, args.separator, to_print = True)
-        sys.exit()
-    
+        s = ft.pretty_print_csv(string_to_read, separator, to_print = True)
+
 

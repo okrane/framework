@@ -38,7 +38,7 @@ def get_local(date, sec_id, srv_addr, local_temp = ''):
         local_temp, f = os.path.split(full_path)
         
 
-    remote_data_path = '/quant/kc_repository_/get_tick/ft/%s/%s.mat' %(sec_id, day)
+    remote_data_path = '/quant/kc_repository/get_tick/ft/%s/%s.mat' %(sec_id, day)
     
 # =======
 #     if datetime.strptime(date, '%d/%m/%Y')<=datetime.strptime('11/07/2013', '%d/%m/%Y'):
@@ -88,16 +88,10 @@ def ft(**kwargs):
     #### CONFIG and CONNECT
     # TODO: in xml file
     if os.name=='nt':
-        if datetime.strptime(date, '%d/%m/%Y')<=datetime.strptime('11/07/2013', '%d/%m/%Y'):
-            ft_root_path="Q:\\kc_repository"
-        else:
-            ft_root_path="Q:\\test_kc_repository"
+        ft_root_path="Q:\\kc_repository"
     else:
-        if datetime.strptime(date, '%d/%m/%Y')<=datetime.strptime('11/07/2013', '%d/%m/%Y'):
-            ft_root_path="/quant/kc_repository"
-        else:
-            ft_root_path="/quant/test_kc_repository"
-    
+        ft_root_path="/quant/kc_repository"
+        
     ##############################################################
     # load and format
     ##############################################################
@@ -223,9 +217,7 @@ def histocurrencypair(date = None, last_date_from = None, start_date = None, end
     ####  OUTPUT 
     if not vals:
         return out  
-     
-    
-    
+        
     out=pd.DataFrame.from_records(vals,columns=['date','ccy','ccyref','rate'],index=['date'])
     out=out.sort_index()
     return out

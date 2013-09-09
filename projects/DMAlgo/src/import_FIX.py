@@ -12,6 +12,7 @@ import time
 from datetime import datetime, timedelta
 from lib.dbtools import connections
 from pandas import *
+from pandas.io.parsers import read_csv
 from lib.data.pyData import convertStr
 import pytz
 import lib.dbtools.read_dataset as read_dataset
@@ -1230,6 +1231,60 @@ class DatabasePlug:
         
         ssh.close()
         return order_life
+    def get_street_order(self, day):
+        
+        str_street_o = ''
+        str_street_i = ''
+        from_o = ['Account', 'ClOrdId','DeliverToCompID', 'ExDestination', 'ParentClientID', 'Text']
+        for s in self.conf:
+            logging.info('Get data from server: ' + str(s))
+            self.server = self.conf[s]
+
+            ssh = paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(self.server['ip_addr'], 
+                        username = self.server['list_users']['flexsys']['username'], 
+                        password = self.server['list_users']['flexsys']['passwd'])
+            
+            path_out = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sO.fix' % (day, day)
+            path_in  = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sI.fix' % (day, day)
+            
+            cmd_o = "prt_fxlog %s 3 | egrep '35=[DG]'" % path_out
+            cmd_i = "prt_fxlog %s 3 | egrep '35=8.*150=[12]'" % path_in
+            
+            (stdin_o, stdout_grep_o, stderr_o) = ssh.exec_command(cmd_o)
+            (stdin_i, stdout_grep_i, stderr_i) = ssh.exec_command(cmd_i)
+            
+            str_street_o += stdout_grep_o.read()
+            str_street_i += stdout_grep_i.read()
+            
+            csv_o = FixTranslator().pretty_print_csv(str_street_o, to_print = False)
+            csv_i = FixTranslator().pretty_print_csv(str_street_i, to_print = False)
+            
+            file_path_o = 'streets_o.csv'
+            file_path_i = 'streets_i.csv'
+            
+            f = open(file_path_o, 'w')
+            f.write(csv_o)
+            f.close()
+        
+            f = open(file_path_i, 'w')
+            f.write(csv_i)
+            f.close()
+            
+            df_o = read_csv(file_path_o, sep=';')
+            
+            df_i = read_csv(file_path_i, sep=';')
+            
+#             for 
+            
+            df_i
+            print df_o
+            print df_i
+        return df 
+
+                    
+                    
                     
 if __name__ == '__main__':
     import sys    
@@ -1266,12 +1321,16 @@ if __name__ == '__main__':
     environment         = 'prod'
     source              = 'CLNT1'
 
-    dates               = ['20130823']
+    dates               = ['20130902']
     
-    DatabasePlug(database_server    = database_server, 
-                 database           = database,
-                 environment        = environment, 
-                 source             = source, 
-                 dates              = dates,
-                 mode               = "write").fill(order_deals=True, algo_orders=True)
+    dic = DatabasePlug(database_server    = database_server, 
+                     database           = database,
+                     environment        = environment, 
+                     source             = source, 
+                     dates              = dates,
+                     mode               = "write").get_street_order(dates[0])
+    from lib.data.ui import Explorer
+    Explorer(dic['in'])
+    Explorer(dic['out'])
+                 #fill(order_deals=True, algo_orders=True)
     

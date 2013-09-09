@@ -9,18 +9,21 @@ from scipy.stats.mstats import mquantiles
 from lib.plots.matplotlib_tools import FixedOrderFormatter
 from lib.plots.color_schemes import *
 from lib.data.ui.Explorer import *
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+from matplotlib import dates
 
 def global_street_order_count():
-    data = read_csv('C:/st_sim/repository/ULPROD20130902O.csv', sep = ';', na_values=["nan"], keep_default_na = False, index_col = False)    
-    data = data[data['ClOrdID'] != '']
-    print np.unique(data['MsgType'])
+    data = read_csv('C:/st_sim/repository/ULPROD20130903O.csv', sep = ';', na_values=["nan"], keep_default_na = False, index_col = False)        
+    data1 = read_csv('C:/st_sim/repository/ULPROD20130902O.csv', sep = ';', na_values=["nan"], keep_default_na = False, index_col = False)        
     
-        
+    data = data[np.logical_and(data['ClOrdID'] != '', np.logical_or( data['MsgType']=='D', data['MsgType'] == 'G' )  )]    
+    data1 = data1[np.logical_and(data1['ClOrdID'] != '', np.logical_or( data1['MsgType']=='D', data1['MsgType'] == 'G' )  )]    
+    
+    data = data1.append(data)
     data.index = [datetime.strptime(d, '%Y-%m-%d %H:%M:%S') for d in data['SendingTime']]
     return data
 
-def number_of_orders_distribution():
+def number_of_orders_per_minute():
     
     data = global_street_order_count()[['ClOrdID', 'ParentClientID']]
     parents = np.unique(data['ParentClientID'])
@@ -37,23 +40,44 @@ def number_of_orders_distribution():
         order_count = len(order_list.index)
         if order_count > 10 and duration.total_seconds() > 10 * 60:
             for g in group_list:
-                frequency.append((len(g[1]), o))
+                frequency.append((len(g[1]), o, g[0].to_datetime()))
         #print order_count, duration, duration.total_seconds() / 60
         
     return frequency 
 
-d = number_of_orders_distribution()
+def spam_distribution():
+    d = number_of_orders_per_minute()
+    
+    frequency = np.array([f[0] for f in d])
+    frequency = frequency[frequency > 10]
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    print min(frequency), max(frequency)
+    for a in d:
+        if a[0] == max(frequency): print a[1]
+            
+    count,division = np.histogram(frequency, bins = np.arange(min(frequency), max(frequency), 1))    
+    plt.hist(frequency, bins = division)
+    
+    print d[0][2]
+    x = np.array([datetime(datetime.now().year, datetime.now().month, datetime.now().day, f[2].hour, f[2].minute, f[2].second) for f in d])
+    y =  np.array([f[0] for f in d])
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(x[y>0], 1.0 * y[y>0]/60, '.', color = kc_main_colors()['dark_blue'])
+    ax.set_title('Intraday Algo Message Frequency')    
+    ax.set_ylabel('Street Order Frequency (Hz)')
+    print ax.xaxis.get_major_formatter()   
+    xlabels = ax.get_xticklabels() 
+    for label in xlabels: 
+        label.set_rotation(-35) 
+    ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))
+    #ax.xaxis.set_rotation(135)
+    #ax.set_xticks
+    
+    plt.show()
 
-frequency = [f[0] for f in d]
-fig = plt.figure()
-ax = fig.add_subplot(111)
-print min(frequency), max(frequency)
-for a in d:
-    if a[0] == max(frequency): print a[1]
-        
-count,division = np.histogram(frequency, bins = np.arange(min(frequency), max(frequency), 1))    
-plt.hist(frequency, bins = division)
-plt.show()
+spam_distribution()
 # -----------------------------------------------------------------------------
 
 def global_parent_order_size():

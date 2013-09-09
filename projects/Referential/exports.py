@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from lib.dbtools.export import * 
+from datetime import datetime, timedelta
 
 def export_security(filename = "security.kcdb"):
     query = """select SECID, 
@@ -37,12 +38,18 @@ def export_quotation_group(filename = "quotation_group.kcdb"):
 def export_trading_hours(filename = "trading_hours.kcdb"):
     query = """select * from trading_hours"""
     export_to_csv("KGR", query, filename, ";")
-    
+
+def export_currency(filename = "currency.kcdb"):
+    yesterday = datetime.now() - timedelta(days = 1)
+    query = """select CCY, CCYREF, VALUE from histocurrencytimeseries where DATE = '%s' and CCYREF = 'EUR' """ % (datetime.strftime(yesterday, '%Y%m%d'))    
+    export_to_csv('KGR', query, filename, ';')
+        
 
 if __name__ == "__main__":
-    export_security()
-    export_security_market()
-    export_quotation_group()
-    export_trading_hours()
+    export_currency()
+   # export_security()
+   # export_security_market()
+   # export_quotation_group()
+   # export_trading_hours()
     
 

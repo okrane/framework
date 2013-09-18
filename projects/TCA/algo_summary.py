@@ -34,7 +34,7 @@ if __name__=='__main__':
     
     
     # Daily
-    m = '<h3>Daily</h3>'
+    m = '<h2>Daily</h2>'
     daily = PlotEngine(start_date = day, end_date = day)
     
     l         = []
@@ -69,7 +69,7 @@ if __name__=='__main__':
         m += '<img src="cid:%s">\n' %image
         
     # Weekly
-    m += '<h3>Weekly</h3>'
+    m += '<h2>Weekly</h2>'
     weekly = PlotEngine(start_date = day - timedelta(days=7), end_date = day)
     
     image_name = 'Vol_euro_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
@@ -93,7 +93,7 @@ if __name__=='__main__':
         
                 
     # Monthly
-    m += '<h3>Monthly</h3>' 
+    m += '<h2>Monthly</h2>' 
     monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day)
     
     image_name = 'Vol_euro_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
@@ -105,13 +105,13 @@ if __name__=='__main__':
     image_name = 'Place_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
     repeat(image_name)
  
-    image_name = 'Intraday_algo_vol_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
+    image_name = 'Intraday_algo_vol_from_' + datetime.strftime(day- timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
     file_path = folder + image_name
     repeat(image_name)
     
     monthly.plot_basic_stats(path=list_path[8:11])
-#     monthly.plot_intraday_exec_curve().savefig(file_path)
-    for image in l[8:11]:
+    monthly.plot_intraday_exec_curve().savefig(file_path)
+    for image in l[8:12]:
         m += '<img src="cid:%s">\n' %image
 
     # Send an email
@@ -122,8 +122,7 @@ if __name__=='__main__':
     # me == the sender's email address
     # family = the list of all recipients' email addresses
     msg['From'] = 'alababidi@keplercheuvreux.com'
-    to = ['alababidi@keplercheuvreux.com', 'njoseph@keplercheuvreux.com', 'svlasceanu@keplercheuvreux.com', 'gpons@keplercheuvreux.com', 
-          'mdang@keplercheuvreux.com', 'whuang@keplercheuvreux.com', 'sreydellet@keplercheuvreux.com', 'tbiotteau@keplercheuvreux.com']
+    to = ['algoquant@keplercheuvreux.com', 'mnamajee@keplercheuvreux.com', 'glin@keplercheuvreux.com']
     msg['To'] = ' ,'.join(to)
     # Assume we know that the image files are all in PNG format
     for file in l:

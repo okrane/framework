@@ -290,8 +290,8 @@ if __name__=='__main__':
 #     plt.show()
      
     # Monthly
-    monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day )
-#     monthly.plot_basic_stats()
-    monthly.plot_intraday_exec_curve()
+    monthly = PlotEngine(start_date = day - timedelta(days=1), end_date = day )
+    monthly.plot_basic_stats()
+    #monthly.plot_intraday_exec_curve()
     plt.show()
     

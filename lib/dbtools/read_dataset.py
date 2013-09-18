@@ -181,8 +181,6 @@ def histocurrencypair(date = None, last_date_from = None, start_date = None, end
     ##############################################################
     # request and format
     ##############################################################
-
-        
     ####  Build request
     if req_n == 1:
         req=("""SELECT 
@@ -343,7 +341,7 @@ def trading_daily(start_date=None,end_date=None,security_id=[],include_agg=False
         select_req=" SELECT tddaily.*,exchref.EXCHANGETYPE "
     else:
         if np.any([x not in available_colnames for x in out_colnames]):
-            raise valueError('bad out_colnames')
+            raise ValueError('bad out_colnames')
         out_colnames=np.unique(out_colnames+['date','security_id','trading_destination_id'])
         select_req='SELECT '+''.join(['tddaily.'+x+',' for x in out_colnames])+'exchref.EXCHANGETYPE '
     #---- from

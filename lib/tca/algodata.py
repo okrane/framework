@@ -36,7 +36,7 @@ class AlgoDataProcessor(object):
     # INIT
     ###########################################################################
     def __init__(self,date = None, start_date = None, end_date = None, filter = None,
-                 mode_colnames = 'base' , db_name = 'Mars'):
+                 mode_colnames = 'base'):
         
         #---- INPUT
         """start_date and end_date are datetime"""
@@ -57,7 +57,7 @@ class AlgoDataProcessor(object):
         self.data_deal=None
         
         #---- CONNECTION INFO
-        self.db_name = db_name
+        self.db_name = 'Mars'
         self.algo_collection_name = 'AlgoOrders'
         self.deal_collection_name = 'OrderDeals'
         
@@ -69,7 +69,8 @@ class AlgoDataProcessor(object):
     ###########################################################################
     # METHOD GET DATA
     ###########################################################################
-    def get_db_data(self, level=None):
+    def get_db_data(self, level=None,
+                    force_colnames_only=None):
         
         t0=time.clock()
         
@@ -110,7 +111,7 @@ class AlgoDataProcessor(object):
             logging.error('level should be sequence or occurrence')
             raise ValueError('Bad inputs')
         
-        NEEDED_COLNAMES=self.get_db_colnames(level=level,mode=self.mode_colnames)
+        NEEDED_COLNAMES=self.get_db_colnames(level=level,mode=self.mode_colnames,only=force_colnames_only)
           
         #-----------------------------------
         # CONNECTION DB  
@@ -145,6 +146,10 @@ class AlgoDataProcessor(object):
                 
             #--- Filters   
             if self.filter is not None:
+                
+                if np.any([x not in NEEDED_COLNAMES for x in self.filter.keys()]):
+                    raise ValueError('one filter keys is not in the needed colnames')
+                    
                 criterion.append(self.filter)
                 
         else:
@@ -201,6 +206,8 @@ class AlgoDataProcessor(object):
         # Dataframe
         data=pd.DataFrame.from_records(documents, columns=columns,index=index_colname)
         data=data.sort_index()  
+        
+        NEEDED_COLNAMES=np.setdiff1d(NEEDED_COLNAMES,[index_colname])
         
         # HANDLING COLNAMES : drop
         for x in data.columns.tolist():
@@ -285,11 +292,11 @@ class AlgoDataProcessor(object):
         self.data_xls_occ_fe=pd.read_csv(self.xls_occ_fe_pathfilename,sep=';')
         
         # NORMALIZE like the db              
-        # rate_to_euro, cheuvreux_secid, Side, occ_strategy_name_mapped
+        # rate_to_euro, cheuvreux_secid, Side, occ_fe_strategy_name_mapped
         dict_rename={
             'STARTTIME':'SendingTime',
             'ENDTIME':'eff_endtime', 
-            'STRATEGY':'occ_strategy_name_mapped',
+            'STRATEGY':'occ_fe_strategy_name_mapped',
             'CURRENCY':'Currency',
             'TICKERFLEX':'Symbol',
             'USRID':'TargetSubID',
@@ -333,12 +340,12 @@ class AlgoDataProcessor(object):
         self.data_xls_occ_fe['cheuvreux_secid']=vals
          
         #----- strategy name
-        uni_,idx_in_uni_=matlabutils.uniqueext(self.data_xls_occ_fe['occ_strategy_name_mapped'].values,return_inverse=True)
+        uni_,idx_in_uni_=matlabutils.uniqueext(self.data_xls_occ_fe['occ_fe_strategy_name_mapped'].values,return_inverse=True)
         uni_vals=map(lambda x : str(mapping.StrategyName(x)),uni_)
         vals=['']*len(idx_in_uni_)
         for i in range(0,len(vals)):
             vals[i]=uni_vals[idx_in_uni_[i]]
-        self.data_xls_occ_fe['occ_strategy_name_mapped']=vals
+        self.data_xls_occ_fe['occ_fe_strategy_name_mapped']=vals
          
         #----- rate to euro 
         uni_curr=np.unique(self.data_xls_occ_fe['Currency'].values).tolist()

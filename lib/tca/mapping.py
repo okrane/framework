@@ -37,6 +37,9 @@ def ExcludeAuction(x):
         raise NameError('mapping:ExcludeAuction - Bad inputs')
     return out
 
+#------------------------------------------------------------------------------
+# OrdStatus
+#------------------------------------------------------------------------------
 def OrdStatus(char):
     global ord_status_dict
     
@@ -80,6 +83,10 @@ def StrategyName(id, sweep_lit = None, database = 'Mars'):
     if len(l_result) == 0:
         raise NameError('mapping:StrategyName - Bad inputs')
     return l_result[0]["short_name"]
+
+
+
+
 
 if __name__ == "__main__":
     print StrategyName(id = 5)

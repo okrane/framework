@@ -270,7 +270,7 @@ class AdvancedPlotEngine(PlotEngine):
       
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
-    Connections.change_connections("dev")
+    Connections.change_connections("production")
     
     
 #     day = datetime(year=2013, month=8, day=21)
@@ -290,8 +290,8 @@ if __name__=='__main__':
 #     plt.show()
      
     # Monthly
-    monthly = PlotEngine(start_date = day - timedelta(days=1), end_date = day )
+    monthly = PlotEngine(start_date = day - timedelta(days=0), end_date = day )
     monthly.plot_basic_stats()
-    #monthly.plot_intraday_exec_curve()
+    monthly.plot_intraday_exec_curve()
     plt.show()
     

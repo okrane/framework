@@ -22,7 +22,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
     ###########################################################################
     # INIT
     ###########################################################################
-    def __init__(self,a=None,*args,**kwargs):
+    def __init__(self,*args,**kwargs):
         # Parents attr
         AlgoDataProcessor.__init__(self,*args,**kwargs)
         
@@ -40,7 +40,32 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         self.get_db_data(level='occurrence')
         
         #-----------------------------------
-        # APPLY FORMULA STATS
+        # APPLY EXEC FORMULA STATS
+        #-----------------------------------
+        if self.data_occurrence.shape[0]>0:
+            if 'occ_fe_strategy_name_mapped' not in self.data_occurrence.columns.values:
+                data_seq2load=False
+                if self.data_sequence is None:
+                    data_seq2load=True
+                    # bidouille 1 on load les sequence pour calculer le occ_strategy_name_
+                    self.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped'])
+                
+                config_stats={'occ_fe_strategy_name_mapped':
+                    {'default': 'Unknown' ,'slicer' : lambda df : df.strategy_name_mapped.values[-1]}}
+                    
+                _add_data=dftools.agg(self.data_sequence,group_vars='p_occ_id',
+                                      stats=dict([(x,config_stats[x]['slicer']) for x in config_stats.keys()]))
+                                      
+                if _add_data.shape[0]>0:
+                    index_name=self.data_occurrence.index.name
+                    self.data_occurrence=self.data_occurrence.reset_index().merge(_add_data,how='left',on=['p_occ_id']).set_index(index_name)
+                    
+                # bidouille 2 : on efface...
+                if data_seq2load:
+                    self.data_sequence = None
+            
+        #-----------------------------------
+        # APPLY MARKET FORMULA STATS
         #-----------------------------------
         if self.data_occurrence.shape[0]>0:
             

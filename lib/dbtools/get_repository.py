@@ -116,7 +116,8 @@ def tag100_to_place_name():
     vals=Connections.exec_sql('KGR',req)
     
     data=pd.DataFrame.from_records(vals,columns=['suffix','name'])
-    return data
+    
+    return data.drop_duplicates(cols=['suffix','name'])
 
 def get_symbol6_from_ticker(ticker):
     ticker = str(ticker)

@@ -160,9 +160,9 @@ def generate_file(day, all=False, export_path=None, with_none = False):
     optional = ''
     
     if all:
-        optional =  'gl_secid; isin; sedol_secid; reuters_secid; bloomberg_secid; SECID;'
+        optional =  'gl_secid;isin;sedol_secid;reuters_secid;bloomberg_secid;SECID;'
     
-    l.append('cheuvreux_secid; ticker; tickerAG;' + optional + '\n')
+    l.append('cheuvreux_secid;ticker;tickerAG;' + optional + '\n')
     
     
     def line_to_append(my_dict):
@@ -171,7 +171,7 @@ def generate_file(day, all=False, export_path=None, with_none = False):
                                   my_dict['tickerAG']
                                )
         if all:
-            line += '%s; %s; %s; %s; %s; %s;' %(   my_dict['gl_secid'],
+            line += '%s;%s;%s;%s;%s;%s;' %(   my_dict['gl_secid'],
                                                    my_dict['isin'],
                                                    my_dict['sedol_secid'],
                                                    my_dict['reuters_secid'],
@@ -206,7 +206,7 @@ def generate_file(day, all=False, export_path=None, with_none = False):
                 ticker      = ''
             else:
                 ticker_ag   = ''
-            l.append('; %s; %s; ; ; ; ; ; %s;\n' % (ticker, ticker_ag, el))
+            l.append(';%s;%s;;;;;;%s;\n' % (ticker, ticker_ag, el))
     
     if export_path is None:
         export_path = path
@@ -233,6 +233,6 @@ def generate_file(day, all=False, export_path=None, with_none = False):
 
    
 if __name__ == '__main__':
-    day = datetime.strftime(datetime.now(), format= '%Y%m%d')
-    generate_file(day)
+    day = datetime.strftime(datetime(year = 2013, month = 9, day=17), format= '%Y%m%d')
+    generate_file(day, all = True, export_path = "C://temp")
     

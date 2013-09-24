@@ -142,7 +142,7 @@ class FixTranslator(object):
                     
         s_keys = sorted(keys)
         
-        s = sep.join(s_keys) + '\n'
+        s = sep.join(s_keys) + sep + '\n'
         for dic in l_dic:
             l = []
             for key in s_keys:

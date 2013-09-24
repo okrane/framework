@@ -63,7 +63,7 @@ if __name__=='__main__':
     repeat(image_name)
     h.savefig(folder + image_name)
     m = '<h2>History</h2>'
-    m += '<img src="cid:%s">\n' %(folder + image_name)
+    m += '<img src="cid:%s">\n' %image_name
     
     # Daily
     m += '<h2>Daily</h2>'

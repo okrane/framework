@@ -185,8 +185,8 @@ class AlgoDataProcessor(object):
                     criterion.append({'p_cl_ord_id': {"$in": np.unique(self.data_sequence['p_cl_ord_id']).tolist()}})
                     
         # --- Request        
-        req = criterion[0] if (len(criterion) == 1) else {'$and' : criterion}  
-        res = occ_db.find(req,NEEDED_COLNAMES)
+        req = criterion[0] if (len(criterion) == 1) else {'$and' : criterion} 
+        res = occ_db.find(req, NEEDED_COLNAMES)
         client.close()
         
         #-----------------------------------

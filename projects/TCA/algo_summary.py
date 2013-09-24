@@ -15,6 +15,7 @@ import smtplib
 from lib.logger.custom_logger import *
 import logging
 
+import lib.tca.algoplot
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
 #     Connections.change_connections("dev")
@@ -31,10 +32,7 @@ if __name__=='__main__':
     msg = MIMEMultipart()
     msg['Subject'] = 'Algo Summary (Beta test)'
     
-    
-    
-    # Daily
-    m = '<h2>Daily</h2>'
+
     daily = PlotEngine(start_date = day, end_date = day)
     
     l         = []
@@ -48,7 +46,26 @@ if __name__=='__main__':
         
         l.append(image_name)
         list_path.append(file_path)
+    
+
         
+    sdate = day - timedelta(days=90)
+    edate = day 
+    from lib.tca.algostats import AlgoStatsProcessor
+    algo_data = AlgoStatsProcessor(start_date = sdate, end_date = edate)
+    algo_data.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped','rate_to_euro','turnover','TargetSubID','ExDestination'])
+    
+    
+    #Sum up
+    history = lib.tca.algoplot.PlotEngine()
+    h, data = history.plot_algo_evolution(algo_data=algo_data,level='sequence',var='mturnover_euro',gvar='is_dma')
+    image_name = 'Serie_daily_' + datetime.strftime(sdate, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
+    h.savefig(folder + image_name)
+    m = '<h2>History</h2>'
+    m += '<img src="cid:%s">\n' %(folder + image_name)
+    
+    # Daily
+    m += '<h2>Daily</h2>'
     image_name = 'Vol_euro_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
     repeat(image_name)
     

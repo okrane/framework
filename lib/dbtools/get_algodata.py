@@ -19,7 +19,7 @@ from lib.dbtools.connections import Connections
 # sequence_info
 #--------------------------------------------------------------------------
 def sequence_info(db_name = "Mars", sequence_id = None, start_date = None, end_date = None, occurrence_id = None,  filter = None):
-     
+    
     #### DEFAULT OUTPUT    
     data=pd.DataFrame()
     
@@ -31,7 +31,7 @@ def sequence_info(db_name = "Mars", sequence_id = None, start_date = None, end_d
     t0=time.clock()
     
     req = {}
-
+    
     # get all the sequences from sequence ids
     if sequence_id is not None:
         if isinstance(sequence_id, basestring):

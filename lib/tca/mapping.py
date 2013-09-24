@@ -12,6 +12,16 @@ import simplejson
 #import pytz
 
 #------------------------------------------------------------------------------
+# SIDE
+#------------------------------------------------------------------------------
+def Side(x):
+    out=np.array([np.NaN]*len(x))
+    out[np.nonzero([y in ['1','3'] for y in x])[0]]=1
+    out[np.nonzero([y in ['2','4'] for y in x])[0]]=-1
+    
+    return out
+
+#------------------------------------------------------------------------------
 # ExcludeAuction
 #------------------------------------------------------------------------------
 def ExcludeAuction(x):
@@ -27,6 +37,9 @@ def ExcludeAuction(x):
         raise NameError('mapping:ExcludeAuction - Bad inputs')
     return out
 
+#------------------------------------------------------------------------------
+# OrdStatus
+#------------------------------------------------------------------------------
 def OrdStatus(char):
     global ord_status_dict
     
@@ -70,6 +83,10 @@ def StrategyName(id, sweep_lit = None, database = 'Mars'):
     if len(l_result) == 0:
         raise NameError('mapping:StrategyName - Bad inputs')
     return l_result[0]["short_name"]
+
+
+
+
 
 if __name__ == "__main__":
     print StrategyName(id = 5)

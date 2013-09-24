@@ -116,7 +116,8 @@ def tag100_to_place_name():
     vals=Connections.exec_sql('KGR',req)
     
     data=pd.DataFrame.from_records(vals,columns=['suffix','name'])
-    return data
+    
+    return data.drop_duplicates(cols=['suffix','name'])
 
 def get_symbol6_from_ticker(ticker):
     ticker = str(ticker)
@@ -214,71 +215,75 @@ def exchangeidmain(**kwargs):
 #------------------------------------------------------------------------------
 # tradingtime
 #------------------------------------------------------------------------------
-def tradingtime(**kwargs):
+def tradingtime(security_id=None,date=None,data_exchange_info=None,mode='main'):
     
-    ##############################################################
-    # input handling
-    ##############################################################
-    #---- security_id
-    if "security_id" in kwargs.keys():
-        lids=kwargs["security_id"]
-    else:
-        raise NameError('get_repository:exchangeidmain - Bad input : security_id is missing')
-    #---- date
-    if "date" in kwargs.keys():
-        date=kwargs["date"]
-    else:
-        date=[]
-        
     out=pd.DataFrame()
+    ##############################################################
+    # input interpretation
+    ##############################################################
+    if data_exchange_info is None:
+        data_exchange_info=exchangeinfo(security_id=security_id)
+        
+    if data_exchange_info is None and (mode=='main') and (data_exchange_info.shape[0]>=0):
+        data_exchange_info=data_exchange_info[data_exchange_info['EXCHANGETYPE']=='M']
+        
+    if data_exchange_info.shape[0]==0:
+        return out        
     
     ##############################################################
     # request data
     ##############################################################
-
-    pref_ = ""
-#     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""
-
-    data=exchangeinfo(security_id=lids)
-    if (data.shape[0]==0) or (not np.any(data['EXCHANGETYPE']=='M')):
-        return out
-    data=data[data['EXCHANGETYPE']=='M']
+    for i in range(0,data_exchange_info.shape[0]):
         
-    req=("SELECT * "
-    " FROM trading_hours_master " 
-    " WHERE trading_destination_id = %d "
-    " AND context_id is null "
-    " AND quotation_group = '%s'") % (data['EXCHANGE'].values[0],data['quotation_group'].values[0]) 
-    
-    vals=Connections.exec_sql('KGR',req,schema = True)
-    
-    if not vals[0]:
-        req=('SELECT * '
-            ' FROM trading_hours_master ' 
-            ' WHERE trading_destination_id = %d '
-            ' AND context_id is null '
-            ' AND quotation_group is null') % (data['EXCHANGE'])
+        req=("SELECT * "
+        " FROM trading_hours_master " 
+        " WHERE trading_destination_id = %d "
+        " AND context_id is null "
+        " AND quotation_group = '%s'") % (data_exchange_info['exchange_id'].values[i],data_exchange_info['quotation_group'].values[i]) 
+        
         vals=Connections.exec_sql('KGR',req,schema = True)
+        
         if not vals[0]:
-            raise NameError('get_repository:tradingtime - No trading hours/ exchange: '+str(data['EXCHANGE'].values[0])+' / quotation_group: '+data['quotation_group'].values[0])
-    
+            req=('SELECT * '
+                ' FROM trading_hours_master ' 
+                ' WHERE trading_destination_id = %d '
+                ' AND context_id is null '
+                ' AND quotation_group is null') % (data_exchange_info['exchange_id'])
+            vals=Connections.exec_sql('KGR',req,schema = True)
+            if not vals[0]:
+                logging.warning('get_repository:tradingtime - No trading hours/ exchange: '+str(data_exchange_info['exchange_id'].values[i])+' / quotation_group: '+data_exchange_info['quotation_group'].values[i])
+                break
+            
+        out=out.append(pd.DataFrame.from_records(vals[0],columns=vals[1]))
+        
     ##############################################################
     # transform data
-    ##############################################################  
-    out=pd.DataFrame.from_records(vals[0],columns=vals[1])
-    out['security_id']=lids
+    ##############################################################
+    if out.shape[0]==0:
+        return out
+        
     colnumns_date=['opening_auction','opening_fixing','opening','intraday_stop_auction','intraday_stop_fixing','intraday_stop','intraday_resumption_auction',
                  'intraday_resumption_fixing','intraday_resumption','closing_auction','closing_fixing','closing','post_opening','post_closing',
                  'trading_at_last_opening','trading_at_last_closing','trading_after_hours_opening','trading_after_hours_closing']
     # timezone
     for cols in colnumns_date:
-        if (out[cols].values[0] is not None):
-            tz=pytz.timezone(data['TIMEZONE'].values[0])
-            out[cols]=tz.localize(datetime.combine(datetime(2000,1,1).date(),datetime.strptime(out[cols].values[0][0:8],'%H:%M:%S').time())).timetz()
-            if not (date==[]):
-                # if date, the output will be in datetime whether in time format
-                out[cols]=datetime.combine(datetime.strptime(date, '%d/%m/%Y').date(),out[cols].values[0])
-
+        cols_vals=[]
+        for i in range(0,data_exchange_info.shape[0]):
+            if (out[cols].values[i] is not None):
+                tz=pytz.timezone(data_exchange_info['TIMEZONE'].values[i])
+                _tmp=tz.localize(datetime.combine(datetime(2000,1,1).date(),datetime.strptime(out[cols].values[i][0:8],'%H:%M:%S').time())).timetz()
+                if not (date==[]) and date is not None:
+                    # if date, the output will be in datetime whether in time format
+                    _tmp=datetime.combine(datetime.strptime(date, '%d/%m/%Y').date(),_tmp)
+            else:
+                _tmp=np.nan
+                
+            cols_vals.append(_tmp)
+            
+        out[cols]=cols_vals
+        
+    out=out.rename(columns={'trading_destination_id':'exchange_id'})
+    
     return out
 
 #------------------------------------------------------------------------------
@@ -304,10 +309,6 @@ def exchangeinfo(**kwargs):
     # ----------------
     # NEEDED
     # ----------------
-
-    pref_ = ""
-#     pref_ = "LUIDBC01_" if Connections.connections == "dev" else  ""   
-
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
     # ----------------
@@ -331,7 +332,10 @@ def exchangeinfo(**kwargs):
     
     vals=Connections.exec_sql('KGR',req,schema = True)
     
-    return pd.DataFrame.from_records(vals[0],columns=vals[1])
+    out=pd.DataFrame.from_records(vals[0],columns=vals[1])
+    out=out.rename(columns={'EXCHANGE':'exchange_id'})
+    
+    return out
  
 #------------------------------------------------------------------------------
 # exchangeid2tz

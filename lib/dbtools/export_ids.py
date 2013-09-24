@@ -160,18 +160,19 @@ def generate_file(day, all=False, export_path=None, with_none = False):
     optional = ''
     
     if all:
-        optional =  'gl_secid; isin; sedol_secid; reuters_secid; bloomberg_secid; SECID;'
+        optional =  'gl_secid;isin;sedol_secid;reuters_secid;bloomberg_secid;SECID;'
     
-    l.append('cheuvreux_secid; ticker; tickerAG;' + optional + '\n')
+    l.append('cheuvreux_secid;ticker;tickerAG;' + optional + '\n')
     
     
     def line_to_append(my_dict):
+        
         line = '%s;%s;%s;' %(  my_dict['cheuvreux_secid'],
                                   my_dict['ticker'],
                                   my_dict['tickerAG']
                                )
         if all:
-            line += '%s; %s; %s; %s; %s; %s;' %(   my_dict['gl_secid'],
+            line += '%s;%s;%s;%s;%s;%s;' %(   my_dict['gl_secid'],
                                                    my_dict['isin'],
                                                    my_dict['sedol_secid'],
                                                    my_dict['reuters_secid'],
@@ -179,6 +180,7 @@ def generate_file(day, all=False, export_path=None, with_none = False):
                                                    my_dict['SECID']
                                                  )
         line += '\n'
+        line.replace("|", "")
         return line
 
     for cheuvreux_secids, dict in dict_s6.iteritems():
@@ -206,7 +208,7 @@ def generate_file(day, all=False, export_path=None, with_none = False):
                 ticker      = ''
             else:
                 ticker_ag   = ''
-            l.append('; %s; %s; ; ; ; ; ; %s;\n' % (ticker, ticker_ag, el))
+            l.append(';%s;%s;;;;;;%s;\n' % (ticker, ticker_ag, el))
     
     if export_path is None:
         export_path = path

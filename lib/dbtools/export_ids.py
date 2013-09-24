@@ -166,6 +166,7 @@ def generate_file(day, all=False, export_path=None, with_none = False):
     
     
     def line_to_append(my_dict):
+        
         line = '%s;%s;%s;' %(  my_dict['cheuvreux_secid'],
                                   my_dict['ticker'],
                                   my_dict['tickerAG']
@@ -179,6 +180,7 @@ def generate_file(day, all=False, export_path=None, with_none = False):
                                                    my_dict['SECID']
                                                  )
         line += '\n'
+        line.replace("|", "")
         return line
 
     for cheuvreux_secids, dict in dict_s6.iteritems():

@@ -233,6 +233,6 @@ def generate_file(day, all=False, export_path=None, with_none = False):
 
    
 if __name__ == '__main__':
-    day = datetime.strftime(datetime(year = 2013, month = 9, day=17), format= '%Y%m%d')
-    generate_file(day, all = True, export_path = "C://temp")
+    day = datetime.strftime(datetime.now(), format= '%Y%m%d')
+    generate_file(day)
     

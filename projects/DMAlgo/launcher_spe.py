@@ -20,6 +20,7 @@ if __name__ == '__main__':
 
     
     dates               = sorted(dates)
+	dates               = ['20130927']
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 

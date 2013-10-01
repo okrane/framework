@@ -93,9 +93,9 @@ if __name__ == "__main__":
     Connections.change_connections('production_copy')
     
     all_runs=get_reference_run(estimator_id=2,level='specific')
+    print all_runs
     
     params,context_name=get_reference_param(all_runs.iloc[0]['context_id'],all_runs.iloc[0]['domain_id'],all_runs.iloc[0]['estimator_id'])
-    
     print context_name
     
     

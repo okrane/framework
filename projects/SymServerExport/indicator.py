@@ -73,10 +73,9 @@ def export_symdata(data_security_referential = None,
         raise ValueError('one of the asked indictor do not have yet a flid')
        
     #--------------------
-    #- ADD DATA (by chunks of securities)
+    #- ADD DATA (by chunks of securities in order to avoid memory leaks)
     #--------------------
-    # in order to avoid memory leaks
-    
+    with_data_sec_ids = []
     out = open( os.path.join(path_export, filename_export), 'w' )
     
     NB_MAX_SEC = 2000
@@ -103,14 +102,15 @@ def export_symdata(data_security_referential = None,
             " AND ( erefcompl.EXCHANGETYPE is NULL or erefcompl.EXCHANGETYPE = 'M' ) " \
             " ORDER BY si.security_id, si.trading_destination_id, si.indicator_id " % (str_secids,str_indicators2export)
         
-        vals=Connections.exec_sql('QUANT',query_indicatops,schema = True)
+        vals=Connections.exec_sql('MARKET_DATA',query_indicatops,schema = True)
         if not vals[0]:
             continue
         
         #--------------------
         #- add to symdata
         #--------------------
-        last_symbol=''
+        last_symbol = ''
+        last_secid = -1
         
         for i in range(0, len(vals[0])):
             # l is one indicator line
@@ -119,8 +119,10 @@ def export_symdata(data_security_referential = None,
             flidid = map_flid_indid[map_flid_indid['indicator_id'] == int(vals[0][i][2])]['flid'].values[0]
             
             #-- symbol
-            this_sec_info = data_security_referential[ data_security_referential['cheuvreux_secid'] == vals[0][i][0] ]
+            sec_id = int(vals[0][i][0])
+            this_sec_info = data_security_referential[ data_security_referential['cheuvreux_secid'] ==  sec_id]
             symbol = this_sec_info['ticker'].values[0]
+            
             if vals[0][i][1] is None:
                 symbol = this_sec_info['tickerAG'].values[0]
             
@@ -140,13 +142,25 @@ def export_symdata(data_security_referential = None,
                 
             out.write(add_str)
             
+            #-- add to data
+            if last_secid != sec_id:
+                with_data_sec_ids.append(sec_id)
+            
             #-- for next loop
-            last_symbol=symbol
-        
-    
+            last_symbol = symbol
+            last_secid = sec_id
+            
+            
     out.close()   
     logging.info('END export_symdata: successfully create indicator export')
     
+    #--------------------
+    #- RETURN DATA
+    #--------------------
+    
+    out_sec_ids = np.setdiff1d(all_sec_ids, with_data_sec_ids)
+    
+    return out_sec_ids
             
             
     

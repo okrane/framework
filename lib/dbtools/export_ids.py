@@ -73,7 +73,7 @@ def get_conf(referential, dico_universe):
             
     return conf
 
-def generate_file(day, all=False, export_path=None, with_none = False):
+def generate_file(day, all=False, export_path=None, export_name=None, with_none = False, send2flexapp = True, export2json = True):
     new_dict = {}
     gl_list  = [] 
     
@@ -214,27 +214,33 @@ def generate_file(day, all=False, export_path=None, with_none = False):
         export_path = path
     
     
-    day = datetime.strftime(datetime.now(), format= '%Y%m%d')    
-    csv_path = export_path + '/' + day + '-export.csv'       
+    if export_name is not None:
+        csv_path = os.path.join(export_path, export_name)
+    else:
+        csv_path = os.path.join(export_path, day + '-export.csv')
+        
     file = open(csv_path, 'w')
     file.writelines(l)
     file.close()
     
-    to_json = simplejson.dumps(dict_secs, separators=(',',':'), indent='\t')
-
-    json_path = export_path + '/' + day + '-export.json'
+    if export2json:
+        to_json = simplejson.dumps(dict_secs, separators=(',',':'), indent='\t')
+        
+        json_path = os.path.join(export_path, day + '-export.json')
+        
+        file_orders = open(json_path, 'w')
+        file_orders.write(to_json)
+        file_orders.close()
     
-    file_orders = open(json_path, 'w')
-    file_orders.write(to_json)
-    file_orders.close()
-    
-    send(csv_path, '/home/flexapp/logs/volume_curves/'+ day + '-export.csv')
-    send(csv_path, '/home/flexapp/logs/volume_curves/TRANSCOSYMBOLCHEUVREUX.csv')
+    if send2flexapp:
+        send(csv_path, '/home/flexapp/logs/volume_curves/'+ day + '-export.csv')
+        send(csv_path, '/home/flexapp/logs/volume_curves/TRANSCOSYMBOLCHEUVREUX.csv')
+        
     return new_dict
 
 
    
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
-    generate_file(day)
-    
+    #generate_file(day)
+    generate_file(day, export_path='C:\\', export_name='champion.csv',send2flexapp = False, export2json = False)

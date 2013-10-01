@@ -185,6 +185,22 @@ def get_symbol6_from_ticker(ticker):
 
 
 #------------------------------------------------------------------------------
+# def
+#------------------------------------------------------------------------------
+def get_flexexchangemapping():
+    
+    query = """ SELECT *
+                FROM KGR..FlextradeExchangeMapping
+                ORDER BY EXCHANGE """
+                
+    vals=Connections.exec_sql('KGR',query,schema = True)
+    
+    if not vals[0]:
+        return pd.DataFrame()
+        
+    return pd.DataFrame.from_records(vals[0],columns=vals[1])
+  
+#------------------------------------------------------------------------------
 # exchangeidmain
 #------------------------------------------------------------------------------
 def exchangeidmain(**kwargs):

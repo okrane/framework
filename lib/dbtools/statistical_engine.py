@@ -30,13 +30,15 @@ def get_reference_run(estimator_id=None,level=None):
         elif level == 'specific':
             query=""" SELECT context_id, domain_id, estimator_id, security_id, EXCHANGE, rank, active, default_context, run_id, varargin 
                  FROM QUANT..quant_reference 
-                 WHERE security_id is not null and estimator_id = %d """  % (estimator_id)
+                 WHERE security_id is not null and estimator_id = %d and active = 1
+                 ORDER BY security_id, EXCHANGE, rank """  % (estimator_id)
                 
         elif level == 'generic':
             query=""" SELECT context_id, domain_id, estimator_id, security_id, EXCHANGE, rank, active, default_context, run_id, varargin 
                  FROM QUANT..quant_reference 
-                 WHERE security_id is null and estimator_id = %d """ % (estimator_id)
-                         
+                 WHERE security_id is null and estimator_id = %d and active = 1
+                 ORDER BY varargin, EXCHANGE, rank """ % (estimator_id)
+                     
         #-- query
         vals = Connections.exec_sql('QUANT',query,schema = True)
         if not vals[0]:

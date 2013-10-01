@@ -62,7 +62,9 @@ class AlgoDataProcessor(object):
         self.deal_collection_name = 'OrderDeals'
         
         #---- excel INFO
-        self.xls_occ_fe_pathfilename=os.path.join('H:\\Data','Export_EOD_Flex_2013_extract.csv')
+        self.xls_occ_fe_path = 'H:\\Data'
+        self.xls_occ_fe_filename = 'Export_EOD_Flex_2013_comma2.csv'
+        self.xls_occ_fe_filenameg = 'export_renormalized.csv'
         self.data_xls_occ_fe=None
         
             
@@ -282,14 +284,23 @@ class AlgoDataProcessor(object):
         
     def get_xls_occ_fe_data(self):    
         
+        #------ LOAD HISTO DATA ALREADY FORMATED
+        if os.path.exists(os.path.join(self.xls_occ_fe_path,self.xls_occ_fe_filenameg)):
+            self.data_xls_occ_fe = pd.read_csv(os.path.join(self.xls_occ_fe_path,self.xls_occ_fe_filenameg))
+            self.data_xls_occ_fe['SendingTime']=map(lambda x : dt.datetime.strptime(x,'%Y-%m-%d %H:%M:%S'),self.data_xls_occ_fe['SendingTime'].values)
+            self.data_xls_occ_fe['eff_endtime']=map(lambda x : dt.datetime.strptime(x,'%Y-%m-%d %H:%M:%S'),self.data_xls_occ_fe['eff_endtime'].values)
+            self.data_xls_occ_fe = self.data_xls_occ_fe.set_index('SendingTime')
+            return
+            
+        #------ LOAD HISTO DATA OCC FE DATA + save the formatted version
         if self.data_xls_occ_fe is not None:
             logging.info('get_xls_occ_fe_data is already loaded')
             
         #------ LOAD HISTO DATA OCC FE DATA
-        if not os.path.isfile(self.xls_occ_fe_pathfilename):
+        if not os.path.isfile(os.path.join(self.xls_occ_fe_path,self.xls_occ_fe_filename)):
             raise ValueError('the occ_fe_file is missing')
             
-        self.data_xls_occ_fe=pd.read_csv(self.xls_occ_fe_pathfilename,sep=';')
+        self.data_xls_occ_fe=pd.read_csv(os.path.join(self.xls_occ_fe_path,self.xls_occ_fe_filename),sep=',')
         
         # NORMALIZE like the db              
         # rate_to_euro, cheuvreux_secid, Side, occ_fe_strategy_name_mapped
@@ -359,6 +370,7 @@ class AlgoDataProcessor(object):
         
         #----- index
         self.data_xls_occ_fe=self.data_xls_occ_fe.set_index('SendingTime')
+        self.data_xls_occ_fe.to_csv(os.path.join(self.xls_occ_fe_path,self.xls_occ_fe_filenameg))
 
 
     ###########################################################################
@@ -552,10 +564,10 @@ if __name__=='__main__':
     a=1
 #     from lib.dbtools.connections import Connections
 #   
-#     #-----  EXCEL VALS
-#     test = AlgoDataProcessor(filter = {"p_occ_id": {"$in" : ['20130603FY71306030000015RLUIFLT01']}})
-#     test.get_xls_occ_fe_data()
-#     print test.data_xls_occ_fe
+    #-----  EXCEL VALS
+    test = AlgoDataProcessor()
+    test.get_xls_occ_fe_data()
+    print test.data_xls_occ_fe
 #
 #     #-----  ENTRY OCCURENCE 
 #     test = AlgoDataProcessor(filter = {"p_occ_id": {"$in" : ['20130603FY71306030000015RLUIFLT01']}})
@@ -579,7 +591,7 @@ if __name__=='__main__':
 #     
 #     #-----  ENTRY SEQUENCE 
 #     test = AlgoDataProcessor(start_date=dt.datetime(2013,8,30,0,0,0),end_date=dt.datetime(2013,8,31,0,0,0))
-#     test.get_db_data(level='sequence')
+#     test.get_db_data(level='sequence',force_colnames_only=['turnover'])
 #     test.get_db_data(level='occurrence')
 #     test.get_db_data(level='deal')
 #     

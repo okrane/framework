@@ -137,21 +137,27 @@ class PlotEngine(object):
         # PLOT
         #-----------------------------------
         ylabel=''
-        title='Evolution by '+agg_step+'+ \n From ' + dt.datetime.strftime(min_day,'%d/%m/%Y') + ' To '+ dt.datetime.strftime(max_day,'%d/%m/%Y')
+        title='Evolution by '+ agg_step +'\n From ' + dt.datetime.strftime(min_day,'%d/%m/%Y') + ' To '+ dt.datetime.strftime(max_day,'%d/%m/%Y')
         
         if var == 'mturnover_euro':
             ylabel='Turnover/Algo (,000,000 Euros)'
             
+        cma = cm.spectral
+        if gvar == 'is_dma':
+            cmap = [kc_main_colors()['blue_1'],kc_main_colors()['blue_2']]
         tzname='Europe/London'
-        h=dfplots.stackbar(data,var=var,
-                           gvar='tmp_date_end',gvar_sbucket='tmp_date_start',
-                           gvar_vals=gvar,
-                           gvar_tzname=tzname,
-                           title=title,
-                           ylabel=ylabel,
-                           show=False,
-                           legend_loc='upper center',
-                           FIG_SIZE=DEFAULT_FIGSIZE)
+        h=dfplots.stackbar(data, 
+                           var = var,
+                           gvar ='tmp_date_end',
+                           gvar_sbucket = 'tmp_date_start',
+                           gvar_vals =gvar,
+                           gvar_tzname = tzname,
+                           title = title,
+                           ylabel = ylabel,
+                           show = False,
+                           cmap = cmap,
+                           legend_loc = 'upper center',
+                           FIG_SIZE = DEFAULT_FIGSIZE)
         
         return h,data
         
@@ -373,12 +379,12 @@ if __name__=='__main__':
     from lib.tca.algostats import AlgoStatsProcessor
     
     #-----  TEST plot_intraday_exec_curve
-    sdate=dt.datetime(2013,9,14)
-    edate=dt.datetime(2013,9,18)
+    sdate=dt.datetime(2013,05,01)
+    edate=dt.datetime(2013,9,23)
     algo_data = AlgoStatsProcessor(start_date = sdate, end_date = edate)
     algo_data.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped','rate_to_euro','turnover','TargetSubID','ExDestination'])
-    algo_data.get_db_data(level='deal')
-    algo_data.get_intraday_agg_deals_data(group_var='strategy_name_mapped',step_sec=60*30)
+    #algo_data.get_db_data(level='deal')
+    #algo_data.get_intraday_agg_deals_data(group_var='strategy_name_mapped',step_sec=60*30)
     
     #------------------
     #-- all days
@@ -391,6 +397,9 @@ if __name__=='__main__':
 #     #- BY PLACE
 #     testp.plot_algo_hbar(algo_data=algo_data,gvar='place',gvar_vals='is_dma')
 #     plt.show()  
+     
+    testp.plot_algo_evolution(algo_data=algo_data,level='sequence',var='mturnover_euro',gvar='is_dma')
+    plt.show() 
       
     #- EXEC CURVE
     testp.plot_intraday_exec_curve(algo_data=algo_data)

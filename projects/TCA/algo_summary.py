@@ -15,13 +15,14 @@ import smtplib
 from lib.logger.custom_logger import *
 import logging
 
+import lib.tca.algoplot
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
 #     Connections.change_connections("dev")
     
-    
-    day = datetime(year=2013, month=7, day=23)
-    day = datetime.now() - timedelta(days=1)
+    now = datetime.now() - timedelta(days=1)
+    day = datetime(year = now.year, month=now.month, day=now.day, hour = 23, minute = 59, second = 59)
+    #day = datetime.combine(.day, date).time() - timedelta(days=1)
     if os.name == 'nt':
         folder  = 'C:\\temp\\'
     else:
@@ -31,10 +32,7 @@ if __name__=='__main__':
     msg = MIMEMultipart()
     msg['Subject'] = 'Algo Summary (Beta test)'
     
-    
-    
-    # Daily
-    m = '<h2>Daily</h2>'
+
     daily = PlotEngine(start_date = day, end_date = day)
     
     l         = []
@@ -48,7 +46,27 @@ if __name__=='__main__':
         
         l.append(image_name)
         list_path.append(file_path)
+    
+
         
+    sdate = day - timedelta(days=90)
+    edate = day
+    from lib.tca.algostats import AlgoStatsProcessor
+    algo_data = AlgoStatsProcessor(start_date = sdate, end_date = edate)
+    algo_data.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped','rate_to_euro','turnover','TargetSubID','ExDestination'])
+    
+    
+    #Sum up
+    history = lib.tca.algoplot.PlotEngine()
+    h, data = history.plot_algo_evolution(algo_data=algo_data,level='sequence',var='mturnover_euro',gvar='is_dma')
+    image_name = 'Serie_daily_' + datetime.strftime(sdate, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
+    repeat(image_name)
+    h.savefig(folder + image_name)
+    m = '<h2>History</h2>'
+    m += '<img src="cid:%s">\n' %image_name
+    plt.show()
+    # Daily
+    m += '<h2>Daily</h2>'
     image_name = 'Vol_euro_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
     repeat(image_name)
     
@@ -62,10 +80,10 @@ if __name__=='__main__':
     file_path = folder + image_name
     repeat(image_name)
     
-    daily.plot_basic_stats(path=list_path[0:3])
+    daily.plot_basic_stats(path=list_path[1:4])
     daily.plot_intraday_exec_curve().savefig(file_path)
     
-    for image in l:
+    for image in l[1:5]:
         m += '<img src="cid:%s">\n' %image
         
     # Weekly
@@ -85,10 +103,10 @@ if __name__=='__main__':
     file_path = folder + image_name
     repeat(image_name)
     
-    weekly.plot_basic_stats(path=list_path[4:7])
+    weekly.plot_basic_stats(path=list_path[5:8])
     weekly.plot_intraday_exec_curve().savefig(file_path)
     
-    for image in l[4:8]:
+    for image in l[5:9]:
         m += '<img src="cid:%s">\n' %image
         
                 
@@ -109,9 +127,9 @@ if __name__=='__main__':
     file_path = folder + image_name
     repeat(image_name)
     
-    monthly.plot_basic_stats(path=list_path[8:11])
+    monthly.plot_basic_stats(path=list_path[9:12])
     monthly.plot_intraday_exec_curve().savefig(file_path)
-    for image in l[8:12]:
+    for image in l[9:13]:
         m += '<img src="cid:%s">\n' %image
 
     # Send an email

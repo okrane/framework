@@ -11,10 +11,6 @@ import pandas as pd
 import datetime as dt
 import projects.SymServerExport.vc as vc
 import projects.SymServerExport.indicator as indicator
-import projects.SymServerExport.loadSymMapping as loadSymMapping
-import projects.SymServerExport.loadExchange as loadExchange
-import projects.SymServerExport.loadCurves as loadCurves
-import projects.SymServerExport.loadGenericCurves as loadGenericCurves
 import lib.dbtools.export_ids as export_ids
 import lib.dbtools.get_repository as get_repository
 from lib.dbtools.connections import Connections

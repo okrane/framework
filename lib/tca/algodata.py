@@ -341,13 +341,13 @@ class AlgoDataProcessor(object):
         self.data_xls_occ_fe['SendingTime']=map(lambda x : dt.datetime.strptime(x,'%d.%m.%Y %H:%M'),self.data_xls_occ_fe['SendingTime'].values)
         self.data_xls_occ_fe['eff_endtime']=map(lambda x : dt.datetime.strptime(x,'%d.%m.%Y %H:%M'),self.data_xls_occ_fe['eff_endtime'].values)
         self.data_xls_occ_fe['Side']=self.data_xls_occ_fe['Side'].apply(lambda x : 1 if x=='B' else -1)
-         
+        
         #----- cheuvreux_secid
         uni_,idx_in_uni_=matlabutils.uniqueext(self.data_xls_occ_fe['Symbol'].values,return_inverse=True)
-        uni_vals=map(lambda x : get_repository.get_symbol6_from_ticker(x),uni_)
+        # uni_vals=map(lambda x : get_repository.get_symbol6_from_ticker(x),uni_)
         vals=[np.nan]*len(idx_in_uni_)
-        for i in range(0,len(vals)):
-            vals[i]=uni_vals[idx_in_uni_[i]]
+        # for i in range(0,len(vals)):
+        #     vals[i]=uni_vals[idx_in_uni_[i]]
         self.data_xls_occ_fe['cheuvreux_secid']=vals
          
         #----- strategy name

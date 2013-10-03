@@ -29,7 +29,7 @@ def send_report(dict_file,email_list):
     # ---
     send_email(_to = email_list, 
                _from = 'njoseph@keplercheuvreux.com',
-               _subject = "[SymServer] Files sending ",
+               _subject = "[SymServer] Files sending Report ",
                _message = html_message)
     
     
@@ -57,7 +57,7 @@ if __name__ == "__main__":
     if not os.path.exists(PATH_FILE):
         raise ValueError('No Data at all')
         
-    REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com']
+    REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com' , 'sreydellet@keplercheuvreux.com']
     
     #----------------
     # -- Send files
@@ -65,32 +65,56 @@ if __name__ == "__main__":
     # -- 
     if ENV == 'dev':
         
-        dict_to_send = {'indicator' : {'server' : 'PARFLTLAB', 'env' : 'dev', 'user' : 'flexsys' ,
+        dict_to_send = {'indicator' : {'server' : 'PARFLTLAB', 'env' : ENV, 'user' : 'flexsys' ,
                                        'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
                                        'send_status' : False},
                          
-                        'volume curve specific' : {'server' : 'PARFLTLAB', 'env' : 'dev', 'user' : 'flexapp' ,
+                        'volume curve specific' : {'server' : 'PARFLTLAB', 'env' : ENV, 'user' : 'flexapp' ,
                                        'path' : '/home/flexapp' , 'file' : 'VWAP_Profile_0',
                                        'send_status' : False},
                          
-                        'volume curve generic' : {'server' : 'PARFLTLAB', 'env' : 'dev', 'user' : 'flexapp' ,
+                        'volume curve generic' : {'server' : 'PARFLTLAB', 'env' : ENV, 'user' : 'flexapp' ,
                                        'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
                                        'send_status' : False}}
-                                        
+                        
     elif ENV == 'prod' and not os.name == 'nt':
         print 'TO DO'
-        
+#         dict_to_send = {'indicator (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexsys' ,
+#                                        'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
+#                                        'send_status' : False},
+#                          
+#                         'volume curve specific (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+#                                        'path' : '/home/flexapp' , 'file' : 'VWAP_Profile_0',
+#                                        'send_status' : False},
+#                          
+#                         'volume curve generic (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+#                                        'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
+#                                        'send_status' : False},
+#                         
+#                         'indicator (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexsys' ,
+#                                        'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
+#                                        'send_status' : False},
+#                          
+#                         'volume curve specific (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+#                                        'path' : '/home/flexapp' , 'file' : 'VWAP_Profile_0',
+#                                        'send_status' : False},
+#                          
+#                         'volume curve generic (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+#                                        'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
+#                                        'send_status' : False}}
+#         
     else:
-        raise ValueError()
+        raise ValueError('unknown environnement <' + ENV + '>')
         
     # -- TEST FILE EXISTS
     for x in dict_to_send.keys():
         
         if not os.path.exists(os.path.join(PATH_FILE , dict_to_send[x]['file'])):
-            raise ValueError(x + ' :No data')
+            raise ValueError('At least one of the needed file is missing : ' + x)
             
     # -- SEND
     for x in dict_to_send.keys():
+        is_send = False
         
         try:
             is_send = toolkit.send(os.path.join(PATH_FILE , dict_to_send[x]['file']), 
@@ -98,12 +122,12 @@ if __name__ == "__main__":
                          server_remote = dict_to_send[x]['server'], 
                          env = dict_to_send[x]['env'],
                          user = dict_to_send[x]['user'])
-                                
-            dict_to_send[x]['send_status'] = is_send
+                        
         except:
             get_traceback()
-            logging.error('')
-        
+            logging.error('error in send file')
+            
+        dict_to_send[x]['send_status'] = is_send
         
     #----------------
     # -- Send report        

@@ -565,6 +565,7 @@ if __name__=='__main__':
     test = AlgoDataProcessor()
     test.get_xls_occ_fe_data()
     print test.data_xls_occ_fe
+    a=1
 #
 #     #-----  ENTRY OCCURENCE 
 #     test = AlgoDataProcessor(filter = {"p_occ_id": {"$in" : ['20130603FY71306030000015RLUIFLT01']}})

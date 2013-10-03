@@ -78,7 +78,7 @@ def export_symdata(data_security_referential = None,
     with_data_symbol = []
     out = open( os.path.join(path_export, filename_export), 'w' )
     
-    NB_MIN_SYMBOL = 1000
+    NB_MIN_SYMBOL = 5000
     NB_MAX_SEC = 2000
     last_idx = -1
     

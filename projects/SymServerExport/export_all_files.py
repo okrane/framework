@@ -73,31 +73,31 @@ def send_report(pathexport,copy_sec_bkp,security_ref,copy_exch_bkp,exchange_ref,
     if info_vcg == []:
         txt_message += 'Backup  file has been loaded'
     else:
-        txt_message += 'curve OK (nb ' + str(len(info_vcg[0])) + ') \n'
+        txt_message += '\n curve OK (nb ' + str(len(info_vcg[0])) + ') \n'
         txt_message += ''.join([str(x) + ',' for x in info_vcg[0]])
-        txt_message += 'curve BACKUP (nb ' + str(len(info_vcg[1])) + ') \n'
+        txt_message += '\n curve BACKUP (nb ' + str(len(info_vcg[1])) + ') \n'
         txt_message += ''.join([str(x) + ',' for x in info_vcg[1]])
-        txt_message += 'curve not in export file (nb ' + str(len(info_vcg[2])) + ') \n'
+        txt_message += '\n curve not in export file (nb ' + str(len(info_vcg[2])) + ') \n'
         txt_message += ''.join([str(x) + ',' for x in info_vcg[2]])
-        txt_message += 'curve in error (nb ' + str(len(info_vcg[3])) + ') \n'
+        txt_message += '\n curve in error (nb ' + str(len(info_vcg[3])) + ') \n'
         txt_message += ''.join([str(x) + ',' for x in info_vcg[3]])
     # ---
     txt_message += '\n Volume curve specific \n'
     if info_vcs == []:
         txt_message += 'Backup file has been loaded'
     else:
-        txt_message += 'Symbol with a curve (nb ' + str(len(info_vcs[0])) + ') \n'
+        txt_message += '\n Symbol with a curve (nb ' + str(len(info_vcs[0])) + ') \n'
         txt_message += ''.join([str(x) + ',' for x in info_vcs[0]])
-        txt_message += 'Curve in error (nb ' + str(len(info_vcs[1])) + ') \n'
+        txt_message += '\n Curve in error (nb ' + str(len(info_vcs[1])) + ') \n'
         txt_message += ''.join([str(x) + ',' for x in info_vcs[1]])
     # ---
     txt_message += '\n Indicator \n'
     if info_indicator == []:
         txt_message += 'Backup file has been loaded'
     else:
-        txt_message += 'Symbol with indicators (nb ' + str(len(info_indicator[0])) + ') \n'
+        txt_message += '\n Symbol with indicators (nb ' + str(len(info_indicator[0])) + ') \n'
         txt_message += ''.join([str(x) + ',' for x in info_indicator[0]])
-        txt_message += 'Symbol without indicators (nb ' + str(len(info_indicator[1])) + ') \n' 
+        txt_message += '\n Symbol without indicators (nb ' + str(len(info_indicator[1])) + ') \n' 
         txt_message += ''.join([str(x) + ',' for x in info_indicator[1]])
         
     out = open( os.path.join( pathexport , 'email_log.txt') ,'w')
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     FNAME_VC_GENERIC = 'USR.vwap.opts'
     
     #--
-    REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com']
+    REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com' , 'sreydellet@keplercheuvreux.com']
     
     #############################################################################
     #- REFERENTIAL
@@ -179,8 +179,10 @@ if __name__ == "__main__":
         get_traceback()
         logging.error("security_ref can't be created")
         copy_sec_bkp = True
-              
+               
     if copy_sec_bkp:
+        if not os.path.exists(os.path.join(PATH_BACKUP, FNAME_SECURITY_REF)):
+            raise ValueError('security_ref backup cant be found')
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_SECURITY_REF), os.path.join(PATH_EXPORT, FNAME_SECURITY_REF))
         logging.warning("security_ref backup has been copied")
         
@@ -207,6 +209,8 @@ if __name__ == "__main__":
         copy_exch_bkp = True
         
     if copy_exch_bkp:
+        if not os.path.exists(os.path.join(PATH_BACKUP, FNAME_EXCHANGE_REF)):
+            raise ValueError('exchange_ref backup cant be found')
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_EXCHANGE_REF), os.path.join(PATH_EXPORT, FNAME_EXCHANGE_REF))
         logging.warning("exchange_ref backup has been copied")   
         
@@ -232,6 +236,8 @@ if __name__ == "__main__":
         copy_indicator_bkp = True
         
     if copy_indicator_bkp:
+        if not os.path.exists(os.path.join(PATH_BACKUP, FNAME_INDICATOR)):
+            raise ValueError('indicator backup cant be found')
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_INDICATOR), os.path.join(PATH_EXPORT, FNAME_INDICATOR))
         logging.warning("indicator backup has been copied")
     
@@ -262,6 +268,8 @@ if __name__ == "__main__":
         copy_specific_bkp = True 
        
     if copy_specific_bkp:
+        if not os.path.exists(os.path.join(PATH_BACKUP, FNAME_VC_SPECIFIC)):
+            raise ValueError('specific curve backup cant be found')
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_VC_SPECIFIC), os.path.join(PATH_EXPORT, FNAME_VC_SPECIFIC))
         logging.warning("specific curve  backup has been copied")
         
@@ -281,6 +289,8 @@ if __name__ == "__main__":
         copy_generic_bkp = True
         
     if copy_generic_bkp:
+        if not os.path.exists(os.path.join(PATH_BACKUP, FNAME_VC_GENERIC)):
+            raise ValueError('generic curve backup cant be found')
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_VC_GENERIC), os.path.join(PATH_EXPORT, FNAME_VC_GENERIC))
         logging.warning("generic curve  backup has been copied")
         

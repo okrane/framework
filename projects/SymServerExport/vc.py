@@ -207,7 +207,7 @@ def export_vc_specific(data_security_referential = None,
     
     DEFAULT_VAL= - 999
     NB_CONT_SLICE = 102
-    NB_MIN_CURVES = 100
+    NB_MIN_CURVES = 300
     
     #-------------------------------------------------------------------------
     # ADD CB PARAMS 
@@ -352,7 +352,6 @@ def export_vc_generic(data_exchange_referential = None,
     data['id']=map(lambda x,y,z,a : str(int(x))+':'+str(int(y))+':'+str(int(z))+':'+str(int(a)),data['run_id'],data['context_id'],data['domain_id'],data['estimator_id'])
     
     NB_CONT_SLICE = 102
-    NB_MIN_CURVES = 10
     
     #-------------------------------------------------------------------------
     # ADD CB PARAMS 
@@ -447,18 +446,13 @@ def export_vc_generic(data_exchange_referential = None,
     
     out.close()
     
-    #-------------------------------------------------------------------------
-    # CHECK ADDED CURVES
-    #-------------------------------------------------------------------------
-    cb_added = all_cb_added.keys()
-    if len(cb_added) < NB_MIN_CURVES:
-        raise ValueError('generated file contain less than' + str(NB_MIN_CURVES) + ' curves')
-        
+    
     #-------------------------------------------------------------------------
     # BIDOUILLE : BACKUP CURVES
     #-------------------------------------------------------------------------
     # we need at least 1 '_AG' by market, we use some backup curves computed the 30 August 2013
-
+    cb_added = all_cb_added.keys()
+    
     out = open( os.path.join(path_export, filename_export), 'a' )
     
     NEEDED_AG_CURVE = np.setdiff1d(np.unique(data_exchange_referential['SUFFIX'].tolist()) ,np.array(['AG','IX','TQ','ED','EB']))
@@ -509,6 +503,13 @@ def export_vc_generic(data_exchange_referential = None,
     out.close()
           
     logging.info('export_vc_generic: successfull END')
+    
+    #-------------------------------------------------------------------------
+    # CHECK CURVES
+    #-------------------------------------------------------------------------
+    if len(cb_not_added) > 0:
+        raise ValueError('At least one of the _AG curve is missing')
+    
     
     return cb_added , cb_added_backup , cb_not_added , cb_id_error
 

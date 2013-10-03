@@ -37,7 +37,10 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         #-----------------------------------
         # GET DATA
         #-----------------------------------
-        self.get_db_data(level='occurrence')
+        # self.get_db_data(level='occurrence')
+        self.get_xls_occ_fe_data()
+        # tres sale !
+        self.data_occurrence = self.data_xls_occ_fe
         
         #-----------------------------------
         # APPLY EXEC FORMULA STATS

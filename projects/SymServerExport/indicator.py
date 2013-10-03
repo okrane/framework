@@ -78,6 +78,7 @@ def export_symdata(data_security_referential = None,
     with_data_symbol = []
     out = open( os.path.join(path_export, filename_export), 'w' )
     
+    NB_MIN_SYMBOL = 1000
     NB_MAX_SEC = 2000
     last_idx = -1
     
@@ -158,6 +159,12 @@ def export_symdata(data_security_referential = None,
     all_symbol = np.concatenate([np.unique(data_security_referential['ticker'].values),np.unique(data_security_referential['tickerAG'].values)])
     all_symbol = [all_symbol[x] for x in np.where([isinstance(x,basestring) for x in all_symbol])[0]]
     without_data_symbol = np.setdiff1d(all_symbol, with_data_symbol).tolist()
+    
+    #-------------------------------------------------------------------------
+    # CHECK ADDED CURVES
+    #-------------------------------------------------------------------------
+    if len(with_data_symbol) < NB_MIN_SYMBOL:
+        raise ValueError('generated file contain less than' + str(NB_MIN_SYMBOL) + ' symbol with indicators')
     
     return with_data_symbol , without_data_symbol
             

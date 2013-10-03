@@ -10,7 +10,6 @@ import paramiko
 from datetime import datetime, timedelta
 from lib.dbtools import connections
 import pytz
-import lib.dbtools.read_dataset as read_dataset
 import simplejson
 from lib.logger import *
 from lib.io.toolkit import *
@@ -18,72 +17,11 @@ logging.getLogger("paramiko").setLevel(logging.WARNING)
 from lib.tca import mapping
 import os
 
-def send(local, remote):
-   full_path            = os.path.realpath(__file__)    
-   path, f              = os.path.split(full_path)        
-
-   universe_file        = os.path.join(path, 'KC_universe.xml')
-   conf                 = get_conf('dev', universe_file)
-   server               = conf['PARFLTLAB']
-   ip                   = server['ip_addr']
-   username             = server['list_users']['flexapp']['username']
-   password             = server['list_users']['flexapp']['passwd']
-   
-   transport = paramiko.Transport((ip, 22))
-   transport.connect(username=username, password=password)
-   sftp = paramiko.SFTPClient.from_transport(transport)
-   sftp.put(local, remote)
-   sftp.close()
-
-def check(sftp, path):
-    parts = path.split('/')
-    for n in range(2, len(parts) + 1):
-        path = '/'.join(parts[:n])
-        print 'Path:', path,
-        sys.stdout.flush()
-        try:
-            s = sftp.stat(path)
-            print 'mode =', oct(s.st_mode)
-        except IOError as e:
-            print e
-
-
-def get_conf(referential, dico_universe):
-
-    conf        = {}
-    struct      = ET.parse(dico_universe)
-    raw_data    = struct.getroot()
-    servs_dico  = {}
-    
-    for elt in raw_data.findall('env'):
-        if elt.get('name') == referential:
-            servs_dico = elt
-            
-    if servs_dico != {}:
-        for attr in servs_dico.findall('server'):
-            serv_name   = attr.get('name')
-            dict_server = {'ip_addr': attr.get('ip_addr')}
-            l_users     = {}
-            
-            for u_attr in attr.findall('user'):
-                l_users[u_attr.get('username')] = u_attr.attrib
-                
-            dict_server['list_users']   = l_users
-            conf[serv_name]             = dict_server
-            
-    return conf
-
-def generate_file(day, all=False, export_path=None, export_name=None, with_none = False, send2flexapp = True, export2json = True):
+def generate_file(day, all=False, export_path=os.path.realpath(__file__), export_name=None, with_none = False, send2flexapp = True, export2json = True):
     new_dict = {}
     gl_list  = [] 
     
-    import os
-    full_path           = os.path.realpath(__file__)    
-    path, f             = os.path.split(full_path) 
-    
-    universe_file  = path + '/KC_universe.xml'  
-    conf           = get_conf('prod', universe_file)
-    
+    conf    = get_conf('prod')
     server  = conf['WATFLT01']
     ssh     = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -209,11 +147,7 @@ def generate_file(day, all=False, export_path=None, export_name=None, with_none 
             else:
                 ticker_ag   = ''
             l.append(';%s;%s;;;;;;%s;\n' % (ticker, ticker_ag, el))
-    
-    if export_path is None:
-        export_path = path
-    
-    
+            
     if export_name is not None:
         csv_path = os.path.join(export_path, export_name)
     else:
@@ -233,8 +167,8 @@ def generate_file(day, all=False, export_path=None, export_name=None, with_none 
         file_orders.close()
     
     if send2flexapp:
-        send(csv_path, '/home/flexapp/logs/volume_curves/'+ day + '-export.csv')
-        send(csv_path, '/home/flexapp/logs/volume_curves/TRANSCOSYMBOLCHEUVREUX.csv')
+        send(csv_path, '/home/flexapp/logs/volume_curves/'+ day + '-export.csv', server_remote = 'PARFLTLAB', env = 'dev')
+        send(csv_path, '/home/flexapp/logs/volume_curves/TRANSCOSYMBOLCHEUVREUX.csv', server_remote = 'PARFLTLAB' , env = 'dev')
         
     return new_dict
 
@@ -242,5 +176,5 @@ def generate_file(day, all=False, export_path=None, export_name=None, with_none 
    
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
-    #generate_file(day)
-    generate_file(day, export_path='C:\\', export_name='champion.csv',send2flexapp = False, export2json = False)
+    generate_file(day)
+    # generate_file(day, export_path='C:\\', export_name='champion.csv',send2flexapp = False, export2json = False)

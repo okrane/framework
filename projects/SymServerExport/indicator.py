@@ -75,7 +75,7 @@ def export_symdata(data_security_referential = None,
     #--------------------
     #- ADD DATA (by chunks of securities in order to avoid memory leaks)
     #--------------------
-    with_data_sec_ids = []
+    with_data_symbol = []
     out = open( os.path.join(path_export, filename_export), 'w' )
     
     NB_MAX_SEC = 2000
@@ -110,7 +110,6 @@ def export_symdata(data_security_referential = None,
         #- add to symdata
         #--------------------
         last_symbol = ''
-        last_secid = -1
         
         for i in range(0, len(vals[0])):
             # l is one indicator line
@@ -143,12 +142,11 @@ def export_symdata(data_security_referential = None,
             out.write(add_str)
             
             #-- add to data
-            if last_secid != sec_id:
-                with_data_sec_ids.append(sec_id)
+            if last_symbol != symbol:
+                with_data_symbol.append(symbol)
             
             #-- for next loop
             last_symbol = symbol
-            last_secid = sec_id
             
             
     out.close()   
@@ -157,10 +155,11 @@ def export_symdata(data_security_referential = None,
     #--------------------
     #- RETURN DATA
     #--------------------
+    all_symbol = np.concatenate([np.unique(data_security_referential['ticker'].values),np.unique(data_security_referential['tickerAG'].values)])
+    all_symbol = [all_symbol[x] for x in np.where([isinstance(x,basestring) for x in all_symbol])[0]]
+    without_data_symbol = np.setdiff1d(all_symbol, with_data_symbol).tolist()
     
-    out_sec_ids = np.setdiff1d(all_sec_ids, with_data_sec_ids)
-    
-    return out_sec_ids
+    return with_data_symbol , without_data_symbol
             
             
     

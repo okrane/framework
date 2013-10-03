@@ -344,10 +344,10 @@ class AlgoDataProcessor(object):
         
         #----- cheuvreux_secid
         uni_,idx_in_uni_=matlabutils.uniqueext(self.data_xls_occ_fe['Symbol'].values,return_inverse=True)
-        # uni_vals=map(lambda x : get_repository.get_symbol6_from_ticker(x),uni_)
+        uni_vals=map(lambda x : get_repository.get_symbol6_from_ticker(x),uni_)
         vals=[np.nan]*len(idx_in_uni_)
-        # for i in range(0,len(vals)):
-        #     vals[i]=uni_vals[idx_in_uni_[i]]
+        for i in range(0,len(vals)):
+            vals[i]=uni_vals[idx_in_uni_[i]]
         self.data_xls_occ_fe['cheuvreux_secid']=vals
          
         #----- strategy name
@@ -359,7 +359,8 @@ class AlgoDataProcessor(object):
         self.data_xls_occ_fe['occ_fe_strategy_name_mapped']=vals
          
         #----- rate to euro 
-        uni_curr=np.unique(self.data_xls_occ_fe['Currency'].values).tolist()
+        uni_curr = np.unique(self.data_xls_occ_fe['Currency'].values).tolist()
+        uni_curr = [uni_curr[x] for x in np.where([isinstance(x,basestring) for x in uni_curr])[0]]
         data_rte=read_dataset.histocurrencypair(start_date = dt.datetime.strftime(np.min(self.data_xls_occ_fe['SendingTime']),'%Y%m%d'), 
                                                 end_date = dt.datetime.strftime(np.max(self.data_xls_occ_fe['eff_endtime']),'%Y%m%d'),currency = uni_curr)
         data_rte['tmpmergetime']=map(lambda x : dt.datetime.strftime(x.to_datetime(),'%Y-%m-%d'),data_rte.index)
@@ -553,13 +554,9 @@ def get_field_list(cname=None, db_name="Mars"):
         out.append(v)
         
     return np.array(out[0]['list_columns']+['_id'])
-
-
-
-
-
-
-
+    
+    
+    
 if __name__=='__main__':
     a=1
 #     from lib.dbtools.connections import Connections

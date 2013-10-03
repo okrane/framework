@@ -211,7 +211,9 @@ def export_vc_specific(data_security_referential = None,
     #-------------------------------------------------------------------------
     # ADD CB PARAMS 
     #-------------------------------------------------------------------------  
-    id_not_added = []  
+    cb_id_error = []
+    cb_added = []
+    
     out = open( os.path.join(path_export, filename_export), 'w' )
     
     last_secid = DEFAULT_VAL
@@ -248,6 +250,7 @@ def export_vc_specific(data_security_referential = None,
         params,context=se.get_reference_param(data['context_id'].values[i],data['domain_id'].values[i],data['estimator_id'].values[i])
         
         if params.shape[0]==0:
+            out.close()
             raise ValueError('statistical engine issue, params is empty for ' + data['id'].values[i])
         
         #-------------------
@@ -274,13 +277,13 @@ def export_vc_specific(data_security_referential = None,
                 
         #-- check  data : number of slice continuous
         if max_num > NB_CONT_SLICE:
-            id_not_added.append(data['id'].values[i])
+            cb_id_error.append(symbol + ':' + data['id'].values[i])
             logging.error('curve ' + data['id'].values[i] + 'has more than the required nb slice')
             continue
             
         #-- check  data : number of slice continuous
         if np.sum(all_values) < 0.999 or np.sum(all_values) > 1.001:
-            id_not_added.append(data['id'].values[i])
+            cb_id_error.append(symbol + ':' + data['id'].values[i])
             logging.error('curve ' + data['id'].values[i] + 'do not sum at 1')
             continue
                             
@@ -293,21 +296,32 @@ def export_vc_specific(data_security_referential = None,
         add_str += '\n'
         
         out.write(add_str)
+        cb_added.append(symbol)
         
         #-- for next loop
         last_tdid = tdid
         last_secid = sec_id
     
+    out.close()
     logging.info('export_vc_specific: successfull END')
-     
-    return id_not_added
+    
+    return cb_added , cb_id_error
     
   
 
 def export_vc_generic(data_exchange_referential = None,
                    path_export = None, filename_export = None,
                    separator = ':'):
-
+    
+    #--------------------
+    #- WRITE FORMATTER
+    #--------------------
+    def format_line(exchname,cotg,all_values,separator):
+        add_str = exchname + '_' + cotg + ";0:0:0:0:103:0:" + str(all_values[0]) + separator + str(all_values[1]) + " "
+        add_str += "".join([separator if x is None else str(x) + separator for x in all_values[2:-1]])
+        add_str += str(all_values[-1]) + ": 0"  + '\n'
+        return add_str
+        
     #--------------------
     #- TEST INPUT
     #--------------------
@@ -330,13 +344,17 @@ def export_vc_generic(data_exchange_referential = None,
     data = data.sort(columns = ['varargin','EXCHANGE','rank'])
     data['id']=map(lambda x,y,z,a : str(int(x))+':'+str(int(y))+':'+str(int(z))+':'+str(int(a)),data['run_id'],data['context_id'],data['domain_id'],data['estimator_id'])
     
-    
     NB_CONT_SLICE = 102
     
     #-------------------------------------------------------------------------
     # ADD CB PARAMS 
     #-------------------------------------------------------------------------  
-    id_not_added = []  
+    cb_id_error = [] 
+    all_cb_added = {}
+    cb_added = []
+    cb_added_backup = []
+    cb_not_added = []
+    
     out = open( os.path.join(path_export, filename_export), 'w' )
     
     last_cotg = ''
@@ -371,6 +389,7 @@ def export_vc_generic(data_exchange_referential = None,
         params,context=se.get_reference_param(data['context_id'].values[i],data['domain_id'].values[i],data['estimator_id'].values[i])
         
         if params.shape[0] == 0:
+            out.close()
             raise ValueError('statistical engine issue, params is empty for ' + data['id'].values[i])
         
         #-------------------
@@ -378,7 +397,7 @@ def export_vc_generic(data_exchange_referential = None,
         #-------------------
         
         #  format : symbol + opening auction + closing auction  + continuous bucket (102) + intraday auction 
-        all_values= [0] * (NB_CONT_SLICE + 3)
+        all_values= [ None ] * (NB_CONT_SLICE + 2) + [0]
         if 'auction_open' in params['parameter_name'].values:
             all_values[0] = params['value'][params['parameter_name'] == 'auction_open'].values[0]
             
@@ -397,32 +416,87 @@ def export_vc_generic(data_exchange_referential = None,
                 
         #-- check  data : number of slice continuous
         if max_num > NB_CONT_SLICE:
-            id_not_added.append(data['id'].values[i])
-            logging.error('curve ' + data['id'].values[i] + 'has more than the required nb slice')
+            cb_id_error.append(exchname + '_' + cotg + ':' + data['id'].values[i])
+            logging.error('curve ' + exchname + '_' + cotg + ' ' +  data['id'].values[i] + 'has more than the required nb slice')
             continue
             
         #-- check  data : number of slice continuous
-        if np.sum(all_values) < 0.999 or np.sum(all_values) > 1.001:
-            id_not_added.append(data['id'].values[i])
-            logging.error('curve ' + data['id'].values[i] + 'do not sum at 1')
+        if np.sum([ 0 if x is None else x for x in all_values]) < 0.999 or np.sum([ 0 if x is None else x for x in all_values]) > 1.001:
+            cb_id_error.append(exchname + '_' + cotg + ':' + data['id'].values[i])
+            logging.error('curve ' + exchname + '_' + cotg + ' ' + data['id'].values[i] + 'do not sum at 1')
             continue
-                            
+                   
         #-------------------
         #-- write str
         #-------------------
-        add_str = exchname + '_' + cotg + ";0:0:0:0:103:0:" + str(all_values[0]) + separator + str(all_values[1]) + " "
-        add_str += "".join([separator if x == 0.0 else str(x) + separator for x in all_values[2:-1]])
-        add_str += str(all_values[-1]) + ": 0"  + '\n'
+        out.write( format_line( exchname, cotg, all_values, separator ) )
         
-        out.write(add_str)
+        all_cb_added.update({exchname + '_' + cotg : all_values})
         
         #-- for next loop
         last_exchname = exchname
         last_cotg = cotg
     
+    out.close()
+    cb_added = all_cb_added.keys()
+    
+    #-------------------------------------------------------------------------
+    # BIDOUILLE : BACKUP CURVES
+    #-------------------------------------------------------------------------
+    # we need at least 1 '_AG' by market, we use some backup curves computed the 30 August 2013
+
+    out = open( os.path.join(path_export, filename_export), 'a' )
+    
+    NEEDED_AG_CURVE = np.setdiff1d(np.unique(data_exchange_referential['SUFFIX'].tolist()) ,np.array(['AG','IX','TQ','ED','EB']))
+    
+    CB_BACKUP = { 'TI_AG' : [0.010126,0.067265,0.033511,0.025856,0.023893,0.015985,0.01671,0.013196,0.013484,0.009124,0.009952,0.010469,0.008524,0.008829,0.008845,0.008026,
+                             0.006787,0.0075,0.006396,0.00654,0.006959,0.00498,0.00409,0.004217,0.005876,0.003626,0.005951,0.005141,0.003186,0.003529,0.003016,0.00689,
+                             0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.004575,0,0.0345,0.023137,0.021651,0.016497,0.01441,0.012755,0.012146,0.010932,0.009695,0.009135,
+                             0.009112,0.008613,0.00785,0.005905,0.006293,0.010467,0.007399,0.009876,0.010512,0.010201,0.009415,0.011136,0.008703,0.010454,0.011598,
+                             0.01074,0.010843,0.010681,0.009414,0.012388,0.012822,0.014224,0.016934,0.015702,0.019943,0.020746,0.022893,0.02527,0.049375,0.032279,
+                             None,None,None,None,None,None,None,None,None,None,0.040302],
+                 
+                 'SJ_AG' : [0.001096,0.1773,0.003804,0.003576,0.004366,0.004575,0.004867,0.005136,0.005478,0.005398,0.005892,0.005247,0.00647,0.008158,0.014102,0.011561,
+                            0.011149,0.010875,0.010431,0.011065,0.011332,0.010338,0.010382,0.010034,0.009915,0.010206,0.009884,0.010198,0.00975,0.009021,0.009355,0.009482,
+                            0.010216,0.009058,0.008849,0.008596,0.008138,0.008344,0.008558,0.007723,0.008454,0.007857,0.007386,0.008316,0.007162,0.007003,0.007372,0.006671,
+                            0.006954,0.007302,0.00719,0.006488,0.00702,0.006828,0.006639,0.005892,0.00619,0.006546,0.006642,0.006032,0.006148,0.006614,0.007304,0.006711,
+                            0.006586,0.006964,0.007098,0.006754,0.007455,0.007649,0.007272,0.007423,0.008415,0.007919,0.008454,0.008685,0.007964,0.007953,0.008673,0.009748,
+                            0.012295,0.012401,0.012507,0.012613,0.012719,0.012826,0.012921,0.013016,0.013111,0.013206,0.013302,0.013363,0.013424,0.013486,0.013547,0.013609,
+                            0.013609,0.013609,None,None,None,None,None,None,0],
+                 
+                 'GA_AG' : [0.015599,0.060095,0.028998,0.032211,0.026341,0.023761,0.022322,0.021314,0.021141,0.015777,0.015232,0.013916,0.014612,0.015763,0.01432,0.01578,
+                            0.013817,0.01233,0.012715,0.013027,0.011169,0.01022,0.009851,0.00914,0.008515,0.009333,0.008492,0.007894,0.008499,0.00757,0.009679,0.011266,
+                            0.00871,0.007907,0.007753,0.008142,0.007625,0.008302,0.00894,0.007384,0.008908,0.009218,0.007488,0.009035,0.007048,0.007853,0.006905,0.007873,
+                            0.007021,0.007601,0.006098,0.007879,0.008045,0.006067,0.008198,0.010684,0.007115,0.006759,0.008107,0.005952,0.006379,0.007196,0.008316,0.009467,
+                            0.008217,0.009294,0.01078,0.009786,0.00987,0.010938,0.013424,0.012481,0.012781,0.011372,0.013053,0.015789,0.017512,0.018855,0.022068,0.033104,
+                            None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,None,0] }
+
+    
+    for cb in NEEDED_AG_CURVE:
+        if cb + '_AG' not in all_cb_added.keys():
+            if cb in [x.split('_')[0] for x in cb_added]:
+                # CASE 1 : there is a mono curve for this exchange, we take it
+                for x in cb_added:
+                    if x.split('_')[0] == cb:
+                        replace_cb = x
+                        break
+                    
+                out.write( format_line( replace_cb.split('_')[0], 'AG', all_cb_added[replace_cb], separator ) )
+                cb_added_backup.append(cb + '_AG')
+                
+            elif cb + '_AG' in CB_BACKUP.keys():
+                # CASE 2 : backup sale
+                out.write( format_line( cb, 'AG', CB_BACKUP[cb + '_AG'], separator ) )
+                cb_added_backup.append(cb + '_AG')
+                
+            else:
+                cb_not_added.append(cb + '_AG')                
+                
+    out.close()
+          
     logging.info('export_vc_generic: successfull END')
-     
-    return id_not_added
+    
+    return cb_added , cb_added_backup , cb_not_added , cb_id_error
 
 
  
@@ -433,23 +507,26 @@ if __name__ == "__main__":
     # export_vc(vc_level='generic',vc_estimator_id=2,path='C:\\',filename='test_generic')
     # export_vc(vc_level='specific',vc_estimator_id=2,path='C:\\',filename='test_specific')
     
-#     #-- security test
-#     
-#     security_ref = pd.read_csv(os.path.join('C:\\export_sym\\extract', 'TRANSCOSYMBOLCHEUVREUX.csv'),sep = ';')
-#     security_ref = security_ref[['cheuvreux_secid', 'ticker', 'tickerAG']]
-#     
-#     export_vc_specific(data_security_referential = security_ref,
-#                    path_export = 'H:\\', 
-#                    filename_export = 'test.txt',
-#                    separator = '\t')
-    
     #-- security test
-    exchange_ref = pd.read_csv(os.path.join('C:\\export_sym\\extract', 'ref_trd_destination.csv'))
-                    
-    res = export_vc_generic(data_exchange_referential = exchange_ref,
+     
+    security_ref = pd.read_csv(os.path.join('C:\\export_sym\\backup', 'TRANSCOSYMBOLCHEUVREUX.csv'),sep = ';')
+    security_ref = security_ref[['cheuvreux_secid', 'ticker', 'tickerAG']]
+     
+    res = export_vc_specific(data_security_referential = security_ref,
                    path_export = 'H:\\', 
-                   filename_export = 'test_specific.txt',
-                   separator = ':')
+                   filename_export = 'test.txt',
+                   separator = '\t')
+    
     print res
+    
+    
+#     #-- security test
+#     exchange_ref = pd.read_csv(os.path.join('C:\\export_sym\\backup', 'ref_trd_destination.csv'))
+#                     
+#     res = export_vc_generic(data_exchange_referential = exchange_ref,
+#                    path_export = 'H:\\', 
+#                    filename_export = 'test_specific.txt',
+#                    separator = ':')
+#     print res
     
     

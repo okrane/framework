@@ -17,11 +17,102 @@ from lib.dbtools.connections import Connections
 from lib.data.ui.Explorer import Explorer
 from lib.logger import *
 from lib.io.toolkit import get_traceback
+from lib.io.toolkit import send_email
 
 #############################################################################
 #- INFO
 #############################################################################
 # !!!!!!!!!! BACKUP DIRECTORY NEED TO BE FILLED WITh THE NEEDED DATA !!!!!!!!!!
+
+
+def send_report(pathexport,copy_sec_bkp,security_ref,copy_exch_bkp,exchange_ref,info_indicator,info_vcs,info_vcg,email_list):
+    
+    #--------------
+    # --- SUMMARY (message)
+    
+    html_message = ''
+    html_message += '<h1> Summary </h1>'
+    # ---
+    html_message += '<h2> Security Referential </h2>'
+    if copy_sec_bkp:
+        html_message += 'Backup file has been loaded'
+    html_message += 'contains (nb ' + str(security_ref.shape[0]) + ')<br/>'
+    # ---
+    html_message += '<h2> Exchange Referential </h2>'
+    if copy_exch_bkp:
+        html_message += 'Backup file has been loaded'
+    html_message += 'contains (nb ' + str(exchange_ref.shape[0]) + ')<br/>'
+    # ---
+    html_message += '<h2> Volume curve generic </h2>'
+    if info_vcg == []:
+        html_message += 'Backup  file has been loaded'
+    else:
+        html_message += '<br/>curve OK (nb ' + str(len(info_vcg[0])) + ')<br/>'
+        html_message += '<br/>curve BACKUP (nb ' + str(len(info_vcg[1])) + ')<br/>'
+        html_message += '<br/>curve not in export file (nb ' + str(len(info_vcg[2])) + ')<br/>'
+        html_message += '<br/>curve in error (nb ' + str(len(info_vcg[3])) + ')<br/>'
+    # ---
+    html_message += '<h2> Volume curve specific </h2>'
+    if info_vcs == []:
+        html_message += 'Backup file has been loaded'
+    else:
+        html_message += '<br/>Symbol with a curve (nb ' + str(len(info_vcs[0])) + ')<br/>'
+        html_message += '<br/>Curve in error (nb ' + str(len(info_vcs[1])) + ')<br/>'
+    # ---
+    html_message += '<h2>Indicator</h2>'
+    if info_indicator == []:
+        html_message += 'Backup file has been loaded'
+    else:
+        html_message += '<br/>Symbol with indicators (nb ' + str(len(info_indicator[0])) + ')<br/>'
+        html_message += '<br/>Symbol without indicators (nb ' + str(len(info_indicator[1])) + ')<br/>'      
+        
+    #--------------
+    # ---  DETAILS (in attachment)
+    txt_message = ''
+    txt_message += '\n Volume curve generic \n'
+    if info_vcg == []:
+        txt_message += 'Backup  file has been loaded'
+    else:
+        txt_message += 'curve OK (nb ' + str(len(info_vcg[0])) + ') \n'
+        txt_message += ''.join([str(x) + ',' for x in info_vcg[0]])
+        txt_message += 'curve BACKUP (nb ' + str(len(info_vcg[1])) + ') \n'
+        txt_message += ''.join([str(x) + ',' for x in info_vcg[1]])
+        txt_message += 'curve not in export file (nb ' + str(len(info_vcg[2])) + ') \n'
+        txt_message += ''.join([str(x) + ',' for x in info_vcg[2]])
+        txt_message += 'curve in error (nb ' + str(len(info_vcg[3])) + ') \n'
+        txt_message += ''.join([str(x) + ',' for x in info_vcg[3]])
+    # ---
+    txt_message += '\n Volume curve specific \n'
+    if info_vcs == []:
+        txt_message += 'Backup file has been loaded'
+    else:
+        txt_message += 'Symbol with a curve (nb ' + str(len(info_vcs[0])) + ') \n'
+        txt_message += ''.join([str(x) + ',' for x in info_vcs[0]])
+        txt_message += 'Curve in error (nb ' + str(len(info_vcs[1])) + ') \n'
+        txt_message += ''.join([str(x) + ',' for x in info_vcs[1]])
+    # ---
+    txt_message += '\n Indicator \n'
+    if info_indicator == []:
+        txt_message += 'Backup file has been loaded'
+    else:
+        txt_message += 'Symbol with indicators (nb ' + str(len(info_indicator[0])) + ') \n'
+        txt_message += ''.join([str(x) + ',' for x in info_indicator[0]])
+        txt_message += 'Symbol without indicators (nb ' + str(len(info_indicator[1])) + ') \n' 
+        txt_message += ''.join([str(x) + ',' for x in info_indicator[1]])
+        
+    out = open( os.path.join( pathexport , 'email_log.txt') ,'w')
+    out.write(txt_message)
+    out.close()
+    
+    # ---
+    send_email(_to = email_list, 
+               _from = 'njoseph@keplercheuvreux.com',
+               _subject = "[SymServer] Export Files ",
+               _message = html_message , 
+               _files = [os.path.join( pathexport , 'email_log.txt')])
+
+
+
 
 
 if __name__ == "__main__":
@@ -68,6 +159,8 @@ if __name__ == "__main__":
     FNAME_VC_SPECIFIC = 'VWAP_Profile_0'
     FNAME_VC_GENERIC = 'USR.vwap.opts'
     
+    #--
+    REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com']
     
     #############################################################################
     #- REFERENTIAL
@@ -76,7 +169,8 @@ if __name__ == "__main__":
     #----------------------------
     #- EXPORT SECURIY REF
     #-----------------------------
-    copy_bkp = False
+    copy_sec_bkp = False
+    
     try:
         # TODO : check quand on peut le lancer ??
         export_ids.generate_file(day, export_path = PATH_EXPORT, export_name = FNAME_SECURITY_REF, send2flexapp = False, export2json = False)
@@ -84,9 +178,9 @@ if __name__ == "__main__":
     except:
         get_traceback()
         logging.error("security_ref can't be created")
-        copy_bkp = True
-           
-    if copy_bkp:
+        copy_sec_bkp = True
+              
+    if copy_sec_bkp:
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_SECURITY_REF), os.path.join(PATH_EXPORT, FNAME_SECURITY_REF))
         logging.warning("security_ref backup has been copied")
         
@@ -99,7 +193,8 @@ if __name__ == "__main__":
     #----------------------------
     #- EXPORT EXCHANGE REF (needed in Flex code for VC)
     #----------------------------
-    copy_bkp = False
+    copy_exch_bkp = False
+    
     try:
         exchange_ref = get_repository.get_flexexchangemapping()
         if exchange_ref.shape[0]==0:
@@ -109,33 +204,33 @@ if __name__ == "__main__":
     except:
         get_traceback()
         logging.error("exchange_ref can't be created")
-        copy_bkp = True
+        copy_exch_bkp = True
         
-    if copy_bkp:
+    if copy_exch_bkp:
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_EXCHANGE_REF), os.path.join(PATH_EXPORT, FNAME_EXCHANGE_REF))
         logging.warning("exchange_ref backup has been copied")   
         
     #----------------------------
     #- LOAD EXCHANGE REF
     #----------------------------
-    if copy_bkp:
+    if copy_exch_bkp:
         exchange_ref = pd.read_csv(os.path.join(PATH_EXPORT, FNAME_EXCHANGE_REF))
         
     #############################################################################
     #- EXPORT INDICATORS
     #############################################################################
     copy_indicator_bkp = False
-    sec_ids_whithout_indicator = []
-     
+    info_indicator = []
+    
     try:
-        sec_ids_whithout_indicator = indicator.export_symdata(data_security_referential = security_ref, 
+        info_indicator = indicator.export_symdata(data_security_referential = security_ref, 
                                  path_export = PATH_EXPORT, 
                                  filename_export = FNAME_INDICATOR)
     except:
         get_traceback()
         logging.error("indicator export can't be written")
         copy_indicator_bkp = True
-      
+        
     if copy_indicator_bkp:
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_INDICATOR), os.path.join(PATH_EXPORT, FNAME_INDICATOR))
         logging.warning("indicator backup has been copied")
@@ -155,9 +250,9 @@ if __name__ == "__main__":
     #- SPECIFIC
     #----------------------------
     copy_specific_bkp = False
-    vcs_ids_not_pushed = []
+    info_vcs = []
     try:
-        vcs_ids_not_pushed = vc.export_vc_specific(data_security_referential = security_ref,
+        info_vcs = vc.export_vc_specific(data_security_referential = security_ref,
                    path_export = PATH_EXPORT, 
                    filename_export = FNAME_VC_SPECIFIC,
                    separator = '\t')
@@ -165,7 +260,7 @@ if __name__ == "__main__":
         get_traceback()
         logging.error("specific curve file can't be written")
         copy_specific_bkp = True 
-      
+       
     if copy_specific_bkp:
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_VC_SPECIFIC), os.path.join(PATH_EXPORT, FNAME_VC_SPECIFIC))
         logging.warning("specific curve  backup has been copied")
@@ -174,9 +269,9 @@ if __name__ == "__main__":
     #- GENERIC
     #----------------------------
     copy_generic_bkp = False
-    vcg_ids_not_pushed = []
+    info_vcg = []
     try:
-        vcg_ids_not_pushed = vc.export_vc_generic(data_exchange_referential = exchange_ref,
+        info_vcg = vc.export_vc_generic(data_exchange_referential = exchange_ref,
                    path_export = PATH_EXPORT, 
                    filename_export = FNAME_VC_GENERIC,
                    separator = ':')
@@ -192,7 +287,10 @@ if __name__ == "__main__":
     #############################################################################
     #- SEND REPORT ON EXPORT INDICATOR AND VOLUME CURVES
     #############################################################################
-    # TO DO
+    send_report(PATH_EXPORT,
+                copy_sec_bkp,security_ref,
+                copy_exch_bkp,exchange_ref,
+                info_indicator,info_vcs,info_vcg,REPORT_MAILING_LIST)
     
     logging.info("EXPORT SYMSERVER : END")
     

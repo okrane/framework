@@ -25,11 +25,12 @@ from lib.tca.algoplot import PlotEngine
 
 
 
+ 
 #----------
 # params
 client_prefix='BLKUK'
 start_date=dt.datetime(2013,1,1)
-end_date=dt.datetime(2013,9,19)
+end_date=dt.datetime(2013,10,1)
 
 
 
@@ -41,9 +42,7 @@ algo_occ_fe_data=AlgoStatsProcessor(start_date = start_date, end_date = end_date
 # algo_occ_fe_data=AlgoStatsProcessor(start_date = start_date, end_date = end_date,
 #                              filter = {'Account': {'$regex' : client_prefix+'.*'}})
 algo_occ_fe_data.get_occ_fe_data()
-
-algo_occ_fe_data.data_occurrence.ix[(np.where(map(lambda x : x is None or not np.isfinite(x) , algo_occ_fe_data.data_occurrence['rate_to_euro']))[0])]
-         
+       
 # -- 
 # algo_deal_data=AlgoStatsProcessor(start_date = start_date, end_date = end_date,
 #                              filter = {'Account': {'$regex' : client_prefix+'.*'}})

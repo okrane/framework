@@ -7,6 +7,7 @@ Created on Tue Sep 03 10:25:23 2013
 from pymongo import *
 import pandas as pd
 import datetime as dt
+import pytz
 import time as time
 import numpy as np
 # import lib.data.matlabutils as matlabutils
@@ -62,8 +63,8 @@ class AlgoDataProcessor(object):
         self.deal_collection_name = 'OrderDeals'
         
         #---- excel INFO
-        self.xls_occ_fe_path = 'H:\\Data'
-        self.xls_occ_fe_filename = 'Export_EOD_Flex_2013_comma2.csv'
+        self.xls_occ_fe_path = 'W:\\Global_Research\\Quant_research\\Data\\tca'
+        self.xls_occ_fe_filename = 'Export_EOD_Flex_2013_comma.csv'
         self.xls_occ_fe_filenameg = 'export_renormalized.csv'
         self.data_xls_occ_fe=None
         
@@ -284,11 +285,12 @@ class AlgoDataProcessor(object):
         
     def get_xls_occ_fe_data(self):    
         
+        tzparis=pytz.timezone('Europe/Paris')
         #------ LOAD HISTO DATA ALREADY FORMATED
         if os.path.exists(os.path.join(self.xls_occ_fe_path,self.xls_occ_fe_filenameg)):
             self.data_xls_occ_fe = pd.read_csv(os.path.join(self.xls_occ_fe_path,self.xls_occ_fe_filenameg))
-            self.data_xls_occ_fe['SendingTime']=map(lambda x : dt.datetime.strptime(x,'%Y-%m-%d %H:%M:%S'),self.data_xls_occ_fe['SendingTime'].values)
-            self.data_xls_occ_fe['eff_endtime']=map(lambda x : dt.datetime.strptime(x,'%Y-%m-%d %H:%M:%S'),self.data_xls_occ_fe['eff_endtime'].values)
+            self.data_xls_occ_fe['SendingTime']=map(lambda x : tzparis.localize(dt.datetime.strptime(x,'%Y-%m-%d %H:%M:%S')),self.data_xls_occ_fe['SendingTime'].values)
+            self.data_xls_occ_fe['eff_endtime']=map(lambda x : tzparis.localize(dt.datetime.strptime(x,'%Y-%m-%d %H:%M:%S')),self.data_xls_occ_fe['eff_endtime'].values)
             self.data_xls_occ_fe = self.data_xls_occ_fe.set_index('SendingTime')
             return
             
@@ -305,7 +307,8 @@ class AlgoDataProcessor(object):
         # NORMALIZE like the db              
         # rate_to_euro, cheuvreux_secid, Side, occ_fe_strategy_name_mapped
         dict_rename={
-            'STARTTIME':'SendingTime',
+            'EXECDATE':'EXECDATE',
+            'STARTTIME':'STARTTIME',
             'ENDTIME':'eff_endtime', 
             'STRATEGY':'occ_fe_strategy_name_mapped',
             'CURRENCY':'Currency',
@@ -338,18 +341,22 @@ class AlgoDataProcessor(object):
         self.data_xls_occ_fe['occ_fe_prv_wexec']=0
          
         #---- basic formula
-        self.data_xls_occ_fe['SendingTime']=map(lambda x : dt.datetime.strptime(x,'%d.%m.%Y %H:%M'),self.data_xls_occ_fe['SendingTime'].values)
-        self.data_xls_occ_fe['eff_endtime']=map(lambda x : dt.datetime.strptime(x,'%d.%m.%Y %H:%M'),self.data_xls_occ_fe['eff_endtime'].values)
+        self.data_xls_occ_fe['SendingTime']=map(lambda x,y : dt.datetime.combine(dt.datetime.strptime(x,'%d.%m.%Y %H:%M').date(),dt.datetime.strptime(y,'%d.%m.%Y %H:%M').time()),
+                                                self.data_xls_occ_fe['EXECDATE'].values,self.data_xls_occ_fe['STARTTIME'].values)
+        self.data_xls_occ_fe['eff_endtime']=map(lambda x,y : dt.datetime.combine(dt.datetime.strptime(x,'%d.%m.%Y %H:%M').date(),dt.datetime.strptime(y,'%d.%m.%Y %H:%M').time()),
+                                                self.data_xls_occ_fe['EXECDATE'].values,self.data_xls_occ_fe['eff_endtime'].values)
+        self.data_xls_occ_fe = self.data_xls_occ_fe.drop(['EXECDATE','STARTTIME'],axis=1)
         self.data_xls_occ_fe['Side']=self.data_xls_occ_fe['Side'].apply(lambda x : 1 if x=='B' else -1)
-        
+        # np.unique(self.data_xls_occ_fe.ix[np.where(self.data_xls_occ_fe['Currency'] == 'EUR')[0]]['SendingTime'].values)
         #----- cheuvreux_secid
         uni_,idx_in_uni_=matlabutils.uniqueext(self.data_xls_occ_fe['Symbol'].values,return_inverse=True)
         uni_vals=map(lambda x : get_repository.get_symbol6_from_ticker(x),uni_)
         vals=[np.nan]*len(idx_in_uni_)
         for i in range(0,len(vals)):
             vals[i]=uni_vals[idx_in_uni_[i]]
+        
         self.data_xls_occ_fe['cheuvreux_secid']=vals
-         
+        
         #----- strategy name
         uni_,idx_in_uni_=matlabutils.uniqueext(self.data_xls_occ_fe['occ_fe_strategy_name_mapped'].values,return_inverse=True)
         uni_vals=map(lambda x : str(mapping.StrategyName(x)),uni_)
@@ -362,7 +369,9 @@ class AlgoDataProcessor(object):
         uni_curr = np.unique(self.data_xls_occ_fe['Currency'].values).tolist()
         uni_curr = [uni_curr[x] for x in np.where([isinstance(x,basestring) for x in uni_curr])[0]]
         data_rte=read_dataset.histocurrencypair(start_date = dt.datetime.strftime(np.min(self.data_xls_occ_fe['SendingTime']),'%Y%m%d'), 
-                                                end_date = dt.datetime.strftime(np.max(self.data_xls_occ_fe['eff_endtime']),'%Y%m%d'),currency = uni_curr)
+                                                end_date = dt.datetime.strftime(np.max(self.data_xls_occ_fe['eff_endtime']),'%Y%m%d'),
+                                                currency = uni_curr,
+                                                all_business_day = True)
         data_rte['tmpmergetime']=map(lambda x : dt.datetime.strftime(x.to_datetime(),'%Y-%m-%d'),data_rte.index)
         self.data_xls_occ_fe['tmpmergetime']=map(lambda x : dt.datetime.strftime(x,'%Y-%m-%d'),self.data_xls_occ_fe['SendingTime'])
         data_rte=data_rte.rename(columns={'ccy':'Currency'}).drop('ccyref',axis=1)

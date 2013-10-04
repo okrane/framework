@@ -16,6 +16,7 @@ from lib.tca.algodata import *
 import lib.data.dataframe_tools as dftools
 import lib.data.matlabutils as mutils
 import lib.io.toolkit as toolkit
+import re
 
 class AlgoStatsProcessor(AlgoDataProcessor):
     
@@ -34,38 +35,79 @@ class AlgoStatsProcessor(AlgoDataProcessor):
     # SELF GET DATA METHODS
     ###########################################################################
     def get_occ_fe_data(self):
-        #-----------------------------------
-        # GET DATA
-        #-----------------------------------
-        # self.get_db_data(level='occurrence')
-        self.get_xls_occ_fe_data()
-        # tres sale !
-        self.data_occurrence = self.data_xls_occ_fe
+        
+        if self.data_occurrence is not None:
+            raise ValueError('nothing should be loaded')
         
         #-----------------------------------
-        # APPLY EXEC FORMULA STATS
+        # GET DATA (XLS drom from Flex Stats)
         #-----------------------------------
-        if self.data_occurrence.shape[0]>0:
-            if 'occ_fe_strategy_name_mapped' not in self.data_occurrence.columns.values:
-                data_seq2load=False
-                if self.data_sequence is None:
-                    data_seq2load=True
-                    # bidouille 1 on load les sequence pour calculer le occ_strategy_name_
-                    self.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped'])
+        # --
+        self.get_xls_occ_fe_data()
+        dates = [x.to_datetime() for x in self.data_xls_occ_fe.index]
+        max_date_xls = pytz.UTC.localize(dt.datetime.combine(np.max(dates).date(),dt.time(23,59)))
+        
+        # -- filter start end
+        if self.start_date is not None and self.end_date is not None:
+            sdate = self.start_date
+            edate = self.end_date
+            if sdate.tzinfo is None:
+                sdate = pytz.UTC.localize(sdate)
+            if edate.tzinfo is None:
+                edate = pytz.UTC.localize(edate)
                 
-                config_stats={'occ_fe_strategy_name_mapped':
-                    {'default': 'Unknown' ,'slicer' : lambda df : df.strategy_name_mapped.values[-1]}}
+            self.data_xls_occ_fe = self.data_xls_occ_fe[ map(lambda x : x >= sdate and x <= edate, dates) ]
+            
+        # -- filter start end
+        if self.filter is not None:
+            try:     
+                reg_client = self.filter['Account']['$regex']
+            except:
+                raise ValueError('only accept "Account" and "$regex" for now')
+            if self.data_xls_occ_fe.shape[0] > 0:
+                self.data_xls_occ_fe = self.data_xls_occ_fe[self.data_xls_occ_fe['Account'].apply(lambda x : True if isinstance(x,basestring) and re.match(reg_client, x, flags=0) is not None else False)]
+           
+        #-----------------------------------
+        # Merge with occurrence
+        #-----------------------------------
+        add_occurrence = pd.DataFrame()
+        
+        if (self.end_date is None) or (self.start_date is not None and self.end_date is not None and edate > max_date_xls):
+            self.get_db_data(level = 'occurrence')
+            #-----------------------------------
+            # APPLY EXEC FORMULA STATS
+            #-----------------------------------
+            if self.data_occurrence.shape[0]>0:
+                if 'occ_fe_strategy_name_mapped' not in self.data_occurrence.columns.values:
+                    data_seq2load=False
+                    if self.data_sequence is None:
+                        data_seq2load=True
+                        # bidouille 1 on load les sequence pour calculer le occ_strategy_name_
+                        self.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped'])
                     
-                _add_data=dftools.agg(self.data_sequence,group_vars='p_occ_id',
-                                      stats=dict([(x,config_stats[x]['slicer']) for x in config_stats.keys()]))
-                                      
-                if _add_data.shape[0]>0:
-                    index_name=self.data_occurrence.index.name
-                    self.data_occurrence=self.data_occurrence.reset_index().merge(_add_data,how='left',on=['p_occ_id']).set_index(index_name)
-                    
-                # bidouille 2 : on efface...
-                if data_seq2load:
-                    self.data_sequence = None
+                    config_stats={'occ_fe_strategy_name_mapped':
+                        {'default': 'Unknown' ,'slicer' : lambda df : df.strategy_name_mapped.values[-1]}}
+                        
+                    _add_data=dftools.agg(self.data_sequence,group_vars='p_occ_id',
+                                          stats=dict([(x,config_stats[x]['slicer']) for x in config_stats.keys()]))
+                                          
+                    if _add_data.shape[0]>0:
+                        index_name=self.data_occurrence.index.name
+                        self.data_occurrence=self.data_occurrence.reset_index().merge(_add_data,how='left',on=['p_occ_id']).set_index(index_name)
+                        
+                    # bidouille 2 : on efface...
+                    if data_seq2load:
+                        self.data_sequence = None
+                        
+            add_occurrence = self.data_occurrence[map(lambda x : x > max_date_xls, [x.to_datetime() for x in self.data_occurrence.index])]
+            self.data_occurrence = None
+            
+            
+        self.data_occurrence = self.data_xls_occ_fe.append(add_occurrence)
+        self.data_occurrence = self.data_occurrence.sort_index()
+        self.data_xls_occ_fe = None
+        
+
             
         #-----------------------------------
         # APPLY MARKET FORMULA STATS

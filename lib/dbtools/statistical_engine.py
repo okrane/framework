@@ -86,17 +86,50 @@ def get_reference_param(context_id,domain_id,estimator_id):
         context_name = vals[0][0][0]
     
     return params,context_name
-        
 
+##------------------------------------------------------------------------------
+# check update
+#------------------------------------------------------------------------------       
+def check_db_update(date):
+    
+    out = False
+    
+    try:
+        
+        date_s = dt.datetime.strftime(date.date(),'%Y%m%d')
+        date_e = dt.datetime.strftime((date + dt.timedelta(days=1)).date(),'%Y%m%d')
+        
+        query=""" SELECT date , jobname ,status
+                  FROM QUANT..upd_quant_data_report
+                  WHERE date >= '%s' and date < '%s' """ % (date_s,date_e)
+                  
+        vals = Connections.exec_sql('QUANT',query,schema = True)
+        if not vals[0]:
+            logging.warning('No info of curve update for date : ' + date_s)
+        else:
+            data = pd.DataFrame.from_records(vals[0],columns=vals[1])
+            
+            out = data[data['jobname'] == 'upd_quant_data']['status'].values[0] == 'O' and data[data['jobname'] == 'quant_reference_update_context']['status'].values[0] == 'O'
+            
+            if not out:
+                logging.warning('Error in curve update for date : ' + date_s) 
+               
+    except:
+        logging.error('error in check_db_update func')
+    
+    return out
+   
 if __name__ == "__main__":
     
     Connections.change_connections('production_copy')
+    # -- check
+    print check_db_update(dt.datetime(2013,10,07))
     
-    all_runs=get_reference_run(estimator_id=2,level='specific')
-    print all_runs
-    
-    params,context_name=get_reference_param(all_runs.iloc[0]['context_id'],all_runs.iloc[0]['domain_id'],all_runs.iloc[0]['estimator_id'])
-    print context_name
+#     all_runs=get_reference_run(estimator_id=2,level='specific')
+#     print all_runs
+#     
+#     params,context_name=get_reference_param(all_runs.iloc[0]['context_id'],all_runs.iloc[0]['domain_id'],all_runs.iloc[0]['estimator_id'])
+#     print context_name
     
     
       

@@ -501,20 +501,20 @@ def export_vc_generic(data_exchange_referential = None,
                 cb_not_added.append(cb + '_AG')                
                 
     out.close()
-          
+    
     logging.info('export_vc_generic: successfull END')
     
     #-------------------------------------------------------------------------
     # CHECK CURVES
     #-------------------------------------------------------------------------
     if len(cb_not_added) > 0:
-        raise ValueError('At least one of the _AG curve is missing')
+        raise ValueError('These the _AG curve are missing : ' + ''.join([str(x) + ',' for x in cb_not_added])[:-1])
     
     
     return cb_added , cb_added_backup , cb_not_added , cb_id_error
 
 
- 
+
 if __name__ == "__main__":
     
     Connections.change_connections('production_copy')
@@ -524,24 +524,24 @@ if __name__ == "__main__":
     
     #-- security test
      
-    security_ref = pd.read_csv(os.path.join('C:\\export_sym\\backup', 'TRANSCOSYMBOLCHEUVREUX.csv'),sep = ';')
-    security_ref = security_ref[['cheuvreux_secid', 'ticker', 'tickerAG']]
-     
-    res = export_vc_specific(data_security_referential = security_ref,
-                   path_export = 'H:\\', 
-                   filename_export = 'test.txt',
-                   separator = '\t')
-    
-    print res
-    
-    
-#     #-- security test
-#     exchange_ref = pd.read_csv(os.path.join('C:\\export_sym\\backup', 'ref_trd_destination.csv'))
-#                     
-#     res = export_vc_generic(data_exchange_referential = exchange_ref,
+#     security_ref = pd.read_csv(os.path.join('C:\\export_sym\\backup', 'TRANSCOSYMBOLCHEUVREUX.csv'),sep = ';')
+#     security_ref = security_ref[['cheuvreux_secid', 'ticker', 'tickerAG']]
+#      
+#     res = export_vc_specific(data_security_referential = security_ref,
 #                    path_export = 'H:\\', 
-#                    filename_export = 'test_specific.txt',
-#                    separator = ':')
+#                    filename_export = 'test.txt',
+#                    separator = '\t')
+#     
 #     print res
     
+    
+    #-- security test
+    exchange_ref = pd.read_csv(os.path.join('C:\\export_sym\\backup', 'ref_trd_destination.csv'))
+                 
+    res = export_vc_generic(data_exchange_referential = exchange_ref,
+                path_export = 'H:\\', 
+                filename_export = 'test_specific.txt',
+                separator = ':')
+    print res
+     
     

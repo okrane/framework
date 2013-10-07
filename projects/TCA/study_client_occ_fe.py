@@ -35,35 +35,19 @@ end_date=dt.datetime(2013,10,1)
 
 
 #----------
-# get data
-# -- 
+# OCC FE Analysis
+# -- get data
 algo_occ_fe_data=AlgoStatsProcessor(start_date = start_date, end_date = end_date,
                              filter = {'Account': {'$regex' : client_prefix+'.*'}})
-# algo_occ_fe_data=AlgoStatsProcessor(start_date = start_date, end_date = end_date,
-#                              filter = {'Account': {'$regex' : client_prefix+'.*'}})
 algo_occ_fe_data.get_occ_fe_data()
        
-# -- 
-# algo_deal_data=AlgoStatsProcessor(start_date = start_date, end_date = end_date,
-#                              filter = {'Account': {'$regex' : client_prefix+'.*'}})
-# algo_deal_data.get_db_data(level='sequence',force_colnames_only=['Account'])
-# algo_deal_data.get_db_data(level='deal')
-# algo_deal_data.get_intraday_agg_deals_data()
-# algo_data.get_xls_occ_fe_data()
-# 
 
-
-#----------
 # PLot on all the period
 plot_allp=PlotEngine()
 
 #-- evolution / turnover by algo
 tmp=plot_allp.plot_algo_evolution(algo_data=algo_occ_fe_data,level='occ_fe',var='mturnover_euro',gvar='occ_fe_strategy_name_mapped')
 plt.show()
-
-#-- algo usage in nb occurence
-# plot_allp.plot_intraday_exec_curve(algo_data=algo_deal_data)
-# plt.show()  
 
 #-- algo usage in turnover
 tmp=plot_allp.plot_algo_hbar(algo_data=algo_occ_fe_data,level='occ_fe',var='mturnover_euro',gvar='occ_fe_strategy_name_mapped')

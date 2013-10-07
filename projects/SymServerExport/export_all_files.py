@@ -14,6 +14,7 @@ import projects.SymServerExport.indicator as indicator
 import lib.dbtools.export_ids as export_ids
 import lib.dbtools.get_repository as get_repository
 from lib.dbtools.connections import Connections
+import lib.dbtools.statistical_engine as se
 from lib.data.ui.Explorer import Explorer
 from lib.logger import *
 from lib.io.toolkit import get_traceback
@@ -121,15 +122,19 @@ if __name__ == "__main__":
     
     Connections.change_connections('production')
     
-    force_generate = True
-    day = dt.datetime.strftime(dt.datetime.now(), format= '%Y%m%d')
+    
+    date = dt.datetime.now()
+    day = dt.datetime.strftime(date, format= '%Y%m%d')
     
     #############################################################################
     #- GLOBAL VARS + TEST
     #############################################################################
+    
+    force_generate = True
+    
     # -- path
     if os.name == 'nt':
-        GPATH = 'C:\\export_sym'
+        GPATH = 'W:\\Global_Research\\Quant_research\\projets\\export_sym'
     else:
         GPATH = '/home/quant/export_sym'
     
@@ -173,7 +178,7 @@ if __name__ == "__main__":
     
     try:
         # TODO : check quand on peut le lancer ??
-        export_ids.generate_file(day, export_path = PATH_EXPORT, export_name = FNAME_SECURITY_REF, send2flexapp = False, export2json = False)
+        export_ids.generate_file(day, export_path = PATH_EXPORT, export_name = FNAME_SECURITY_REF, last_day = True, send2flexapp = False, export2json = False)
         logging.info("security_ref has been created")
     except:
         get_traceback()
@@ -223,18 +228,25 @@ if __name__ == "__main__":
     #############################################################################
     #- EXPORT INDICATORS
     #############################################################################
-    copy_indicator_bkp = False
+    copy_indicator_bkp = True
     info_indicator = []
     
-    try:
-        info_indicator = indicator.export_symdata(data_security_referential = security_ref, 
-                                 path_export = PATH_EXPORT, 
-                                 filename_export = FNAME_INDICATOR)
-    except:
-        get_traceback()
-        logging.error("indicator export can't be written")
-        copy_indicator_bkp = True
+    # -- check database
+    db_indicator_ok = True
+    
+    # -- extract
+    if db_indicator_ok:
         
+        try:
+            info_indicator = indicator.export_symdata(data_security_referential = security_ref, 
+                                     path_export = PATH_EXPORT, 
+                                     filename_export = FNAME_INDICATOR)
+            copy_indicator_bkp = False
+        except:
+            get_traceback()
+            logging.error("indicator export can't be written")
+            
+    # -- backup        
     if copy_indicator_bkp:
         if not os.path.exists(os.path.join(PATH_BACKUP, FNAME_INDICATOR)):
             raise ValueError('indicator backup cant be found')
@@ -251,48 +263,62 @@ if __name__ == "__main__":
     #############################################################################
     #- EXPORT VOLUME CURVES FILES
     #############################################################################
-    
-    #----------------------------
-    #- SPECIFIC
-    #----------------------------
-    copy_specific_bkp = False
+    # -- default
+    copy_specific_bkp = True
     info_vcs = []
-    try:
-        info_vcs = vc.export_vc_specific(data_security_referential = security_ref,
-                   path_export = PATH_EXPORT, 
-                   filename_export = FNAME_VC_SPECIFIC,
-                   separator = '\t')
-    except:
-        get_traceback()
-        logging.error("specific curve file can't be written")
-        copy_specific_bkp = True 
-       
+    copy_generic_bkp = True
+    info_vcg = []
+    
+    # -- check database
+    db_curve_ok = se.check_db_update(date)
+    
+    # -- extract
+    if db_curve_ok:
+        
+        #----------------------------
+        #- SPECIFIC
+        #----------------------------
+    
+        try:
+            info_vcs = vc.export_vc_specific(data_security_referential = security_ref,
+                       path_export = PATH_EXPORT, 
+                       filename_export = FNAME_VC_SPECIFIC,
+                       separator = '\t')
+            
+            copy_specific_bkp = False 
+        except:
+            get_traceback()
+            logging.error("specific curve file can't be written")
+            
+            
+        #----------------------------
+        #- GENERIC
+        #----------------------------
+    
+        try:
+            info_vcg = vc.export_vc_generic(data_exchange_referential = exchange_ref,
+                       path_export = PATH_EXPORT, 
+                       filename_export = FNAME_VC_GENERIC,
+                       separator = ':')
+            
+            copy_generic_bkp = False
+        except:
+            get_traceback()
+            logging.error("generic curve file can't be written")
+     
+    # -- backup              
     if copy_specific_bkp:
         if not os.path.exists(os.path.join(PATH_BACKUP, FNAME_VC_SPECIFIC)):
             raise ValueError('specific curve backup cant be found')
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_VC_SPECIFIC), os.path.join(PATH_EXPORT, FNAME_VC_SPECIFIC))
         logging.warning("specific curve  backup has been copied")
         
-    #----------------------------
-    #- GENERIC
-    #----------------------------
-    copy_generic_bkp = False
-    info_vcg = []
-    try:
-        info_vcg = vc.export_vc_generic(data_exchange_referential = exchange_ref,
-                   path_export = PATH_EXPORT, 
-                   filename_export = FNAME_VC_GENERIC,
-                   separator = ':')
-    except:
-        get_traceback()
-        logging.error("generic curve file can't be written")
-        copy_generic_bkp = True
-        
     if copy_generic_bkp:
         if not os.path.exists(os.path.join(PATH_BACKUP, FNAME_VC_GENERIC)):
             raise ValueError('generic curve backup cant be found')
         shutil.copy2(os.path.join(PATH_BACKUP, FNAME_VC_GENERIC), os.path.join(PATH_EXPORT, FNAME_VC_GENERIC))
         logging.warning("generic curve  backup has been copied")
+        
         
     #############################################################################
     #- SEND REPORT ON EXPORT INDICATOR AND VOLUME CURVES

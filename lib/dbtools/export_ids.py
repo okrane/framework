@@ -17,7 +17,7 @@ logging.getLogger("paramiko").setLevel(logging.WARNING)
 from lib.tca import mapping
 import os
 
-def generate_file(day, all=False, export_path=os.path.realpath(__file__), export_name=None, with_none = False, send2flexapp = True, export2json = True):
+def generate_file(day, all=False, export_path=os.path.realpath(__file__), last_day = False , export_name=None, with_none = False, send2flexapp = True, export2json = True):
     new_dict = {}
     gl_list  = [] 
     
@@ -29,9 +29,26 @@ def generate_file(day, all=False, export_path=os.path.realpath(__file__), export
                 username = server['list_users']['flexsys']['username'], 
                 password = server['list_users']['flexsys']['passwd'])
     
-    
-    
-    cmd = 'cat /home/flexsys/logs/rtp/%s/gl_flex_dictionary' %day
+    # -- find the last day before 'day' in directory
+    if last_day:
+        (stdin, stdout_grep, stderr) = ssh.exec_command('ls -d /home/flexsys/logs/rtp/*/')
+        lines                        = stdout_grep.readlines()
+        
+        dates = []
+        for line in lines:
+            tmp_dir = line.split('/')[-2]
+            if tmp_dir[0] == '2' and len(tmp_dir) == 8:
+                dates.append(tmp_dir)
+        dates.sort(reverse = True)
+        
+        for d in dates:
+            if d < day:
+                day = d
+                break
+            
+    # -- get flex dictionnary
+    path_flex_dico = '/home/flexsys/logs/rtp/%s/gl_flex_dictionary' %day
+    cmd = 'cat ' + path_flex_dico 
     
     (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
     lines                        = stdout_grep.readlines()
@@ -42,6 +59,8 @@ def generate_file(day, all=False, export_path=os.path.realpath(__file__), export
         gl_list.append(l_line[4])
             
     ssh.close()
+    
+    logging.info(path_flex_dico + ' has been used as flex dico')
     
     unique_ids  = set(gl_list) 
     len_ids     = len(unique_ids)

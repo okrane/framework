@@ -197,7 +197,11 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             
         self.__add_benchtime(lasttick_datetime=lasttick_datetime)
         
- 
+        #-----------------------------------
+        # market stats on period
+        #-----------------------------------        
+        # TO DO
+        
     def __compute_db_exec_stats(self):
         #-----------------------------------
         # TESTS

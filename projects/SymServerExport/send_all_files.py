@@ -48,7 +48,7 @@ if __name__ == "__main__":
     day = dt.datetime.strftime(dt.datetime.now(), format= '%Y%m%d')
     
     if os.name == 'nt':
-        GPATH = 'C:\\export_sym'
+        GPATH = 'W:\\Global_Research\\Quant_research\\projets\\export_sym'
     else:
         GPATH = '/home/quant/export_sym'
     

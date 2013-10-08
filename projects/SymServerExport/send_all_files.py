@@ -57,7 +57,12 @@ if __name__ == "__main__":
     if not os.path.exists(PATH_FILE):
         raise ValueError('No Data at all')
         
-    REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com' , 'sreydellet@keplercheuvreux.com']
+    #-- maing list
+    if os.name == 'nt':
+        REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com']
+        
+    else:
+        REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com' , 'sreydellet@keplercheuvreux.com']
     
     #----------------
     # -- Send files

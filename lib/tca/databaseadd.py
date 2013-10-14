@@ -76,7 +76,12 @@ class PostDbAdd(object):
                 self.data_occurrence=self.data_occurrence.append(occ_data.data_occurrence)
                 #self.data_deal=self.data_deal.append(occ_data.data_deal)
                 
-                
+    ###########################################################################
+    # METHOD FORMAT DATA FOR DB ADD
+    ###########################################################################
+    # TO DO
+    # def format_output(self):
+                    
                 
                 
 

@@ -18,6 +18,7 @@ import lib.stats.slicer as slicer
 import lib.stats.formula as formula
 from lib.logger import *
 from lib.io.toolkit import get_traceback
+import lib.data.matlabutils as matlabutils
 
 if os.name != 'nt':
     import socket
@@ -139,7 +140,9 @@ def ftickdb(**kwargs):
 #--------------------------------------------------------------------------
 # histocurrency 
 #--------------------------------------------------------------------------
-def histocurrencypair(date = None, last_date_from = None, start_date = None, end_date = None, currency = None, currency_ref = None):
+def histocurrencypair(date = None, last_date_from = None, start_date = None, end_date = None, 
+                      currency = None, currency_ref = None,
+                      all_business_day = None):
     
     out = pd.DataFrame()
     
@@ -156,6 +159,7 @@ def histocurrencypair(date = None, last_date_from = None, start_date = None, end
         if start_date is None or end_date is None:
             raise NameError('read_dataset:histocurrencypair - Bad input for dates')        
         req_n = 1
+        
     #---- currencyref info
     if currency_ref is not None: 
         raise NameError('read_dataset:histocurrencypair - currency_ref not available NOW') 
@@ -218,6 +222,46 @@ def histocurrencypair(date = None, last_date_from = None, start_date = None, end
         
     out=pd.DataFrame.from_records(vals,columns=['date','ccy','ccyref','rate'],index=['date'])
     out=out.sort_index()
+    
+    
+    ##############################################################
+    # request and format
+    ##############################################################    
+    if all_business_day:
+        uni_currency_pair = matlabutils.uniqueext(out[['ccy','ccyref']].values,rows = True )
+        #-- dates
+        min_date = out.index[0].to_datetime()
+        max_date = out.index[-1].to_datetime()
+        all_date = []
+        date = min_date
+        while date <= max_date:
+            if date.weekday() not in [5, 6]:
+                all_date.append(date)
+            date += timedelta(days=1)
+            
+        #-- for each cuurency pair (get the last value)
+        for i in range(0,len(uni_currency_pair)):
+            
+            idx = np.where(map(lambda x,y : x == uni_currency_pair[i][0] and y== uni_currency_pair[i][1] , out['ccy'] , out['ccyref']))[0]
+            
+            if any([x not in [out.index[ii].to_datetime() for ii in idx] for x in all_date]):
+                missing_date = []
+                unused = [missing_date.append(x) if x not in [out.index[ii].to_datetime() for ii in idx] else None for x in all_date]
+                for d in missing_date:
+                    idx2 = -1
+                    for ii in range(0,len(idx)):
+                        if out.index[idx[ii]].to_datetime() < d:
+                            idx2 = ii
+                            
+                    tmp = pd.DataFrame([{'date' : d,
+                                        'ccy' : uni_currency_pair[i][0],
+                                        'ccyref' : uni_currency_pair[i][1],
+                                        'rate' : np.nan if idx2 == -1 else out['rate'].values[idx[idx2]]}])
+                    tmp = tmp.set_index('date')
+                    out = out.append(tmp)
+                    
+        out=out.sort_index()
+        
     return out
 
 
@@ -401,13 +445,14 @@ def trading_daily(start_date=None,end_date=None,security_id=[],include_agg=False
     
 
 if __name__=='__main__':
-    # ft london stock
-    data=ft(security_id=10735,date='11/03/2013')
-    # ft french stock
-    data=ft(security_id=110,date='11/03/2013')
-    # ft french stock (local)
-    data=ft(security_id=110,date='11/03/2013', remote=True)
+    from lib.data.ui.Explorer import Explorer
+    Explorer(histocurrencypair(start_date='20130401',end_date='20130410' , all_business_day = True))
+#     # ft london stock
+#     data=ft(security_id=10735,date='11/03/2013')
+#     # ft french stock
+#     data=ft(security_id=110,date='11/03/2013')
+#     # ft french stock (local)
+#     data=ft(security_id=110,date='11/03/2013', remote=True)
     # currency rate
-    print histocurrencypair(start_date='20130501',end_date='20130502',currency=['GBX','SEK'])
-    # currency rate
-    print histocurrencypair(last_date_from='20130803', currency=['GBX','SEK'])
+    
+    

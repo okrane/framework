@@ -264,3 +264,4 @@ import pytz
 # outfile.close()
 
 print datetime.datetime.today().strftime('%Y%m%d')
+print 'bienvenue sur Python'

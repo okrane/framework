@@ -142,7 +142,7 @@ class PlotEngine(object):
         if var == 'mturnover_euro':
             ylabel='Turnover/Algo (,000,000 Euros)'
             
-        cma = cm.spectral
+        cmap = cm.spectral
         if gvar == 'is_dma':
             cmap = [kc_main_colors()['blue_1'],kc_main_colors()['blue_2']]
         tzname='Europe/London'

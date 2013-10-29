@@ -168,5 +168,50 @@ def export_symdata(data_security_referential = None,
     
     return with_data_symbol , without_data_symbol
             
-            
+##------------------------------------------------------------------------------
+# check database update
+#------------------------------------------------------------------------------       
+def check_db_update(date):
+    
+    out = False
+    
+    try:
+        
+        date_s = dt.datetime.strftime(date.date(),'%Y%m%d')
+        date_e = dt.datetime.strftime((date + dt.timedelta(days=1)).date(),'%Y%m%d')
+        date_f = dt.datetime.strftime((date - dt.timedelta(days=1)).date(),'%Y%m%d')
+        
+        query=""" SELECT date , jobname ,status
+                  FROM Market_data..ciupdate_report
+                  WHERE date >= '%s' and date < '%s' """ % (date_f,date_e)
+                  
+        vals = Connections.exec_sql('MARKET_DATA',query,schema = True)
+        if not vals[0]:
+            logging.warning('No info of indicator update for date : ' + date_s)
+        else:
+            data = pd.DataFrame.from_records(vals[0],columns=vals[1])
+            #-- ciupdatesecurityindicator_all : day before
+            if any((data['jobname'] == 'ciupdatesecurityindicator_all') & (data['date'] >= dt.datetime.strptime(date_f,'%Y%m%d'))):
+                out = any(data[(data['jobname'] == 'ciupdatesecurityindicator_all') & (data['date'] >= dt.datetime.strptime(date_f,'%Y%m%d'))]['status'].values == 'O')
+                
+            #-- ciupdatesecurityindicator_all : day before
+            if out and any((data['jobname'] == 'ciupdatesecurityindicator_ost') & (data['date'] >= dt.datetime.strptime(date_s,'%Y%m%d'))):
+                out = any(data[(data['jobname'] == 'ciupdatesecurityindicator_ost') & (data['date'] >= dt.datetime.strptime(date_s,'%Y%m%d'))]['status'].values == 'O')                
+                
+            if not out:
+                logging.warning('Indicator database has not been update properly for date : ' + date_s)
+               
+    except:
+        logging.error('error in check_db_update func')
+    
+    return out
+
+
+if __name__ == "__main__":
+    
+    Connections.change_connections('production')
+    # -- check
+    print check_db_update(dt.datetime(2013,10,5))
+
+         
     

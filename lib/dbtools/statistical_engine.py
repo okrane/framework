@@ -88,7 +88,7 @@ def get_reference_param(context_id,domain_id,estimator_id):
     return params,context_name
 
 ##------------------------------------------------------------------------------
-# check update
+# check database update
 #------------------------------------------------------------------------------       
 def check_db_update(date):
     
@@ -108,11 +108,16 @@ def check_db_update(date):
             logging.warning('No info of curve update for date : ' + date_s)
         else:
             data = pd.DataFrame.from_records(vals[0],columns=vals[1])
-            
-            out = data[data['jobname'] == 'upd_quant_data']['status'].values[0] == 'O' and data[data['jobname'] == 'quant_reference_update_context']['status'].values[0] == 'O'
-            
+            #-- upd_quant_data
+            if any(data['jobname'] == 'upd_quant_data'):
+                out = data[data['jobname'] == 'upd_quant_data']['status'].values[0] == 'O'
+                
+            #--- quant_reference_update_context
+            if out and any(data['jobname'] == 'quant_reference_update_context'):
+                out = data[data['jobname'] == 'quant_reference_update_context']['status'].values[0] == 'O'
+                
             if not out:
-                logging.warning('Error in curve update for date : ' + date_s) 
+                logging.warning('Curve database has not been update properly for date : ' + date_s) 
                
     except:
         logging.error('error in check_db_update func')
@@ -121,9 +126,9 @@ def check_db_update(date):
    
 if __name__ == "__main__":
     
-    Connections.change_connections('production_copy')
+    Connections.change_connections('production')
     # -- check
-    print check_db_update(dt.datetime(2013,10,07))
+    print check_db_update(dt.datetime(2013,10,8))
     
 #     all_runs=get_reference_run(estimator_id=2,level='specific')
 #     print all_runs

@@ -164,8 +164,12 @@ if __name__ == "__main__":
     FNAME_VC_SPECIFIC = 'VWAP_Profile_0'
     FNAME_VC_GENERIC = 'USR.vwap.opts'
     
-    #--
-    REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com' , 'sreydellet@keplercheuvreux.com']
+    #-- maing list
+    if os.name == 'nt':
+        REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com']
+        
+    else:
+        REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com' , 'sreydellet@keplercheuvreux.com']
     
     #############################################################################
     #- REFERENTIAL
@@ -232,7 +236,7 @@ if __name__ == "__main__":
     info_indicator = []
     
     # -- check database
-    db_indicator_ok = True
+    db_indicator_ok = indicator.check_db_update(date)
     
     # -- extract
     if db_indicator_ok:

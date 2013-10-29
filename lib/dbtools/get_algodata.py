@@ -115,7 +115,7 @@ def sequence_info(db_name = "Mars", sequence_id = None, start_date = None, end_d
     if ('Side' in data.columns.tolist()):
         tmp=np.array([np.NaN]*data.shape[0])
         tmp[np.nonzero([x in ['1','3'] for x in data['Side']])[0]]=1
-        tmp[np.nonzero([x in ['2','4'] for x in data['Side']])[0]]=-1
+        tmp[np.nonzero([x in ['2','4','5'] for x in data['Side']])[0]]=-1
         if np.any(np.isnan(tmp)):
             raise NameError('get_algodata:sequence_info - Side : strange values')
         data['Side']=tmp
@@ -197,7 +197,7 @@ def occurrence_info(db_name = "Mars", start_date = None, end_date = None, occurr
     if ('Side' in data.columns.tolist()):
         tmp=np.array([np.NaN]*data.shape[0])
         tmp[np.nonzero([x in ['1','3'] for x in data['Side']])[0]]=1
-        tmp[np.nonzero([x in ['2','4'] for x in data['Side']])[0]]=-1
+        tmp[np.nonzero([x in ['2','4', '5'] for x in data['Side']])[0]]=-1
         if np.any(np.isnan(tmp)):
             raise NameError('get_algodata:occurence_info - Side : strange values')
         data['Side']=tmp   

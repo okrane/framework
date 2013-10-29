@@ -64,7 +64,7 @@ if __name__=='__main__':
     h.savefig(folder + image_name)
     m = '<h2>History</h2>'
     m += '<img src="cid:%s">\n' %image_name
-    plt.show()
+    #plt.show()
     # Daily
     m += '<h2>Daily</h2>'
     image_name = 'Vol_euro_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'

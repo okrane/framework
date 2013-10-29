@@ -23,7 +23,7 @@ def stackbar(data,
             gvar_vals=None, #
             is_horizontal=False,
             ecart_bucket=0,
-            color='Blue',
+            color='b',
             title='',
             xlabel='',
             ylabel='',
@@ -56,7 +56,10 @@ def stackbar(data,
     if is_gvar_datetime:
         
         def apply2dt(x,tzname):
-            out=x.to_datetime()
+            if isinstance(x,pd.tslib.Timestamp):
+                out=x.to_datetime()
+            else:
+                out = x
             if out.tzinfo is not None and tzname is not None:
                 out=out.astimezone(tz=pytz.timezone(tzname))
             elif out.tzinfo is None:
@@ -146,29 +149,23 @@ def stackbar(data,
                 if not is_horizontal:
                     if not is_gvar_datetime:
                         args.append([idx_gvar+0.5*ecart_bucket,idx_gvar+1-0.5*ecart_bucket,idx_gvar+1-0.5*ecart_bucket,idx_gvar+0.5*ecart_bucket])
+                    elif gvar_sbucket is not None:
+                        args.append([uni_gvar_sbucket[idx_gvar],uni_gvar[idx_gvar],uni_gvar[idx_gvar],uni_gvar_sbucket[idx_gvar]])
+                    elif idx_gvar==0:
+                        args.append([first_dt_uni_gvar,uni_gvar[idx_gvar],uni_gvar[idx_gvar],first_dt_uni_gvar])
                     else:
-                        if gvar_sbucket is not None:
-                            args.append([uni_gvar_sbucket[idx_gvar],uni_gvar[idx_gvar],uni_gvar[idx_gvar],uni_gvar_sbucket[idx_gvar]])
-                        else:
-                            if idx_gvar==0:
-                                args.append([first_dt_uni_gvar,uni_gvar[idx_gvar],uni_gvar[idx_gvar],first_dt_uni_gvar])
-                            else:
-                                args.append([uni_gvar[idx_gvar-1],uni_gvar[idx_gvar],uni_gvar[idx_gvar],uni_gvar[idx_gvar-1]])
-                            
+                        args.append([uni_gvar[idx_gvar-1],uni_gvar[idx_gvar],uni_gvar[idx_gvar],uni_gvar[idx_gvar-1]])
                     args.append([tmp_cum_value,tmp_cum_value,tmp_cum_value+tmp_data[var].values[0],tmp_cum_value+tmp_data[var].values[0]])
                 else:
                     args.append([tmp_cum_value,tmp_cum_value+tmp_data[var].values[0],tmp_cum_value+tmp_data[var].values[0],tmp_cum_value])
                     if not is_gvar_datetime:
                         args.append([idx_gvar+0.5*ecart_bucket,idx_gvar+0.5*ecart_bucket,idx_gvar+1-0.5*ecart_bucket,idx_gvar+1-0.5*ecart_bucket])
-                    else:
-                        if gvar_sbucket is not None:
+                    elif gvar_sbucket is not None:
                             args.append([uni_gvar_sbucket[idx_gvar],uni_gvar_sbucket[idx_gvar],uni_gvar[idx_gvar],uni_gvar[idx_gvar]])
-                        else:
-                            if idx_gvar==0:
-                                args.append([first_dt_uni_gvar,first_dt_uni_gvar,uni_gvar[idx_gvar],uni_gvar[idx_gvar]])
-                            else:
-                                args.append([uni_gvar[idx_gvar-1],uni_gvar[idx_gvar-1],uni_gvar[idx_gvar],uni_gvar[idx_gvar]])
-                            
+                    elif idx_gvar==0:
+                        args.append([first_dt_uni_gvar,first_dt_uni_gvar,uni_gvar[idx_gvar],uni_gvar[idx_gvar]])
+                    else:
+                        args.append([uni_gvar[idx_gvar-1],uni_gvar[idx_gvar-1],uni_gvar[idx_gvar],uni_gvar[idx_gvar]])
                 tmp_cum_value+=tmp_data[var].values[0]
                 
                 #--        
@@ -189,12 +186,27 @@ def stackbar(data,
                 raise ValueError('gvar is not unique')
                 
             #--
+                # need to change
             args=[]
             if not is_horizontal:
-                args.append([idx_gvar+0.5*ecart_bucket,idx_gvar+1-0.5*ecart_bucket,idx_gvar+1-0.5*ecart_bucket,idx_gvar+0.5*ecart_bucket])
+                if not is_gvar_datetime:
+                    args.append([idx_gvar+0.5*ecart_bucket,idx_gvar+1-0.5*ecart_bucket,idx_gvar+1-0.5*ecart_bucket,idx_gvar+0.5*ecart_bucket])
+                elif gvar_sbucket is not None:
+                    args.append([uni_gvar_sbucket[idx_gvar],uni_gvar[idx_gvar],uni_gvar[idx_gvar],uni_gvar_sbucket[idx_gvar]])
+                elif idx_gvar==0:
+                    args.append([first_dt_uni_gvar,uni_gvar[idx_gvar],uni_gvar[idx_gvar],first_dt_uni_gvar])
+                else:
+                    args.append([uni_gvar[idx_gvar-1],uni_gvar[idx_gvar],uni_gvar[idx_gvar],uni_gvar[idx_gvar-1]])
                 args.append([0,0,this_gvar_data[var].values[0],this_gvar_data[var].values[0]])
             else:
-                args.append([0,this_gvar_data[var].values[0],this_gvar_data[var].values[0],0])
+                if not is_gvar_datetime:
+                    args.append([0,this_gvar_data[var].values[0],this_gvar_data[var].values[0],0])
+                elif gvar_sbucket is not None:
+                        args.append([uni_gvar_sbucket[idx_gvar],uni_gvar_sbucket[idx_gvar],uni_gvar[idx_gvar],uni_gvar[idx_gvar]])
+                elif idx_gvar==0:
+                    args.append([first_dt_uni_gvar,first_dt_uni_gvar,uni_gvar[idx_gvar],uni_gvar[idx_gvar]])
+                else:
+                    args.append([uni_gvar[idx_gvar-1],uni_gvar[idx_gvar-1],uni_gvar[idx_gvar],uni_gvar[idx_gvar]])
                 args.append([idx_gvar+0.5*ecart_bucket,idx_gvar+0.5*ecart_bucket,idx_gvar+1-0.5*ecart_bucket,idx_gvar+1-0.5*ecart_bucket])
                 
             tmp_cum_value+=this_gvar_data[var].values[0]
@@ -246,11 +258,11 @@ def stackbar(data,
     plt.ylabel(ylabel)
     plt.title(title, size = 'large')
     
-    if gvar_vals is not None and legend_loc is not None:
-        plt.legend(loc=legend_loc)   
+#    if gvar_vals is not None and legend_loc is not None:
+#        plt.legend(loc=legend_loc)   
               
-    if show:
-        plt.show()
+#    if show:
+#        plt.show()
     
     return out
         

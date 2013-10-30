@@ -1231,7 +1231,7 @@ class DatabasePlug:
         
         ssh.close()
         return order_life
-    def get_street_order(self, day):
+    def get_street_order(self, day, regexp = '35=8.*150=[12]'):
         return_df = pd.DataFrame()
 
         from_o = ['Account', 'ClOrdID','DeliverToCompID', 'ExDestination', 'ParentClientID', 'Text']
@@ -1249,7 +1249,7 @@ class DatabasePlug:
             path_in  = '/home/flexsys/logs/trades/%s/FLEX_ULPROD%sI.fix' % (day, day)
             
             cmd_o = "prt_fxlog %s 3 | egrep '35=[DG]'" % path_out
-            cmd_i = "prt_fxlog %s 3 | egrep '35=8.*150=[12]'" % path_in
+            cmd_i = "prt_fxlog %s 3 | egrep '%s'" % (path_in, regexp)
             
             (stdin_o, stdout_grep_o, stderr_o) = ssh.exec_command(cmd_o)
             (stdin_i, stdout_grep_i, stderr_i) = ssh.exec_command(cmd_i)  
@@ -1283,15 +1283,29 @@ class DatabasePlug:
             df_o = pd.read_csv(file_path_o, sep=';')
             df_i = pd.read_csv(file_path_i, sep=';')
 
+            
+            
+            for n in df_o.columns.values:
+                if 'Unnamed' in n:
+                    del df_o[n]
+                    
+            for n in df_i.columns.values:
+                if 'Unnamed' in n:
+                    del df_i[n]
             print df_o
-            print df_i
+            print df_i        
             df = self.merge_df(df_o, df_i, from_o, 'ClOrdID', s, day)
             return_df = return_df.append(df)
             
+            df.to_csv("C:\\" + s + day + ".csv")
+
+        return_df.to_csv("C:\\" + day + ".csv")    
         return return_df
      
     def merge_df(self, from_df, to_df, col_to_add_from, key, server, day):
         from_df = from_df[col_to_add_from]
+        if "Text" in to_df.columns.values:
+            del to_df["Text"]
         df = pd.merge(left=from_df, right=to_df, how='right',  on= [key], sort=False)
         # cl_order_id
         df['server'] = server
@@ -1300,15 +1314,24 @@ class DatabasePlug:
         df['p_exec_id'] = day + df.ExecID + df.server
         df['job_id'] = 'OD' + day
         
-        for n in df.columns.values:
-            if 'Unnamed' in n:
-                del df[n]
-                break
+        
         
         
         return df
 
-                    
+    def analyse_IOC(self, dates):
+        to_return = pd.DataFrame()
+        for day in dates:
+            df = self.get_street_order(day, regexp = '35=8.*59=3')
+            total               = (df['OrdStatus'] == 0).sum() # New
+            canceled            = (df['OrdStatus'] == 4).sum() # Canceled
+            pending_canceled    = (df['OrdStatus'] == 6).sum() # Pending Cancel
+            rejected            = (df['OrdStatus'] == 8).sum() # Rejected
+            from lib.data.dataframe_tools import agg 
+            grouped_by          = agg(df, ["ClOrdID", "ExDestination", "LastMkt"], stats = {"Sum" : lambda x: sum(x.LastShares) }) 
+            grouped_by.to_csv("C:\\" + day + "-grouped.csv")
+            to_return = to_return.append([{"Day" : datetime.strptime(day, "%Y%m%d"), "rejected":rejected, "canceled" : canceled, "pending_canceled" : pending_canceled, "total" : total}])
+        return to_return
                     
                     
 if __name__ == '__main__':
@@ -1331,7 +1354,7 @@ if __name__ == '__main__':
         environment = 'preprod'
         io          = 'I'
         source      = 'CLNT1'
-    connections.Connections.change_connections('production')    
+    connections.Connections.change_connections('dev')    
     dates       =  ['20130603','20130604','20130605','20130606','20130607',
                     '20130610','20130611','20130612','20130613','20130614',
                     '20130617','20130618','20130619','20130620','20130621',
@@ -1346,16 +1369,18 @@ if __name__ == '__main__':
     environment         = 'prod'
     source              = 'CLNT1'
 
-    dates               = ['20130902']
+    dates               = ['20131007', '20131008','20131009', '20131010', '20131011', 
+                           '20131014', '20131015', '20131016']
     
     df = DatabasePlug(database_server    = database_server, 
                      database           = database,
                      environment        = environment, 
                      source             = source, 
                      dates              = dates,
-                     mode               = "write").get_street_order(dates[0])
+                     mode               = "write").analyse_IOC(dates)
     from lib.data.ui import Explorer
     print df
-    Explorer.Explorer(df)
+    df.to_csv('C:\\temp.csv')
+    #Explorer.Explorer(df)
                  #fill(order_deals=True, algo_orders=True)
     

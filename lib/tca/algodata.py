@@ -67,7 +67,6 @@ class AlgoDataProcessor(object):
         self.xls_occ_fe_filename = 'Export_EOD_Flex_2013_comma.csv'
         self.xls_occ_fe_filenameg = 'export_renormalized.csv'
         self.data_xls_occ_fe=None
-        
             
     ###########################################################################
     # METHOD GET DATA

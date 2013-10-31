@@ -1369,15 +1369,14 @@ if __name__ == '__main__':
     environment         = 'prod'
     source              = 'CLNT1'
 
-    dates               = ['20131007', '20131008','20131009', '20131010', '20131011', 
-                           '20131014', '20131015', '20131016']
+    dates               = ['20131029']
     
     df = DatabasePlug(database_server    = database_server, 
                      database           = database,
                      environment        = environment, 
                      source             = source, 
                      dates              = dates,
-                     mode               = "write").analyse_IOC(dates)
+                     mode               = "write").fill()
     from lib.data.ui import Explorer
     print df
     df.to_csv('C:\\temp.csv')

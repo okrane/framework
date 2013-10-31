@@ -471,11 +471,10 @@ if __name__ == '__main__':
     storeFile = './cfg/store.txt'
     
     user = 'ON2'
-    OrchesFile = './inputs/basket-test.txt'
+    OrchesFile = './inputs/basket_allmarkets_CLOSE.txt'
     
     logfile_name = './logs/basket_test_%s.log' %day
-    LOG_FILE = logfile_name
-    
+    LOG_FILE = logfile_name    
     mode = 'submit'
 #     mode = 'switch'
     

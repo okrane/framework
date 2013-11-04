@@ -169,7 +169,8 @@ if __name__ == "__main__":
         REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com']
         
     else:
-        REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com' , 'sreydellet@keplercheuvreux.com']
+        #REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com' , 'sreydellet@keplercheuvreux.com']
+        REPORT_MAILING_LIST=['algoquant@keplercheuvreux.com']
     
     #############################################################################
     #- REFERENTIAL

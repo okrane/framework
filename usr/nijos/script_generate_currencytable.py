@@ -22,11 +22,11 @@ path_export='H:/TQM/mapping_table/'
 
 Connections.change_connections('production')
 
-date='19/07/2013'
-data=read_dataset.histocurrencypair(start_date=date,end_date=date)
+date='20131024'
+data=read_dataset.histocurrencypair(date = date)
 
 
-myfile = open(path_export+'currency_table_'+datetime.strftime(datetime.strptime(date,'%d/%m/%Y'),'%Y%m%d')+'.txt','w')
+myfile = open(path_export+'currency_table_'+date+'.txt','w')
 myfile.write('  <currencymanager normalise="EUR" useBaseCCY="no">\n')
 for i in range(0,data.shape[0]):
     myfile.write('      <ccy symbol="'+data.ix[i]['ccy']+'" multiplier="1" default-rate="'+str(data.ix[i]['rate'])+'" />\n')

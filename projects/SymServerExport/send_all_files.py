@@ -41,7 +41,7 @@ if __name__ == "__main__":
     
     #----------------
     # -- enviroonement
-    ENV = 'dev'    
+    ENV = 'prod'    
     
     #----------------
     # -- PATH
@@ -62,8 +62,9 @@ if __name__ == "__main__":
         REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com']
         
     else:
-        REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com' , 'sreydellet@keplercheuvreux.com']
-    
+        # REPORT_MAILING_LIST=['njoseph@keplercheuvreux.com' , 'alababidi@keplercheuvreux.com' , 'sreydellet@keplercheuvreux.com']
+        REPORT_MAILING_LIST=['algoquant@keplercheuvreux.com']
+        
     #----------------
     # -- Send files
     
@@ -83,31 +84,31 @@ if __name__ == "__main__":
                                        'send_status' : False}}
                         
     elif ENV == 'prod' and not os.name == 'nt':
-        print 'TO DO'
-#         dict_to_send = {'indicator (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexsys' ,
-#                                        'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
-#                                        'send_status' : False},
-#                          
-#                         'volume curve specific (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexapp' ,
-#                                        'path' : '/home/flexapp' , 'file' : 'VWAP_Profile_0',
-#                                        'send_status' : False},
-#                          
-#                         'volume curve generic (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexapp' ,
-#                                        'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
-#                                        'send_status' : False},
-#                         
-#                         'indicator (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexsys' ,
-#                                        'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
-#                                        'send_status' : False},
-#                          
-#                         'volume curve specific (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexapp' ,
-#                                        'path' : '/home/flexapp' , 'file' : 'VWAP_Profile_0',
-#                                        'send_status' : False},
-#                          
-#                         'volume curve generic (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexapp' ,
-#                                        'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
-#                                        'send_status' : False}}
-#         
+        
+        dict_to_send = {'indicator (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexsys' ,
+                                       'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
+                                       'send_status' : False},
+                          
+                        'volume curve specific (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+                                       'path' : '/home/flexapp' , 'file' : 'VWAP_Profile_0',
+                                       'send_status' : False},
+                          
+                        'volume curve generic (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+                                       'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
+                                       'send_status' : False},
+                         
+                        'indicator (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexsys' ,
+                                       'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
+                                       'send_status' : False},
+                          
+                        'volume curve specific (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+                                       'path' : '/home/flexapp' , 'file' : 'VWAP_Profile_0',
+                                       'send_status' : False},
+                          
+                        'volume curve generic (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+                                       'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
+                                       'send_status' : False}}
+         
     else:
         raise ValueError('unknown environnement <' + ENV + '>')
         

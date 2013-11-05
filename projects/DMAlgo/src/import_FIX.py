@@ -639,6 +639,11 @@ class DatabasePlug:
                         
                     if done_sec and done_sym:
                         break
+            # To manage odd characters
+            for order in u_orders:
+                for key, val in order.iteritems():
+                    if isinstance(order[key], basestring):
+                        order[key] = str(val).encode('ascii', 'replace')
                     
             import lib.io.serialize as serialize
             import simplejson
@@ -1376,10 +1381,10 @@ if __name__ == '__main__':
                      environment        = environment, 
                      source             = source, 
                      dates              = dates,
-                     mode               = "write").fill()
+                     mode               = "write").fill(order_deals=False)
     from lib.data.ui import Explorer
     print df
-    df.to_csv('C:\\temp.csv')
+    #df.to_csv('C:\\temp.csv')
     #Explorer.Explorer(df)
                  #fill(order_deals=True, algo_orders=True)
     

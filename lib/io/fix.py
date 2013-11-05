@@ -57,7 +57,9 @@ class FixTranslator(object):
     def translate_tag(self, value):
         """Two way translator tag fix <-> name
         @param value: either a tagfix Name or a tagfix number, for number, str or int are accepted"""
-        value = unidecode.unidecode(str(value))
+
+        
+
         if value in self.mapping.keys():
             return self.mapping[value]
         try:

@@ -8,7 +8,8 @@ if __name__ == '__main__':
     database            = 'Mars'
     environment         = 'prod'
     source              = 'CLNT1'
-    dates               =  ['20131014', '20131015', '20131016']
+    dates               =  ['20131105', '20131104',
+                            '20131101', '20131031', '20131030', '20131029', '20131028']
 
     
     dates               = sorted(dates)

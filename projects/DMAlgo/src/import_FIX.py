@@ -643,7 +643,7 @@ class DatabasePlug:
             for order in u_orders:
                 for key, val in order.iteritems():
                     if isinstance(order[key], basestring):
-                        order[key] = str(val).encode('ascii', 'replace')
+                        order[key] = str(val).encode('utf-8', 'replace')
                     
             import lib.io.serialize as serialize
             import simplejson
@@ -1374,7 +1374,7 @@ if __name__ == '__main__':
     environment         = 'prod'
     source              = 'CLNT1'
 
-    dates               = ['20131029']
+    dates               = ['20131105']
     
     df = DatabasePlug(database_server    = database_server, 
                      database           = database,

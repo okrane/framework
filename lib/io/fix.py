@@ -5,7 +5,7 @@ from datetime import datetime
 import logging
 import simplejson
 import os, sys
-import lib.io.unidecode as unidecode
+
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 
 def convert_str(s, date_format = ["%Y-%m-%d %H:%M:%S", "%Y%m%d-%H:%M:%S"]):

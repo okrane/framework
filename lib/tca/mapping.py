@@ -17,7 +17,7 @@ import simplejson
 def Side(x):
     out=np.array([np.NaN]*len(x))
     out[np.nonzero([y in ['1','3'] for y in x])[0]]=1
-    out[np.nonzero([y in ['2','4'] for y in x])[0]]=-1
+    out[np.nonzero([y in ['2','4','6','5'] for y in x])[0]]=-1
     
     return out
 

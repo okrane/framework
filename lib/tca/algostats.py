@@ -116,7 +116,9 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         #-----------------------------------
         if self.data_occurrence.shape[0]>0:
             
-            self.data_occurrence['occ_fe_vwap']=((self.data_occurrence['occ_fe_inmkt_turnover']+self.data_occurrence['occ_fe_prv_turnover'])/
+            self.data_occurrence['occ_fe_turnover']=self.data_occurrence['occ_fe_inmkt_turnover']+self.data_occurrence['occ_fe_prv_turnover']
+                        
+            self.data_occurrence['occ_fe_vwap']=(self.data_occurrence['occ_fe_turnover']/
             (self.data_occurrence['occ_fe_inmkt_volume']+self.data_occurrence['occ_fe_prv_volume']))
             
             self.data_occurrence['slippage_vwap_bp']=(10000*self.data_occurrence['Side']*
@@ -129,7 +131,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             
             # --------------add slippage_bp by the benchmark
             self.data_occurrence['slippage_bp'] = np.nan
-            idx_vwap = (self.data_occurrence['occ_fe_strategy_name_mapped'] =='VWAP') | (self.data_occurrence['occ_fe_strategy_name_mapped'] == 'VOL') | (self.data_occurrence['occ_fe_strategy_name_mapped'] == 'DYNVOL')
+            idx_vwap = (self.data_occurrence['occ_fe_strategy_name_mapped'] == 'VWAP') | (self.data_occurrence['occ_fe_strategy_name_mapped'] == 'VOL') | (self.data_occurrence['occ_fe_strategy_name_mapped'] == 'DYNVOL')
             idx_is = self.data_occurrence['occ_fe_strategy_name_mapped'] == 'IS'
             
             self.data_occurrence['slippage_bp'][idx_vwap] = self.data_occurrence['slippage_vwap_bp'][idx_vwap].tolist()

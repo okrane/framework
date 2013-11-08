@@ -643,7 +643,7 @@ class DatabasePlug:
             for order in u_orders:
                 for key, val in order.iteritems():
                     if isinstance(order[key], basestring):
-                        order[key] = str(val).encode('utf-8', 'replace')
+                        order[key] = str(val).decode('utf-8', 'replace')
                     
             import lib.io.serialize as serialize
             import simplejson

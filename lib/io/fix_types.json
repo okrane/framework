@@ -10681,6 +10681,11 @@
           "number": "9271",
           "name": "ParentClientID",
           "type": "STRING"
+        },
+        {
+          "number": "9267",
+          "name": "SOROption",
+          "type": "INT"
         }
         
       ]

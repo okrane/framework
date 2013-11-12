@@ -73,12 +73,12 @@ def export_symdata(data_security_referential = None,
         raise ValueError('one of the asked indictor do not have yet a flid')
        
     #--------------------
-    #- ADD DATA (by chunks of securities)
+    #- ADD DATA (by chunks of securities in order to avoid memory leaks)
     #--------------------
-    # in order to avoid memory leaks
-    
+    with_data_symbol = []
     out = open( os.path.join(path_export, filename_export), 'w' )
     
+    NB_MIN_SYMBOL = 5000
     NB_MAX_SEC = 2000
     last_idx = -1
     
@@ -103,14 +103,14 @@ def export_symdata(data_security_referential = None,
             " AND ( erefcompl.EXCHANGETYPE is NULL or erefcompl.EXCHANGETYPE = 'M' ) " \
             " ORDER BY si.security_id, si.trading_destination_id, si.indicator_id " % (str_secids,str_indicators2export)
         
-        vals=Connections.exec_sql('QUANT',query_indicatops,schema = True)
+        vals=Connections.exec_sql('MARKET_DATA',query_indicatops,schema = True)
         if not vals[0]:
             continue
         
         #--------------------
         #- add to symdata
         #--------------------
-        last_symbol=''
+        last_symbol = ''
         
         for i in range(0, len(vals[0])):
             # l is one indicator line
@@ -119,8 +119,10 @@ def export_symdata(data_security_referential = None,
             flidid = map_flid_indid[map_flid_indid['indicator_id'] == int(vals[0][i][2])]['flid'].values[0]
             
             #-- symbol
-            this_sec_info = data_security_referential[ data_security_referential['cheuvreux_secid'] == vals[0][i][0] ]
+            sec_id = int(vals[0][i][0])
+            this_sec_info = data_security_referential[ data_security_referential['cheuvreux_secid'] ==  sec_id]
             symbol = this_sec_info['ticker'].values[0]
+            
             if vals[0][i][1] is None:
                 symbol = this_sec_info['tickerAG'].values[0]
             
@@ -140,13 +142,76 @@ def export_symdata(data_security_referential = None,
                 
             out.write(add_str)
             
+            #-- add to data
+            if last_symbol != symbol:
+                with_data_symbol.append(symbol)
+            
             #-- for next loop
-            last_symbol=symbol
-        
-    
+            last_symbol = symbol
+            
+            
     out.close()   
     logging.info('END export_symdata: successfully create indicator export')
     
+    #--------------------
+    #- RETURN DATA
+    #--------------------
+    all_symbol = np.concatenate([np.unique(data_security_referential['ticker'].values),np.unique(data_security_referential['tickerAG'].values)])
+    all_symbol = [all_symbol[x] for x in np.where([isinstance(x,basestring) for x in all_symbol])[0]]
+    without_data_symbol = np.setdiff1d(all_symbol, with_data_symbol).tolist()
+    
+    #-------------------------------------------------------------------------
+    # CHECK ADDED CURVES
+    #-------------------------------------------------------------------------
+    if len(with_data_symbol) < NB_MIN_SYMBOL:
+        raise ValueError('generated file contain less than' + str(NB_MIN_SYMBOL) + ' symbol with indicators')
+    
+    return with_data_symbol , without_data_symbol
             
-            
+##------------------------------------------------------------------------------
+# check database update
+#------------------------------------------------------------------------------       
+def check_db_update(date):
+    
+    out = False
+    
+    try:
+        
+        date_s = dt.datetime.strftime(date.date(),'%Y%m%d')
+        date_e = dt.datetime.strftime((date + dt.timedelta(days=1)).date(),'%Y%m%d')
+        date_f = dt.datetime.strftime((date - dt.timedelta(days=1)).date(),'%Y%m%d')
+        
+        query=""" SELECT date , jobname ,status
+                  FROM Market_data..ciupdate_report
+                  WHERE date >= '%s' and date < '%s' """ % (date_f,date_e)
+                  
+        vals = Connections.exec_sql('MARKET_DATA',query,schema = True)
+        if not vals[0]:
+            logging.warning('No info of indicator update for date : ' + date_s)
+        else:
+            data = pd.DataFrame.from_records(vals[0],columns=vals[1])
+            #-- ciupdatesecurityindicator_all : day before
+            if any((data['jobname'] == 'ciupdatesecurityindicator_all') & (data['date'] >= dt.datetime.strptime(date_f,'%Y%m%d'))):
+                out = any(data[(data['jobname'] == 'ciupdatesecurityindicator_all') & (data['date'] >= dt.datetime.strptime(date_f,'%Y%m%d'))]['status'].values == 'O')
+                
+            #-- ciupdatesecurityindicator_all : day before
+            if out and any((data['jobname'] == 'ciupdatesecurityindicator_ost') & (data['date'] >= dt.datetime.strptime(date_s,'%Y%m%d'))):
+                out = any(data[(data['jobname'] == 'ciupdatesecurityindicator_ost') & (data['date'] >= dt.datetime.strptime(date_s,'%Y%m%d'))]['status'].values == 'O')                
+                
+            if not out:
+                logging.warning('Indicator database has not been update properly for date : ' + date_s)
+               
+    except:
+        logging.error('error in check_db_update func')
+    
+    return out
+
+
+if __name__ == "__main__":
+    
+    Connections.change_connections('production')
+    # -- check
+    print check_db_update(dt.datetime(2013,10,5))
+
+         
     

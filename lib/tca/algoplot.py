@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from lib.plots.color_schemes import kc_main_colors
 import lib.dbtools.get_repository as get_repository
+import lib.tca.algodata_formula as statsformula
 
 DEFAULT_FIGSIZE = (13,7)
 
@@ -45,27 +46,15 @@ class PlotEngine(object):
         #-----------------------------------
         # INPUT
         #-----------------------------------
-        if algo_data is None:
+        if not isinstance(algo_data, AlgoDataProcessor):
             raise ValueError('algo_data is not a proper algostatsprocessor class')
         
-        if gvar is None:
-            raise ValueError('gvar should be present')
-        
-        #-----------------------------------
-        # GET DATA
-        #-----------------------------------
-        if level == 'sequence':
-            data=algo_data.data_sequence
-            stats_config={'mturnover_euro': lambda df : np.sum(df.rate_to_euro*df.turnover)*1e-6,
-                          'nb_occurrence': lambda df : len(np.unique(df.p_occ_id))}
-                          
-        elif level == 'occ_fe':
-            data=algo_data.data_occurrence
-            stats_config={'mturnover_euro': lambda df : np.sum(df.rate_to_euro*df.occ_fe_exec_shares*df.occ_fe_avg_price.apply(lambda x : float(x))*1e-6),
-                          'nb_occurrence': lambda df : len(df.p_occ_id)}
-                          
-        else:
-            raise ValueError('unknown error')
+        # data aggregation            
+        # a remplacer le var par le formule ou le clé
+        stats_config = statsformula.get_formula(level = level, key = var)
+        if stats_config is None:
+            raise ValueError('Formula is not defined for %s'%var)
+        data = algo_data.agg_stats(level=level,stats_config=stats_config,gvar=gvar,agg_step=agg_step)    
         
         # -- check  
         if data is None or data.shape[0]==0:
@@ -81,39 +70,11 @@ class PlotEngine(object):
             # do
             data=data[map(lambda x : x.to_datetime()>=self.start_date and x.to_datetime()<=self.end_date,data.index)]
             
-            # -- check  
-            if data.shape[0]==0:
-                logging.info('no data in the asked timeframe')
-                return h,data
-        
-        #-----------------------------------
-        # AGG DATA
-        #-----------------------------------  
-        # -- config var
-        if var not in stats_config.keys():
-            raise ValueError('unknown var stats')
+        # -- check  
+        if data.shape[0]==0:
+            logging.info('no data in the asked timeframe')
+            return h,data
             
-        # -- handle gvar
-        if gvar in data.columns.values:
-            logging.debug('gvar in data')
-            
-        elif gvar == 'place':
-            places = get_repository.tag100_to_place_name()
-            def exdest2place(x,allx):
-                ids=[tmp==x for tmp in allx['suffix']]
-                if any(ids):
-                    out=allx['name'][ids].values[0]
-                else:
-                    out='Unknown (%s)'%(x)
-                return out
-            data[gvar]=[exdest2place(x,places) for x in data['ExDestination']]
-            
-        elif gvar == 'is_dma': 
-            data[gvar]=data['TargetSubID' ].apply(lambda x: 'Algo DMA' if x in  ['ON1','ON2','ON3'] else 'Other')
-            
-        else:
-            raise ValueError('gvar not in data')  
-          
         # -- handle datetime
         if self.start_date is not None:
             min_day=self.start_date.date()
@@ -124,15 +85,6 @@ class PlotEngine(object):
         else:          
             min_day=min([x.to_datetime().date() for x in data.index])
             max_day=max([x.to_datetime().date() for x in data.index]) 
-        
-        if agg_step == 'day':
-            data['tmp_date_end']=[dt.datetime.combine(x.to_datetime().date(),dt.time(0,0,0)) for x in data.index]
-            data['tmp_date_start']=[dt.datetime.combine((x.to_datetime()-dt.timedelta(days=1)).date(),dt.time(0,0,0)) for x in data.index]
-        else:
-            raise ValueError('agg_step unknown %s' % (agg_step))
-        
-        data = dftools.agg(data,group_vars=['tmp_date_start','tmp_date_end',gvar],stats=stats_config)
-        
         #-----------------------------------
         # PLOT
         #-----------------------------------
@@ -142,7 +94,7 @@ class PlotEngine(object):
         if var == 'mturnover_euro':
             ylabel='Turnover/Algo (,000,000 Euros)'
             
-        cma = cm.spectral
+        cmap = cm.spectral
         if gvar == 'is_dma':
             cmap = [kc_main_colors()['blue_1'],kc_main_colors()['blue_2']]
         tzname='Europe/London'
@@ -158,7 +110,6 @@ class PlotEngine(object):
                            cmap = cmap,
                            legend_loc = 'upper center',
                            FIG_SIZE = DEFAULT_FIGSIZE)
-        
         return h,data
         
         
@@ -173,28 +124,16 @@ class PlotEngine(object):
         #-----------------------------------
         # INPUT
         #-----------------------------------
-        if algo_data is None:
+        if not isinstance(algo_data, AlgoDataProcessor):
             raise ValueError('algo_data is not a proper algostatsprocessor class')
-        
-        if gvar is None:
-            raise ValueError('gvar should be present')
-        
-        #-----------------------------------
-        # GET DATA
-        #-----------------------------------
-        if level == 'sequence':
-            data=algo_data.data_sequence
-            stats_config={'mturnover_euro': lambda df : np.sum(df.rate_to_euro*df.turnover)*1e-6,
-                          'nb_occurrence': lambda df : len(np.unique(df.p_occ_id))}
-                          
-        elif level == 'occ_fe':
-            data=algo_data.data_occurrence
-            stats_config={'mturnover_euro': lambda df : np.sum(df.rate_to_euro*df.occ_fe_exec_shares*df.occ_fe_avg_price.apply(lambda x : float(x))*1e-6),
-                          'nb_occurrence': lambda df : len(df.p_occ_id)}
-                          
-        else:
-            raise ValueError('unknown error')
+
+        # data aggregation
+        stats_config = statsformula.get_formula(level=level, key=var)
+        if stats_config is None:
+            raise ValueError('Formula is not defined for %s'%var)
             
+        data = algo_data.agg_stats(level=level,stats_config=stats_config,gvar=gvar,gvar_vals=gvar_vals)   
+
         # -- check  
         if data is None or data.shape[0]==0:
             logging.info('no data')
@@ -226,43 +165,6 @@ class PlotEngine(object):
             max_day=max([x.to_datetime().date() for x in data.index])
         
         #-----------------------------------
-        # COMPUTE DATA
-        #----------------------------------- 
-        # -- config var
-        if var not in stats_config.keys():
-            raise ValueError('unknown var stats')
-            
-        # -- handle gvar
-        if gvar == 'place':
-            places = get_repository.tag100_to_place_name()
-            def exdest2place(x,allx):
-                ids=[tmp==x for tmp in allx['suffix']]
-                if any(ids):
-                    out=allx['name'][ids].values[0]
-                else:
-                    out='Unknown (%s)'%(x)
-                return out
-            data[gvar]=[exdest2place(x,places) for x in data['ExDestination']]
-            
-        else:
-            if gvar not in data.columns.values:
-                raise ValueError('gvar not in data')    
-                
-        group_vars=gvar
-        
-        # -- handle gvar_vals
-        if gvar_vals == 'is_dma':
-            data[gvar_vals]=data['TargetSubID' ].apply(lambda x: 'Algo DMA' if x in  ['ON1','ON2','ON3'] else 'Other')
-            group_vars=[gvar]+[gvar_vals]
-            
-        elif gvar_vals is not None:
-            if gvar_vals not in data.columns.values:
-                raise ValueError('gvar_vals not in data')
-            
-        # -- aggregated
-        data=dftools.agg(data,group_vars=group_vars,stats=stats_config)
-        
-        #-----------------------------------
         # PLOT
         #-----------------------------------   
         # -- plot infos
@@ -292,10 +194,7 @@ class PlotEngine(object):
                            legend_loc='lower right',
                            FIG_SIZE=DEFAULT_FIGSIZE)
         
-        return h,data
-    
-    
-    
+        return h,data 
     
     
     def plot_intraday_exec_curve(self,algo_data=None,group_var='strategy_name_mapped'):

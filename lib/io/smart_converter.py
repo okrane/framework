@@ -95,6 +95,8 @@ class Converter:
         elif isinstance(value, type_to):
             return value
         else:
+            if type_to is IntType:
+                value = float(value)
             return type_to(value)
     
     def convert(self, key, value):
@@ -106,6 +108,10 @@ class Converter:
                     except:
                         continue
             else:
+                try:
+                    value = str(value)
+                except:
+                    value = str(value.encode('utf-8'))
                 try:
                     to_return = self._convert_to(self._map(key), value)
                 except ValueError:

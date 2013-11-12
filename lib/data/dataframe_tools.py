@@ -130,6 +130,8 @@ if __name__ == "__main__":
         stats={'nb_deal': lambda df : np.size(df.volume),
                'volume': lambda df : np.sum(df.volume)})
     
+    print agg_slicer
+    
 
 
 

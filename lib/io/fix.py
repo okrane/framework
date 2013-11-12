@@ -5,6 +5,7 @@ from datetime import datetime
 import logging
 import simplejson
 import os, sys
+
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 
 def convert_str(s, date_format = ["%Y-%m-%d %H:%M:%S", "%Y%m%d-%H:%M:%S"]):
@@ -56,7 +57,9 @@ class FixTranslator(object):
     def translate_tag(self, value):
         """Two way translator tag fix <-> name
         @param value: either a tagfix Name or a tagfix number, for number, str or int are accepted"""
-        value = str(value)
+
+        
+
         if value in self.mapping.keys():
             return self.mapping[value]
         try:

@@ -468,7 +468,7 @@ class AlgoDataProcessor(object):
                         u'ClientID',u'TargetSubID',u'Account',
                         #- security symbol
                         u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',
-                        #- info at occurence level
+                        #- info at occurrence level
                         u'Side']
                         
                     if all_cols is None:

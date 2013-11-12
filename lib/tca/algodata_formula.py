@@ -20,8 +20,13 @@ dict_occ_fe = {'mturnover_euro':      {'mturnover_euro': lambda df : np.sum(df.r
                                        'std_slippage_spread': lambda df: np.std(df.slippage_spread[np.isfinite(df.slippage_spread)])}
               }
               
+dict_seq = {'mturnover_euro':         {'mturnover_euro': lambda df : np.sum(df.rate_to_euro*df.turnover)*1e-6,
+                                       'nb_occurrence':  lambda df : len(np.unique(df.p_occ_id))}
+           }
 
 def get_formula(level,key):
     if level == 'occ_fe':
         return dict_occ_fe[key]
+    elif level == 'sequence':
+        return dict_seq[key]
     

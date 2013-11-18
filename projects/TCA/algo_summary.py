@@ -6,7 +6,7 @@ if os.name != 'nt':
     ### VERY IMPROTANT IN LINUX (in order to use X11)
     matplotlib.use('Agg')
 
-from lib.tca.wrapper import PlotEngine
+from lib.tca.wrapper import PlotEngine, DEFAULT_FIGSIZE
 from datetime import datetime, timedelta, time
 import pytz
 import matplotlib.pyplot as plt
@@ -28,7 +28,7 @@ def plot_evol_perf(data,algo):
     if tmp.shape[0] == 0:
         return None
     
-    out = plt.figure()
+    out = plt.figure(figsize = DEFAULT_FIGSIZE)
     plt.hold(True)
     plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['Slippage Vwap (mean / bp)'],'o-')
     plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['IC down : Vwap(mean / bp)'],'-',color = 'r')

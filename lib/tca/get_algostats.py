@@ -91,10 +91,10 @@ def sequence_info(sequence_id=None,occurrence_id=None,start_date=None,end_date=N
         data=get_algodata.sequence_info(start_date=start_date,end_date=end_date)
     else:
         raise NameError('get_algostats:sequence - Bad inputs')
-    
+        
     if data.shape[0]<=0:
         return data
-    
+        
     ###########################################################################
     #### ADD AGG MARKET STATS
     ###########################################################################

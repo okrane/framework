@@ -25,15 +25,23 @@ def weighted_statistics(x,w,mode='mean',handle_nan=True):
         raise ValueError('Input should have same numbers of rows')
     #----- handle nan 
     if handle_nan:
-        idx_ok=np.nonzero(map(lambda x : np.all(np.isfinite(x)),np.hstack((x,w))))[0]
+        idx_ok=np.nonzero(map(lambda x,y : np.isfinite(x) and np.isfinite(y),x,w))[0]
     else:
         idx_ok=np.array(range(0,x.shape[0]))
+        
     #----- computation
     if idx_ok.shape[0]==0:
         return np.nan
         
     if mode.lower()=='mean':
-        out=np.sum(x[idx_ok]*w[idx_ok],axis=0)/np.sum(w[idx_ok])
+        sum_w = np.sum(w[idx_ok])
+        out=np.sum(x[idx_ok]*w[idx_ok],axis=0)/sum_w
+        
+    elif mode.lower()=='std':
+        sum_w = np.sum(w[idx_ok])
+        wmean = np.sum(x[idx_ok]*w[idx_ok],axis=0)/sum_w
+        out = np.sqrt((np.sum(w[idx_ok] * np.power(x[idx_ok] - wmean,2),axis=0))/sum_w)  
+        
     else:
         raise ValueError('Unknown mode <+'+mode+'>')
         

@@ -86,7 +86,7 @@ def aggexec(# order information
     
     return out
 
-#------------------<------------------------------------------------------------
+#------------------------------------------------------------------------------
 # agg market
 #------------------------------------------------------------------------------
 # renorm_datetime : is for handling times for occurence and algo sequence
@@ -136,7 +136,8 @@ def aggmarket(# market information
                 'vwas' : np.nan,
                 'vwas_main' : np.nan,
                 'vol_GK':np.nan}
-                        
+                
+
     ##############################################################
     # compute stats ON PERIOD
     ##############################################################

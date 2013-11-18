@@ -10,7 +10,6 @@ import paramiko
 from datetime import datetime, timedelta
 from lib.dbtools import connections
 import pytz
-import lib.dbtools.read_dataset as read_dataset
 import simplejson
 from lib.logger import *
 from lib.io.toolkit import *
@@ -18,72 +17,11 @@ logging.getLogger("paramiko").setLevel(logging.WARNING)
 from lib.tca import mapping
 import os
 
-def send(local, remote):
-   full_path            = os.path.realpath(__file__)    
-   path, f              = os.path.split(full_path)        
-
-   universe_file        = os.path.join(path, 'KC_universe.xml')
-   conf                 = get_conf('dev', universe_file)
-   server               = conf['PARFLTLAB']
-   ip                   = server['ip_addr']
-   username             = server['list_users']['flexapp']['username']
-   password             = server['list_users']['flexapp']['passwd']
-   
-   transport = paramiko.Transport((ip, 22))
-   transport.connect(username=username, password=password)
-   sftp = paramiko.SFTPClient.from_transport(transport)
-   sftp.put(local, remote)
-   sftp.close()
-
-def check(sftp, path):
-    parts = path.split('/')
-    for n in range(2, len(parts) + 1):
-        path = '/'.join(parts[:n])
-        print 'Path:', path,
-        sys.stdout.flush()
-        try:
-            s = sftp.stat(path)
-            print 'mode =', oct(s.st_mode)
-        except IOError as e:
-            print e
-
-
-def get_conf(referential, dico_universe):
-
-    conf        = {}
-    struct      = ET.parse(dico_universe)
-    raw_data    = struct.getroot()
-    servs_dico  = {}
-    
-    for elt in raw_data.findall('env'):
-        if elt.get('name') == referential:
-            servs_dico = elt
-            
-    if servs_dico != {}:
-        for attr in servs_dico.findall('server'):
-            serv_name   = attr.get('name')
-            dict_server = {'ip_addr': attr.get('ip_addr')}
-            l_users     = {}
-            
-            for u_attr in attr.findall('user'):
-                l_users[u_attr.get('username')] = u_attr.attrib
-                
-            dict_server['list_users']   = l_users
-            conf[serv_name]             = dict_server
-            
-    return conf
-
-def generate_file(day, all=False, export_path=None, with_none = False):
+def generate_file(day, all=False, export_path=os.path.realpath(__file__), last_day = False , export_name=None, with_none = False, send2flexapp = True, export2json = True):
     new_dict = {}
     gl_list  = [] 
     
-    import os
-    full_path           = os.path.realpath(__file__)    
-    path, f             = os.path.split(full_path) 
-    
-    universe_file  = path + '/KC_universe.xml'  
-    conf           = get_conf('prod', universe_file)
-    
+    conf    = get_conf('prod')
     server  = conf['WATFLT01']
     ssh     = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -91,9 +29,26 @@ def generate_file(day, all=False, export_path=None, with_none = False):
                 username = server['list_users']['flexsys']['username'], 
                 password = server['list_users']['flexsys']['passwd'])
     
-    
-    
-    cmd = 'cat /home/flexsys/logs/rtp/%s/gl_flex_dictionary' %day
+    # -- find the last day before 'day' in directory
+    if last_day:
+        (stdin, stdout_grep, stderr) = ssh.exec_command('ls -d /home/flexsys/logs/rtp/*/')
+        lines                        = stdout_grep.readlines()
+        
+        dates = []
+        for line in lines:
+            tmp_dir = line.split('/')[-2]
+            if tmp_dir[0] == '2' and len(tmp_dir) == 8:
+                dates.append(tmp_dir)
+        dates.sort(reverse = True)
+        
+        for d in dates:
+            if d < day:
+                day = d
+                break
+            
+    # -- get flex dictionnary
+    path_flex_dico = '/home/flexsys/logs/rtp/%s/gl_flex_dictionary' %day
+    cmd = 'cat ' + path_flex_dico 
     
     (stdin, stdout_grep, stderr) = ssh.exec_command(cmd)
     lines                        = stdout_grep.readlines()
@@ -104,6 +59,8 @@ def generate_file(day, all=False, export_path=None, with_none = False):
         gl_list.append(l_line[4])
             
     ssh.close()
+    
+    logging.info(path_flex_dico + ' has been used as flex dico')
     
     unique_ids  = set(gl_list) 
     len_ids     = len(unique_ids)
@@ -160,18 +117,19 @@ def generate_file(day, all=False, export_path=None, with_none = False):
     optional = ''
     
     if all:
-        optional =  'gl_secid; isin; sedol_secid; reuters_secid; bloomberg_secid; SECID;'
+        optional =  'gl_secid;isin;sedol_secid;reuters_secid;bloomberg_secid;SECID;'
     
-    l.append('cheuvreux_secid; ticker; tickerAG;' + optional + '\n')
+    l.append('cheuvreux_secid;ticker;tickerAG;' + optional + '\n')
     
     
     def line_to_append(my_dict):
+        
         line = '%s;%s;%s;' %(  my_dict['cheuvreux_secid'],
                                   my_dict['ticker'],
                                   my_dict['tickerAG']
                                )
         if all:
-            line += '%s; %s; %s; %s; %s; %s;' %(   my_dict['gl_secid'],
+            line += '%s;%s;%s;%s;%s;%s;' %(   my_dict['gl_secid'],
                                                    my_dict['isin'],
                                                    my_dict['sedol_secid'],
                                                    my_dict['reuters_secid'],
@@ -179,6 +137,7 @@ def generate_file(day, all=False, export_path=None, with_none = False):
                                                    my_dict['SECID']
                                                  )
         line += '\n'
+        line.replace("|", "")
         return line
 
     for cheuvreux_secids, dict in dict_s6.iteritems():
@@ -206,28 +165,30 @@ def generate_file(day, all=False, export_path=None, with_none = False):
                 ticker      = ''
             else:
                 ticker_ag   = ''
-            l.append('; %s; %s; ; ; ; ; ; %s;\n' % (ticker, ticker_ag, el))
-    
-    if export_path is None:
-        export_path = path
-    
-    
-    day = datetime.strftime(datetime.now(), format= '%Y%m%d')    
-    csv_path = export_path + '/' + day + '-export.csv'       
+            l.append(';%s;%s;;;;;;%s;\n' % (ticker, ticker_ag, el))
+            
+    if export_name is not None:
+        csv_path = os.path.join(export_path, export_name)
+    else:
+        csv_path = os.path.join(export_path, day + '-export.csv')
+        
     file = open(csv_path, 'w')
     file.writelines(l)
     file.close()
     
-    to_json = simplejson.dumps(dict_secs, separators=(',',':'), indent='\t')
-
-    json_path = export_path + '/' + day + '-export.json'
+    if export2json:
+        to_json = simplejson.dumps(dict_secs, separators=(',',':'), indent='\t')
+        
+        json_path = os.path.join(export_path, day + '-export.json')
+        
+        file_orders = open(json_path, 'w')
+        file_orders.write(to_json)
+        file_orders.close()
     
-    file_orders = open(json_path, 'w')
-    file_orders.write(to_json)
-    file_orders.close()
-    
-    send(csv_path, '/home/flexapp/logs/volume_curves/'+ day + '-export.csv')
-    send(csv_path, '/home/flexapp/logs/volume_curves/TRANSCOSYMBOLCHEUVREUX.csv')
+    if send2flexapp:
+        send(csv_path, '/home/flexapp/logs/volume_curves/'+ day + '-export.csv', server_remote = 'PARFLTLAB', env = 'dev')
+        send(csv_path, '/home/flexapp/logs/volume_curves/TRANSCOSYMBOLCHEUVREUX.csv', server_remote = 'PARFLTLAB' , env = 'dev')
+        
     return new_dict
 
 
@@ -235,4 +196,4 @@ def generate_file(day, all=False, export_path=None, with_none = False):
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
     generate_file(day)
-    
+    # generate_file(day, export_path='C:\\', export_name='champion.csv',send2flexapp = False, export2json = False)

@@ -470,16 +470,15 @@ if __name__ == '__main__':
     dico_file = "./cfg/K_CSAM.xml" 
     storeFile = './cfg/store.txt'
     
-    user = 'ON2'
-    OrchesFile = './inputs/basket-test.txt'
+    user = 'ON3'
+    OrchesFile = './inputs/basket_CLOSE_TEST4.txt'
     
     logfile_name = './logs/basket_test_%s.log' %day
-    LOG_FILE = logfile_name
-    
+    LOG_FILE = logfile_name    
     mode = 'submit'
 #     mode = 'switch'
     
-    duration = 1000
+    duration = 100
     
     new_app = Application()
     

@@ -4,6 +4,7 @@ from lib.dbtools.connections import Connections
 from lib.dbtools.read_dataset import ftickdb
 from lib.dbtools.get_repository import *
 from datetime import datetime, timedelta
+from CSymData import flids
 #import curses
 
 def export_level1_market_data(filename, security_id, date):
@@ -67,7 +68,87 @@ def export_level1_market_data(filename, security_id, date):
         f.writelines(fix_message + '\n')
         
     f.close()
+
+def convert_to_fix_format(source, destination):
+   # print flids.keys()      
+    separator = "|"    
+    g = open(source, 'r')    
+    #f = open(destination, 'w')
+    unique_keys = []
+    for line in g.readlines():
+        #print line
+        tokens = line.split('|')       
+        symbol = tokens[0].split(":")[1]
+        
+        values = {} 
+        for e in tokens[1:-1]:
+            tk    = e.split("=")
+            if tk[0] != "RECORD_TIME" and int(tk[0]) not in unique_keys : unique_keys.append(int(tk[0]))
+            values[tk[0]] = tk[1]
+        
+        seconds = int(values['RECORD_TIME']) / 1000
+        milliseconds = int(values['RECORD_TIME']) % 1000        
+        d = datetime.fromtimestamp(seconds) + timedelta(microseconds = 1000 * milliseconds)
+        print d    
+        
+        # bid
+        #if values.has_key()
+        
+        #fix_message += '%d=%s' % (key, value) + separator
+        
+        #f.writelines(fix_message + '\n')
+    
+    #f.close()
+    print unique_keys
+    for k in unique_keys:
+        if k in flids.keys():
+            print flids[k]
+        else:
+            print k, "inexistant"
+    g.close()
+        
+def extract_close_auction(source, destination):
+     
+    g = open(source, 'r')    
+    f = open(destination, 'w')
+    
+    for line in g.readlines():        
+        start = False
+        tokens = line.split('|')
+        symbol = tokens[0].split(":")[1]
+        
+        values = {} 
+        for e in tokens[1:-1]:
+            tk    = e.split("=")
+            values[tk[0]] = tk[1]
+        
+        seconds = int(values['RECORD_TIME']) / 1000        
+        d = datetime.fromtimestamp(seconds)        
+        print d
+        
+        if (d.hour >= 17 and d.minute >= 30) and not start:
+            print "Starting Close Auction by time"
+            start = True
+            
+        if d.hour >= 17 and values.has_key('1308') and not start:
+            print "Starting Close Auction by feed"
+            start = True
+            
+        if start:
+            f.writelines(line)
+    
+    g.close()
+    f.close()
+        
+    
         
 if __name__ == "__main__":
 #     Connections.change_connections('production')
-    export_level1_market_data("C:/Downloads/exports.fmd", 110, "13/05/2013")       
+    #export_level1_market_data("C:/Downloads/exports.fmd", 110, "13/05/2013")
+   # print 6/0
+    query = "select top 10 * from SECURITY"
+    from lib.dbtools.connections import Connections
+    Connections.change_connections('production')
+    result = Connections.exec_sql('KGR', query)
+    print result
+    #convert_to_fix_format('data_sym_record.26920', 'close_auction.07.10.13')       

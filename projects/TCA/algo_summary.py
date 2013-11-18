@@ -7,7 +7,7 @@ if os.name != 'nt':
     matplotlib.use('Agg')
 
 from lib.tca.wrapper import PlotEngine
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 import pytz
 import matplotlib.pyplot as plt
 from lib.io.toolkit import send_email
@@ -21,6 +21,23 @@ import numpy as np
 import lib.data.dataframe_tools as dftools
 import lib.stats.slicer as slicer
 from lib.tca.algostats import AlgoStatsProcessor
+
+
+def plot_evol_perf(data,algo):
+    tmp = data[data['occ_fe_strategy_name_mapped'] == algo.upper()]
+    if tmp.shape[0] == 0:
+        return None
+    
+    out = plt.figure()
+    plt.hold(True)
+    plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['Slippage Vwap (mean / bp)'],'o-')
+    plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['IC down : Vwap(mean / bp)'],'-',color = 'r')
+    plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['IC up : Vwap(mean / bp)'],'-',color = 'g')
+    plt.hold(False)
+    plt.title('Slippage evolution: ' + algo)
+    # plt.legend('Mean','IC down','IC up')
+    
+    return out
 
 
 if __name__=='__main__':
@@ -148,17 +165,17 @@ if __name__=='__main__':
 
     # Send an email
     title = "<h2>Sum up for %s</h2>\n" % datetime.strftime(day, '%Y%m%d' )
-      
-      
+    
     ###########################################################################
     # Slippage table.
     ###########################################################################
+    startday = datetime(year = 2013, month=1, day=1, hour = 0, minute = 0, second = 1)
     sday = datetime(year = now.year, month=now.month, day=now.day, hour = 0, minute = 0, second = 1)
     mday = datetime.now() - timedelta(days=28)
     mday = datetime(year = mday.year, month=mday.month, day=mday.day, hour = 0, minute = 0, second = 1)
     
     #--- extract data
-    occ_data_4slippage = AlgoStatsProcessor(start_date = mday, end_date = day)
+    occ_data_4slippage = AlgoStatsProcessor(start_date = startday, end_date = day)
     occ_data_4slippage.get_occ_fe_data()
     occ_data_4slippage = occ_data_4slippage.data_occurrence.copy()
     occ_data_dates = [x.to_datetime() for x in occ_data_4slippage.index]
@@ -199,6 +216,37 @@ if __name__=='__main__':
         m += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
           
+    #--- evolution weekly des perfs 
+    occ_data_4slippage['tmp_date_end'] = [datetime.combine(x.to_datetime().date()-timedelta(days=x.to_datetime().date().weekday()-4),time(0,0,0)) for x in occ_data_4slippage.index]
+    occ_data_4slippage['tmp_date_start'] = [datetime.combine(x.to_datetime().date()-timedelta(days=x.to_datetime().date().weekday()),time(0,0,0)) for x in occ_data_4slippage.index]
+    
+    agg_weekly_data = dftools.agg(occ_data_4slippage,
+                                 group_vars = ['tmp_date_start','tmp_date_end','occ_fe_strategy_name_mapped'],
+                                 stats = STATS)
+                                 
+    agg_weekly_data['IC down : Vwap(mean / bp)'] = (agg_weekly_data['Slippage Vwap (mean / bp)']
+                                        - 1.96 *  agg_weekly_data['Slippage Vwap (std / bp)'] / np.sqrt(agg_weekly_data['nb_slippage_vwap_bp']))
+                                        
+    agg_weekly_data['IC up : Vwap(mean / bp)'] = (agg_weekly_data['Slippage Vwap (mean / bp)']
+                                        + 1.96 *  agg_weekly_data['Slippage Vwap (std / bp)'] / np.sqrt(agg_weekly_data['nb_slippage_vwap_bp']))
+                                        
+    agg_weekly_data['IC down : IS(mean / bp)'] = (agg_weekly_data['Slippage IS (mean / bp)']
+                                        - 1.96 *  agg_weekly_data['Slippage IS (std / bp)'] / np.sqrt(agg_weekly_data['nb_slippage_is_bp']))
+                                        
+    agg_weekly_data['IC up : IS(mean / bp)'] = (agg_weekly_data['Slippage IS (mean / bp)']
+                                        + 1.96 *  agg_weekly_data['Slippage IS (std / bp)'] / np.sqrt(agg_weekly_data['nb_slippage_is_bp']))
+                                        
+    algo_evol = [ 'Vwap' , 'VOL' ,'DYNVOL']
+    # attention a gérer dans le plot si le bench n'est pas le vwap+ un dico avant
+    for algo in algo_evol:
+        h = plot_evol_perf(agg_weekly_data,algo)
+        if h is not None:
+            m += '<h2>' + algo + ': weekly Slippage Evolution (from FlexStat)</h2>'
+            image_name = folder + 'evol_' + algo
+            h.savefig(image_name)
+            repeat(image_name)
+            m += '<img src="cid:%s">\n' %image_name
+    
     
     ###########################################################################
     # add figure to email msg.

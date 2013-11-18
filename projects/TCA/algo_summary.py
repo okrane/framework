@@ -237,7 +237,7 @@ if __name__=='__main__':
                                         + 1.96 *  agg_weekly_data['Slippage IS (std / bp)'] / np.sqrt(agg_weekly_data['nb_slippage_is_bp']))
                                         
     algo_evol = [ 'Vwap' , 'VOL' ,'DYNVOL']
-    # attention a gérer dans le plot si le bench n'est pas le vwap+ un dico avant
+    # attention a gerer dans le plot si le bench n'est pas le vwap+ un dico avant
     for algo in algo_evol:
         h = plot_evol_perf(agg_weekly_data,algo)
         if h is not None:

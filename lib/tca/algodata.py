@@ -64,13 +64,14 @@ class AlgoDataProcessor(object):
         
         #---- excel INFO
         if os.name == 'nt':
-            self.xls_occ_fe_path = '/home/quant/prod/tca'
-        else:
             self.xls_occ_fe_path = 'W:\\Global_Research\\Quant_research\\Data\\tca'
+        else:
+            self.xls_occ_fe_path = '/home/quant/prod/tca'
+        
         self.xls_occ_fe_filename = 'Export_EOD_Flex_2013_comma.csv'
         self.xls_occ_fe_filenameg = 'export_renormalized.csv'
         self.data_xls_occ_fe=None
-            
+        
     ###########################################################################
     # METHOD GET DATA
     ###########################################################################

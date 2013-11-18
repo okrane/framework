@@ -242,11 +242,11 @@ if __name__=='__main__':
         h = plot_evol_perf(agg_weekly_data,algo)
         if h is not None:
             m += '<h2>' + algo + ': weekly Slippage Evolution (from FlexStat)</h2>'
-            image_name = 'evol_' + algo
+            image_name = 'evol_' + algo + '.png'
             h.savefig(folder + image_name)
             repeat(image_name)
             m += '<img src="cid:%s">\n' %image_name
-    
+            
     
     ###########################################################################
     # add figure to email msg.
@@ -263,7 +263,6 @@ if __name__=='__main__':
         msg.attach(img)
         
     msg.attach(MIMEText(m, 'html'))    
-    
     
     ###########################################################################
     # Send the email via our own SMTP server.

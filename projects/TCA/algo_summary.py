@@ -44,7 +44,7 @@ if __name__=='__main__':
     from lib.dbtools.connections import Connections
 #     Connections.change_connections("dev")
     
-    now = datetime.now() - timedelta(days=3)
+    now = datetime.now() - timedelta(days=1)
     day = datetime(year = now.year, month=now.month, day=now.day, hour = 23, minute = 59, second = 59)
     
     
@@ -61,8 +61,8 @@ if __name__=='__main__':
     # me == the sender's email address
     # family = the list of all recipients' email addresses
     msg['From'] = 'alababidi@keplercheuvreux.com'
-    #to = ['algoquant@keplercheuvreux.com', 'mnamajee@keplercheuvreux.com', 'glin@keplercheuvreux.com']
-    to = ['alababidi@keplercheuvreux.com','njoseph@keplercheuvreux.com']
+    to = ['algoquant@keplercheuvreux.com', 'mnamajee@keplercheuvreux.com', 'glin@keplercheuvreux.com']
+    #to = ['alababidi@keplercheuvreux.com','njoseph@keplercheuvreux.com']
     msg['To'] = ' ,'.join(to)
 
     daily = PlotEngine(start_date = day, end_date = day)
@@ -241,7 +241,7 @@ if __name__=='__main__':
     for algo in algo_evol:
         h = plot_evol_perf(agg_weekly_data,algo)
         if h is not None:
-            m += '<h2>' + algo + ': weekly Slippage Evolution (from FlexStat)</h2>'
+            m += '<h2>' + algo + ': Weekly Slippage Evolution (from FlexStat)</h2>'
             image_name = 'evol_' + algo + '.png'
             h.savefig(folder + image_name)
             repeat(image_name)

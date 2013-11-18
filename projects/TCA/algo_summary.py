@@ -17,7 +17,7 @@ import smtplib
 from lib.logger.custom_logger import *
 import logging
 import lib.tca.algoplot
-
+import numpy as np
 import lib.data.dataframe_tools as dftools
 import lib.stats.slicer as slicer
 from lib.tca.algostats import AlgoStatsProcessor

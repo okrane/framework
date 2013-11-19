@@ -22,7 +22,16 @@ import lib.data.dataframe_tools as dftools
 import lib.stats.slicer as slicer
 from lib.tca.algostats import AlgoStatsProcessor
 
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Image
 
+
+if os.name == 'nt':
+    FOLDER  = 'C:\\temp\\'
+else:
+    FOLDER  = '/home/quant/temp/'
+        
+        
 def plot_evol_perf(data,algo):
     tmp = data[data['occ_fe_strategy_name_mapped'] == algo.upper()]
     if tmp.shape[0] == 0:
@@ -39,7 +48,44 @@ def plot_evol_perf(data,algo):
     
     return out
 
-
+    
+    
+def plot_basic_stats(start, end, path_list, image_name_list, html_string, image_list):
+    new_path_list = new_image_name_list = []
+    duration = datetime.strftime(start, '%Y%m%d' ) + '_to_' + datetime.strftime(end, '%Y%m%d' ) + '.png'
+    image_name = 'Vol_euro_from_' + duration
+    new_path_list.append(FOLDER + image_name)
+    new_image_name_list.append(image_name)
+    
+    image_name = 'Occ_euro_from_' + duration
+    new_path_list.append(FOLDER + image_name)
+    new_image_name_list.append(image_name)
+    
+    image_name = 'Place_from_' + duration
+    new_path_list.append(FOLDER + image_name)
+    new_image_name_list.append(image_name)
+    
+    image_name = 'Intraday_algo_vol_from_' + duration
+    new_path_list.append(FOLDER + image_name)
+    new_image_name_list.append(image_name)
+    
+    
+    period = PlotEngine(start_date  = start, end_date = end)
+    period.plot_basic_stats(path    = new_path_list)
+    period.plot_intraday_exec_curve(duration = 'From ' + datetime.strftime(start, '%Y/%m/%d' ) + ' to ' + datetime.strftime(end, '%Y/%m/%d' )).savefig(FOLDER + image_name)
+    
+    html_string = ""
+    for image in new_image_name_list:
+        html_string += '<img src="cid:%s">\n' %image
+        
+    for image_path in new_image_name_list:
+        image_list.append(Image(image_path))
+        
+    path_list.extend(new_path_list)
+    image_name_list.extend(new_image_name_list)
+    
+    return html_string
+        
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
 #     Connections.change_connections("dev")
@@ -47,124 +93,79 @@ if __name__=='__main__':
     now = datetime.now() - timedelta(days=1)
     day = datetime(year = now.year, month=now.month, day=now.day, hour = 23, minute = 59, second = 59)
     
+
+    #doc = SimpleDocTemplate(FOLDER + "Sum_up_" + datetime.strftime(day, '%Y/%m/%d') + ".pdf", pagesize=letter)
     
-    #day = datetime.combine(.day, date).time() - timedelta(days=1)
-    if os.name == 'nt':
-        folder  = 'C:\\temp\\'
-    else:
-        folder  = '/home/quant/temp/'
     
     
     msg = MIMEMultipart()
     msg['Subject'] = 'Algo Summary (Beta test)'
     
-    # me == the sender's email address
-    # family = the list of all recipients' email addresses
     msg['From'] = 'alababidi@keplercheuvreux.com'
     to = ['algoquant@keplercheuvreux.com', 'mnamajee@keplercheuvreux.com', 'glin@keplercheuvreux.com']
     #to = ['alababidi@keplercheuvreux.com','njoseph@keplercheuvreux.com']
     msg['To'] = ' ,'.join(to)
+    
+    list_image  = []
+    list_path   = []
+    parts       = []
+    html_string = ""    
 
-    daily = PlotEngine(start_date = day, end_date = day)
-    
-    l         = []
-    list_path = []
-    
-    def  repeat(name):
-        global l
-        global list_path
-        
-        file_path = folder + image_name
-        
-        l.append(image_name)
-        list_path.append(file_path)
-    
-
-        
+    # HISTORY    
     sdate = day - timedelta(days=90)
     edate = day
     algo_data = AlgoStatsProcessor(start_date = sdate, end_date = edate)
     algo_data.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped','rate_to_euro','turnover','TargetSubID','ExDestination'])
-    
-    
-    #Sum up
+
     history = lib.tca.algoplot.PlotEngine()
     h, data = history.plot_algo_evolution(algo_data=algo_data,level='sequence',var='mturnover_euro',gvar='is_dma')
-    image_name = 'Serie_daily_' + datetime.strftime(sdate, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    repeat(image_name)
-    h.savefig(folder + image_name)
-    m = '<h2>History</h2>'
-    m += '<img src="cid:%s">\n' %image_name
-    #plt.show()
+    image_name = 'Serie_daily_' + datetime.strftime(sdate, '%Y%m%d' ) + '_to_' + datetime.strftime(edate, '%Y%m%d' ) + '.png'
+    
+    list_image.append(image_name)
+    list_path.append(FOLDER + image_name)
+    h.savefig(FOLDER + image_name)
+
+    html_string += '<h2>History</h2>'
+    html_string += '<img src="cid:%s">\n' %image_name
+    plt.show()
+    
     # Daily
-    m += '<h2>Daily</h2>'
-    image_name = 'Vol_euro_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    repeat(image_name)
+    html_string += '<h2>Daily</h2>'
+    #return_dic = plot_basic_stats(edate, edate, list_path, list_image, html_string)
+    html_string = plot_basic_stats(edate, edate, list_path, list_image, html_string, parts)
     
-    image_name = 'Occ_euro_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    repeat(image_name)
+#     list_path   = return_dic["path_list"]
+#     list_image  = return_dic["image_name_list"] 
+#     html_string = return_dic["html_string"] 
     
-    image_name = 'Place_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    repeat(image_name)
-    
-    image_name = 'Intraday_algo_vol_from_' + datetime.strftime(day, '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    file_path = folder + image_name
-    repeat(image_name)
-    
-    daily.plot_basic_stats(path=list_path[1:4])
-    daily.plot_intraday_exec_curve().savefig(file_path)
-    
-    for image in l[1:5]:
-        m += '<img src="cid:%s">\n' %image
-        
+    plt.show()
+       
     # Weekly
-    m += '<h2>Weekly</h2>'
-    weekly = PlotEngine(start_date = day - timedelta(days=7), end_date = day)
+    html_string += '<h2>Weekly</h2>'
+    #return_dic = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string)
+    html_string = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string, parts)
     
-    image_name = 'Vol_euro_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    repeat(image_name)
     
-    image_name = 'Occ_euro_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    repeat(image_name)
+#     list_path   = return_dic["path_list"]
+#     list_image  = return_dic["image_name_list"] 
+#     html_string = return_dic["html_string"] 
     
-    image_name = 'Place_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    repeat(image_name)
-    
-    image_name = 'Intraday_algo_vol_from_' + datetime.strftime(day- timedelta(days=7), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    file_path = folder + image_name
-    repeat(image_name)
-    
-    weekly.plot_basic_stats(path=list_path[5:8])
-    weekly.plot_intraday_exec_curve().savefig(file_path)
-    
-    for image in l[5:9]:
-        m += '<img src="cid:%s">\n' %image
-        
-                
+    plt.show() 
+               
     # Monthly
-    m += '<h2>Monthly</h2>' 
-    monthly = PlotEngine(start_date = day - timedelta(days=28), end_date = day)
+    html_string += '<h2>Monthly</h2>'
+    #return_dic = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string)
+    html_string = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string, parts)
     
-    image_name = 'Vol_euro_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    repeat(image_name)
+#     list_path   = return_dic["path_list"]
+#     list_image  = return_dic["image_name_list"] 
+#     html_string = return_dic["html_string"]
+     
+    plt.show()
+                
+                
 
-    image_name = 'Occ_euro_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    repeat(image_name)
     
-    image_name = 'Place_from_' + datetime.strftime(day - timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    repeat(image_name)
- 
-    image_name = 'Intraday_algo_vol_from_' + datetime.strftime(day- timedelta(days=28), '%Y%m%d' ) + '_to_' + datetime.strftime(day, '%Y%m%d' ) + '.png'
-    file_path = folder + image_name
-    repeat(image_name)
-    
-    monthly.plot_basic_stats(path=list_path[9:12])
-    monthly.plot_intraday_exec_curve().savefig(file_path)
-    for image in l[9:13]:
-        m += '<img src="cid:%s">\n' %image
-
-    # Send an email
-    title = "<h2>Sum up for %s</h2>\n" % datetime.strftime(day, '%Y%m%d' )
     
     ###########################################################################
     # Slippage table.
@@ -191,29 +192,29 @@ if __name__=='__main__':
          'Spread (mean / bp)' : lambda df : slicer.weighted_statistics(df.avg_spread_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='mean')}
                              
     #--- add daily table
-    m += '<h2>Slippage Daily (from FlexStat)</h2>'
+    html_string += '<h2>Slippage Daily (from FlexStat)</h2>'
     tmp_ = occ_data_4slippage[ map(lambda x : x >= pytz.UTC.localize(sday) and x <= pytz.UTC.localize(day), occ_data_dates) ]
     if tmp_.shape[0] == 0:
-        m += 'No Data'
+        html_string += 'No Data'
     else:
         agg_data = dftools.agg(tmp_,
                        group_vars = ['occ_fe_strategy_name_mapped'],
                        stats = STATS)
         
-        m += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+        html_string += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
               
     #--- add monthly table
-    m += '<h2>Slippage Monthly (from FlexStat)</h2>'
+    html_string += '<h2>Slippage Monthly (from FlexStat)</h2>'
     tmp_ = occ_data_4slippage[ map(lambda x : x >= pytz.UTC.localize(mday) and x <= pytz.UTC.localize(day), occ_data_dates) ]
     if tmp_.shape[0] == 0:
-        m += 'No Data'
+        html_string += 'No Data'
     else:
         agg_data = dftools.agg(tmp_,
                        group_vars = ['occ_fe_strategy_name_mapped'],
                        stats = STATS)
         
-        m += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+        html_string += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
           
     #--- evolution weekly des perfs 
@@ -237,15 +238,17 @@ if __name__=='__main__':
                                         + 1.96 *  agg_weekly_data['Slippage IS (std / bp)'] / np.sqrt(agg_weekly_data['nb_slippage_is_bp']))
                                         
     algo_evol = [ 'Vwap' , 'VOL' ,'DYNVOL']
+    
     # attention a gerer dans le plot si le bench n'est pas le vwap+ un dico avant
     for algo in algo_evol:
         h = plot_evol_perf(agg_weekly_data,algo)
         if h is not None:
-            m += '<h2>' + algo + ': Weekly Slippage Evolution (from FlexStat)</h2>'
+            html_string += '<h2>' + algo + ': Weekly Slippage Evolution (from FlexStat)</h2>'
             image_name = 'evol_' + algo + '.png'
-            h.savefig(folder + image_name)
-            repeat(image_name)
-            m += '<img src="cid:%s">\n' %image_name
+            h.savefig(FOLDER + image_name)
+            list_path.append(FOLDER + image_name)
+            list_image.append(image_name)
+            html_string += '<img src="cid:%s">\n' %image_name
             
     
     ###########################################################################
@@ -253,16 +256,16 @@ if __name__=='__main__':
     ###########################################################################   
     
     # Assume we know that the image files are all in PNG format
-    for file in l:
+    for file in list_path:
         # Open the files in binary mode.  Let the MIMEImage class automatically
         # guess the specific image type.
-        fp = open(folder + file, 'rb')
+        fp = open(FOLDER + file, 'rb')
         img = MIMEImage(fp.read())
         img.add_header('Content-ID', '<%s>'%file)
         fp.close()
         msg.attach(img)
         
-    msg.attach(MIMEText(m, 'html'))    
+    msg.attach(MIMEText(html_string, 'html'))    
     
     ###########################################################################
     # Send the email via our own SMTP server.
@@ -270,3 +273,4 @@ if __name__=='__main__':
     s = smtplib.SMTP('172.29.97.16')
     s.sendmail(msg['From'], to, msg.as_string())
     s.quit()
+    plt.show()

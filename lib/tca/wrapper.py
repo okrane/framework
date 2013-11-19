@@ -113,7 +113,7 @@ class PlotEngine(Statistic):
     #------------------------------------------------------------------------------
     #  Intraday executed curve
     #------------------------------------------------------------------------------
-    def plot_intraday_exec_curve(self, step_sec=60*30, group_var='strategy_name_mapped'):
+    def plot_intraday_exec_curve(self, duration = "", step_sec=60*30, group_var='strategy_name_mapped'):
         """
         intraday_exec_curve : 
         Plot the daily exec curve in turnover cross by group_var
@@ -160,7 +160,7 @@ class PlotEngine(Statistic):
             
         plt.hold(False)
         plt.ylabel('Turnover (,000,000) euros')
-        plt.title('Intraday traded curve', size = 'large')
+        plt.title('Intraday traded curve: ' + duration, size = 'large')
         plt.legend()   
 
         return h

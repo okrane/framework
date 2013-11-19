@@ -71,13 +71,11 @@ def plot_basic_stats(start, end, path_list, image_name_list, html_string, image_
     image_name = 'Intraday_algo_vol_from_' + duration
     new_path_list.append(FOLDER + image_name)
     new_image_name_list.append(image_name)
-    
-    
+        
     period = PlotEngine(start_date  = start, end_date = end)
     period.plot_basic_stats(path    = new_path_list)
     period.plot_intraday_exec_curve(duration = 'From ' + datetime.strftime(start, '%Y/%m/%d' ) + ' to ' + datetime.strftime(end, '%Y/%m/%d' )).savefig(FOLDER + image_name)
     
-    html_string = ""
     for image in new_image_name_list:
         html_string += '<img src="cid:%s">\n' %image
     
@@ -143,7 +141,7 @@ if __name__=='__main__':
     # Weekly
     html_string += '<h2>Weekly</h2>'
     #return_dic = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string)
-    #html_string = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string, parts)
+    html_string = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string, parts)
     
     
     #     list_path   = return_dic["path_list"]
@@ -155,17 +153,13 @@ if __name__=='__main__':
     # Monthly
     html_string += '<h2>Monthly</h2>'
     #return_dic = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string)
-    #html_string = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string, parts)
+    html_string = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string, parts)
     
     #     list_path   = return_dic["path_list"]
     #     list_image  = return_dic["image_name_list"] 
     #     html_string = return_dic["html_string"]
      
     #plt.show()
-                
-                
-    
-    
     
     ###########################################################################
     # Slippage table.

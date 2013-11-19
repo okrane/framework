@@ -46,7 +46,7 @@ def plot_evol_perf(data,algo):
     plt.plot([dates[0],dates[-1]],[0,0],'--',color = 'k')
     plt.hold(False)
     plt.title('Slippage evolution: ' + algo)
-    plt.legend(['Mean','IC down','IC up'])
+    plt.legend(['Mean','IC down','IC up'] , loc='upper left')
     plt.ylabel('Slippage Vwap (bp)')
     
     return out
@@ -195,7 +195,9 @@ if __name__=='__main__':
                        group_vars = ['occ_fe_strategy_name_mapped'],
                        stats = STATS)
         
-        html_string += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+        agg_data = agg_data.rename(columns={'occ_fe_strategy_name_mapped': 'Strategy'})
+        
+        html_string += agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
               
     #--- add monthly table
@@ -208,7 +210,9 @@ if __name__=='__main__':
                        group_vars = ['occ_fe_strategy_name_mapped'],
                        stats = STATS)
         
-        html_string += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+        agg_data = agg_data.rename(columns={'occ_fe_strategy_name_mapped': 'Strategy'})
+        
+        html_string += agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
           
     #--- evolution weekly des perfs 

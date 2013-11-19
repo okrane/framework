@@ -22,16 +22,16 @@ import lib.data.dataframe_tools as dftools
 import lib.stats.slicer as slicer
 from lib.tca.algostats import AlgoStatsProcessor
 
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Image
+#from reportlab.lib.pagesizes import letter
+#from reportlab.platypus import SimpleDocTemplate, Image
 
 
 if os.name == 'nt':
     FOLDER  = 'C:\\temp\\'
 else:
     FOLDER  = '/home/quant/temp/'
-        
-        
+
+
 def plot_evol_perf(data,algo):
     tmp = data[data['occ_fe_strategy_name_mapped'] == algo.upper()]
     if tmp.shape[0] == 0:
@@ -51,10 +51,10 @@ def plot_evol_perf(data,algo):
     
     return out
 
-    
-    
+
 def plot_basic_stats(start, end, path_list, image_name_list, html_string, image_list):
-    new_path_list = new_image_name_list = []
+    new_path_list = []
+    new_image_name_list = []
     duration = datetime.strftime(start, '%Y%m%d' ) + '_to_' + datetime.strftime(end, '%Y%m%d' ) + '.png'
     image_name = 'Vol_euro_from_' + duration
     new_path_list.append(FOLDER + image_name)
@@ -80,46 +80,43 @@ def plot_basic_stats(start, end, path_list, image_name_list, html_string, image_
     html_string = ""
     for image in new_image_name_list:
         html_string += '<img src="cid:%s">\n' %image
-        
-    for image_path in new_image_name_list:
-        image_list.append(Image(image_path))
-        
+    
+    #    for image_path in new_image_name_list:
+    #        image_list.append(Image(image_path))
+    
     path_list.extend(new_path_list)
     image_name_list.extend(new_image_name_list)
     
     return html_string
-        
+
+
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
-#     Connections.change_connections("dev")
+    #     Connections.change_connections("dev")
     
     now = datetime.now() - timedelta(days=1)
     day = datetime(year = now.year, month=now.month, day=now.day, hour = 23, minute = 59, second = 59)
     
-
     #doc = SimpleDocTemplate(FOLDER + "Sum_up_" + datetime.strftime(day, '%Y/%m/%d') + ".pdf", pagesize=letter)
-    
-    
-    
     msg = MIMEMultipart()
     msg['Subject'] = 'Algo Summary (Beta test)'
     
     msg['From'] = 'alababidi@keplercheuvreux.com'
-    to = ['algoquant@keplercheuvreux.com', 'mnamajee@keplercheuvreux.com', 'glin@keplercheuvreux.com']
-    #to = ['alababidi@keplercheuvreux.com','njoseph@keplercheuvreux.com']
+    #to = ['algoquant@keplercheuvreux.com', 'mnamajee@keplercheuvreux.com', 'glin@keplercheuvreux.com']
+    to = ['alababidi@keplercheuvreux.com','njoseph@keplercheuvreux.com']
     msg['To'] = ' ,'.join(to)
     
     list_image  = []
     list_path   = []
     parts       = []
     html_string = ""    
-
+    
     # HISTORY    
     sdate = day - timedelta(days=90)
     edate = day
     algo_data = AlgoStatsProcessor(start_date = sdate, end_date = edate)
     algo_data.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped','rate_to_euro','turnover','TargetSubID','ExDestination'])
-
+    
     history = lib.tca.algoplot.PlotEngine()
     h, data = history.plot_algo_evolution(algo_data=algo_data,level='sequence',var='mturnover_euro',gvar='is_dma')
     image_name = 'Serie_daily_' + datetime.strftime(sdate, '%Y%m%d' ) + '_to_' + datetime.strftime(edate, '%Y%m%d' ) + '.png'
@@ -127,47 +124,47 @@ if __name__=='__main__':
     list_image.append(image_name)
     list_path.append(FOLDER + image_name)
     h.savefig(FOLDER + image_name)
-
+    
     html_string += '<h2>History</h2>'
     html_string += '<img src="cid:%s">\n' %image_name
-    plt.show()
+    #plt.show()
     
     # Daily
     html_string += '<h2>Daily</h2>'
     #return_dic = plot_basic_stats(edate, edate, list_path, list_image, html_string)
     html_string = plot_basic_stats(edate, edate, list_path, list_image, html_string, parts)
     
-#     list_path   = return_dic["path_list"]
-#     list_image  = return_dic["image_name_list"] 
-#     html_string = return_dic["html_string"] 
+    #     list_path   = return_dic["path_list"]
+    #     list_image  = return_dic["image_name_list"] 
+    #     html_string = return_dic["html_string"] 
     
-    plt.show()
+    #plt.show()
        
     # Weekly
     html_string += '<h2>Weekly</h2>'
     #return_dic = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string)
-    html_string = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string, parts)
+    #html_string = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string, parts)
     
     
-#     list_path   = return_dic["path_list"]
-#     list_image  = return_dic["image_name_list"] 
-#     html_string = return_dic["html_string"] 
+    #     list_path   = return_dic["path_list"]
+    #     list_image  = return_dic["image_name_list"] 
+    #     html_string = return_dic["html_string"] 
     
-    plt.show() 
+    #plt.show() 
                
     # Monthly
     html_string += '<h2>Monthly</h2>'
     #return_dic = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string)
-    html_string = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string, parts)
+    #html_string = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string, parts)
     
-#     list_path   = return_dic["path_list"]
-#     list_image  = return_dic["image_name_list"] 
-#     html_string = return_dic["html_string"]
+    #     list_path   = return_dic["path_list"]
+    #     list_image  = return_dic["image_name_list"] 
+    #     html_string = return_dic["html_string"]
      
-    plt.show()
+    #plt.show()
                 
                 
-
+    
     
     
     ###########################################################################
@@ -186,7 +183,7 @@ if __name__=='__main__':
     
     #--- stats defintion
     STATS = {'nb': lambda df : len(df.p_occ_id),
-         'nb_slippage_vwap_bp': lambda df : len(np.where((np.isfinite(df.rate_to_euro)) & (np.isfinite(df.slippage_vwap_bp)) & (df.occ_fe_turnover*df.rate_to_euro>0))[0]),
+         'nb_slippage_vwap_bp': lambda df : len(np.where((np.isfinite(df.rate_to_euro)) & (np.isfinite(df.slippage_vwap_bp)) & (df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro>0))[0]),
          'Slippage Vwap (mean / bp)': lambda df : slicer.weighted_statistics(df.slippage_vwap_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='mean'),
          'Slippage Vwap (std / bp)': lambda df : slicer.weighted_statistics(df.slippage_vwap_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='std'),
          'nb_slippage_is_bp': lambda df : len(np.where((np.isfinite(df.rate_to_euro)) & (np.isfinite(df.slippage_is_bp)) & (df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro>0))[0]),
@@ -262,7 +259,7 @@ if __name__=='__main__':
     for file in list_path:
         # Open the files in binary mode.  Let the MIMEImage class automatically
         # guess the specific image type.
-        fp = open(FOLDER + file, 'rb')
+        fp = open(file, 'rb')
         img = MIMEImage(fp.read())
         img.add_header('Content-ID', '<%s>'%file)
         fp.close()
@@ -276,4 +273,4 @@ if __name__=='__main__':
     s = smtplib.SMTP('172.29.97.16')
     s.sendmail(msg['From'], to, msg.as_string())
     s.quit()
-    plt.show()
+    #plt.show()

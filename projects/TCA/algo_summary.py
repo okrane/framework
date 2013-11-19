@@ -100,8 +100,8 @@ if __name__=='__main__':
     msg['Subject'] = 'Algo Summary (Beta test)'
     
     msg['From'] = 'alababidi@keplercheuvreux.com'
-    #to = ['algoquant@keplercheuvreux.com', 'mnamajee@keplercheuvreux.com', 'glin@keplercheuvreux.com']
-    to = ['alababidi@keplercheuvreux.com','njoseph@keplercheuvreux.com']
+    to = ['algoquant@keplercheuvreux.com', 'mnamajee@keplercheuvreux.com', 'glin@keplercheuvreux.com']
+    #to = ['alababidi@keplercheuvreux.com','njoseph@keplercheuvreux.com']
     msg['To'] = ' ,'.join(to)
     
     list_image  = []

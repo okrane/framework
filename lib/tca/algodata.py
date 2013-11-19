@@ -440,7 +440,7 @@ class AlgoDataProcessor(object):
                     out = [ # - id/order infos
                         u'_id',u'p_cl_ord_id',u'p_occ_id',
                         # - user/client infos
-                        u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',
+                        u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',u'ProgramName',
                         #- security symbol
                         u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',
                         #- info at occurence level

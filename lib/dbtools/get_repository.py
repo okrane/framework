@@ -228,6 +228,32 @@ def exchangeidmain(**kwargs):
             out[np.nonzero(lids==data['security_id'].values[i])[0]]=data['EXCHANGE'].values[i]
     return out
 
+
+
+##------------------------------------------------------------------------------
+## exchangeidmain
+##------------------------------------------------------------------------------
+#def symbol62name(lids):
+#    ##############################################################
+#    # input handling
+#    ##############################################################
+#    if isinstance(lids,list):
+#        lids=np.array(lids)
+#    elif not isinstance(lids,np.ndarray):
+#        lids=np.array([lids])
+#    
+#    out=np.array([np.nan]*lids.size) 
+#    ##############################################################
+#    # request and format
+#    ##############################################################    
+#    data=exchangeinfo(security_id=lids)
+#    if data.shape[0]>0:
+#        data=data[data['EXCHANGETYPE']=='M']
+#        for i in range(0,data.shape[0]):
+#            out[np.nonzero(lids==data['security_id'].values[i])[0]]=data['EXCHANGE'].values[i]
+#    return out
+
+
 #------------------------------------------------------------------------------
 # tradingtime
 #------------------------------------------------------------------------------

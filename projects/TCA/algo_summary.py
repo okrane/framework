@@ -29,13 +29,16 @@ def plot_evol_perf(data,algo):
         return None
     
     out = plt.figure(figsize = DEFAULT_FIGSIZE)
+    dates = [x.to_datetime() for x in tmp['tmp_date_start']]
     plt.hold(True)
-    plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['Slippage Vwap (mean / bp)'],'o-')
-    plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['IC down : Vwap(mean / bp)'],'-',color = 'r')
-    plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['IC up : Vwap(mean / bp)'],'-',color = 'g')
+    plt.plot(dates,tmp['Slippage Vwap (mean / bp)'],'o-')
+    plt.plot(dates,tmp['IC down : Vwap(mean / bp)'],'-',color = 'r')
+    plt.plot(dates,tmp['IC up : Vwap(mean / bp)'],'-',color = 'g')
+    plt.plot([dates[0],dates[-1]],[0,0],'--',color = 'k')
     plt.hold(False)
     plt.title('Slippage evolution: ' + algo)
-    # plt.legend('Mean','IC down','IC up')
+    plt.legend(['Mean','IC down','IC up'])
+    plt.ylabel('Slippage Vwap (bp)')
     
     return out
 
@@ -183,12 +186,12 @@ if __name__=='__main__':
     #--- stats defintion
     STATS = {'nb': lambda df : len(df.p_occ_id),
          'nb_slippage_vwap_bp': lambda df : len(np.where((np.isfinite(df.rate_to_euro)) & (np.isfinite(df.slippage_vwap_bp)) & (df.occ_fe_turnover*df.rate_to_euro>0))[0]),
-         'Slippage Vwap (mean / bp)': lambda df : slicer.weighted_statistics(df.slippage_vwap_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='mean'),
-         'Slippage Vwap (std / bp)': lambda df : slicer.weighted_statistics(df.slippage_vwap_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='std'),
-         'nb_slippage_is_bp': lambda df : len(np.where((np.isfinite(df.rate_to_euro)) & (np.isfinite(df.slippage_is_bp)) & (df.occ_fe_turnover*df.rate_to_euro>0))[0]),
-         'Slippage IS (mean / bp)': lambda df : slicer.weighted_statistics(df.slippage_is_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='mean'),
-         'Slippage IS (std / bp)': lambda df : slicer.weighted_statistics(df.slippage_is_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='std'),
-         'Spread (mean / bp)' : lambda df : slicer.weighted_statistics(df.avg_spread_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='mean')}
+         'Slippage Vwap (mean / bp)': lambda df : slicer.weighted_statistics(df.slippage_vwap_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='mean'),
+         'Slippage Vwap (std / bp)': lambda df : slicer.weighted_statistics(df.slippage_vwap_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='std'),
+         'nb_slippage_is_bp': lambda df : len(np.where((np.isfinite(df.rate_to_euro)) & (np.isfinite(df.slippage_is_bp)) & (df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro>0))[0]),
+         'Slippage IS (mean / bp)': lambda df : slicer.weighted_statistics(df.slippage_is_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='mean'),
+         'Slippage IS (std / bp)': lambda df : slicer.weighted_statistics(df.slippage_is_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='std'),
+         'Spread (mean / bp)' : lambda df : slicer.weighted_statistics(df.avg_spread_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='mean')}
                              
     #--- add daily table
     m += '<h2>Slippage Daily (from FlexStat)</h2>'

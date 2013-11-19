@@ -256,14 +256,16 @@ if __name__=='__main__':
     ###########################################################################   
     
     # Assume we know that the image files are all in PNG format
+    i = 0
     for file in list_path:
         # Open the files in binary mode.  Let the MIMEImage class automatically
         # guess the specific image type.
         fp = open(file, 'rb')
         img = MIMEImage(fp.read())
-        img.add_header('Content-ID', '<%s>'%file)
+        img.add_header('Content-ID', '<%s>'%list_image[i])
         fp.close()
         msg.attach(img)
+        i += 1
         
     msg.attach(MIMEText(html_string, 'html'))    
     

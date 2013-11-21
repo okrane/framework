@@ -270,7 +270,7 @@ if __name__=='__main__':
     file_w.write(latex_doc)
     file_w.close()
     
-    call(LATEX + " -output-directory="+ FOLDER + " " + tex_file_path + ".tex" , shell=False)
+    call([LATEX, "-output-directory="+ FOLDER, tex_file_path + ".tex"], shell=False)
     pdf = MIMEBase('application', "octet-stream")
     
     file_r = open(tex_file_path + '.pdf', "rb")

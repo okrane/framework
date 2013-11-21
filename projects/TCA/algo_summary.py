@@ -28,7 +28,7 @@ from subprocess import call
 
 if os.name == 'nt':
     FOLDER  = 'C:\\temp\\'
-    LATEX   = 'C:\\Program Files\\MiKTeX 2.9\\miktex\\bin\\pdflatex'
+    LATEX   = '"C:\\Program Files\\MiKTeX 2.9\\miktex\\bin\\pdflatex"'
 else:
     FOLDER  = '/home/quant/temp/'
     LATEX   = '/home/quant/tex/bin/x86_64-linux/pdflatex'
@@ -270,7 +270,7 @@ if __name__=='__main__':
     file_w.write(latex_doc)
     file_w.close()
     
-    call("\"" + LATEX + "\"" + " -output-directory="+ FOLDER + " " + tex_file_path + ".tex" , shell=False)
+    call(LATEX + " -output-directory="+ FOLDER + " " + tex_file_path + ".tex" , shell=False)
     pdf = MIMEBase('application', "octet-stream")
     
     file_r = open(tex_file_path + '.pdf', "rb")

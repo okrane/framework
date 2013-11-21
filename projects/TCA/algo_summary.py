@@ -13,6 +13,8 @@ import matplotlib.pyplot as plt
 from lib.io.toolkit import send_email
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
+from email.MIMEBase import MIMEBase
+from email import Encoders
 import smtplib
 from lib.logger.custom_logger import *
 import logging
@@ -26,8 +28,10 @@ from subprocess import call
 
 if os.name == 'nt':
     FOLDER  = 'C:\\temp\\'
+    LATEX   = 'C:\\Program Files\\MiKTeX 2.9\\miktex\\bin\\pdflatex'
 else:
     FOLDER  = '/home/quant/temp/'
+    LATEX   = '/home/quant/tex/bin/x86_64-linux/pdflatex'
 
 
 def plot_evol_perf(data,algo):
@@ -50,7 +54,7 @@ def plot_evol_perf(data,algo):
     return out
 
 
-def plot_basic_stats(start, end, path_list, image_name_list, html_string, image_list):
+def plot_basic_stats(start, end, path_list, image_name_list, html_string):
     new_path_list = []
     new_image_name_list = []
     duration = datetime.strftime(start, '%Y%m%d' ) + '_to_' + datetime.strftime(end, '%Y%m%d' ) + '.png'
@@ -76,9 +80,6 @@ def plot_basic_stats(start, end, path_list, image_name_list, html_string, image_
     
     for image in new_image_name_list:
         html_string += '<img src="cid:%s">\n' %image
-    
-    #    for image_path in new_image_name_list:
-    #        image_list.append(Image(image_path))
     
     path_list.extend(new_path_list)
     image_name_list.extend(new_image_name_list)
@@ -106,7 +107,9 @@ if __name__=='__main__':
     list_tables = []
     html_string = ""    
     
-    # HISTORY    
+    ###########################################################################
+    # History
+    ###########################################################################   
     sdate = day - timedelta(days=90)
     edate = day
     algo_data = AlgoStatsProcessor(start_date = sdate, end_date = edate)
@@ -123,39 +126,23 @@ if __name__=='__main__':
     html_string += '<h2>History</h2>'
     html_string += '<img src="cid:%s">\n' %image_name
     #plt.show()
-    
+
+    ###########################################################################
+    # Algo Volume
+    ###########################################################################  
     # Daily
     html_string += '<h2>Daily</h2>'
-    #return_dic = plot_basic_stats(edate, edate, list_path, list_image, html_string)
-    html_string = plot_basic_stats(edate, edate, list_path, list_image, html_string, parts)
-    
-    #     list_path   = return_dic["path_list"]
-    #     list_image  = return_dic["image_name_list"] 
-    #     html_string = return_dic["html_string"] 
-    
+    html_string = plot_basic_stats(edate, edate, list_path, list_image, html_string)
     #plt.show()
        
     # Weekly
     html_string += '<h2>Weekly</h2>'
-    #return_dic = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string)
-    html_string = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string, parts)
-    
-    
-    #     list_path   = return_dic["path_list"]
-    #     list_image  = return_dic["image_name_list"] 
-    #     html_string = return_dic["html_string"] 
-    
+    html_string = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string)
     #plt.show() 
                
     # Monthly
     html_string += '<h2>Monthly</h2>'
-    #return_dic = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string)
-    html_string = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string, parts)
-    
-    #     list_path   = return_dic["path_list"]
-    #     list_image  = return_dic["image_name_list"] 
-    #     html_string = return_dic["html_string"]
-     
+    html_string = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string)
     #plt.show()
     
     ###########################################################################
@@ -197,7 +184,7 @@ if __name__=='__main__':
         
         html_string += agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
-        list_tables.append(agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+        list_tables.append(agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_latex())       
     #--- add monthly table
     html_string += '<h2>Slippage Monthly (from FlexStat)</h2>'
@@ -214,7 +201,7 @@ if __name__=='__main__':
         
         html_string += agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
-        list_tables.append(agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+        list_tables.append(agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_latex())      
           
     #--- evolution weekly des perfs 
@@ -277,13 +264,21 @@ if __name__=='__main__':
     # add the pdf file
     ###########################################################################
     latex_doc = latex_string(list_path, list_tables)
+        
+    tex_file_path   = FOLDER + 'latex_' + day_str
+    file_w          = open(tex_file_path, "w")
+    file_w.write(latex_doc)
+    file_w.close()
     
-    tex_file_path   = FOLDER + 'latex_' + day_str + ".tex", "w"
-    file_w          = open(tex_file_path)
-    file.write(latex_doc)
-    filew.close()
-    call("pdflatex " + tex_file_path, shell=True)
-    pdf = MIMEText(file("/home/myuser/sample.pdf").read())
+    call("\"" + LATEX + "\" " + tex_file_path + ".tex" + " --output-directory "+ FOLDER, shell=True)
+    pdf = MIMEBase('application', "octet-stream")
+    
+    file_r = open(tex_file_path + '.pdf', "rb")
+    pdf.set_payload( file_r.read() )
+    Encoders.encode_base64(pdf)
+    file_r.close()
+    
+    pdf.add_header('Content-Disposition', 'attachment; filename="%s"' % os.path.basename(tex_file_path + '.pdf'))
     msg.attach(pdf)
              
     ###########################################################################

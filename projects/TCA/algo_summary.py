@@ -28,28 +28,31 @@ if os.name == 'nt':
     FOLDER  = 'C:\\temp\\'
 else:
     FOLDER  = '/home/quant/temp/'
-        
-        
+
+
 def plot_evol_perf(data,algo):
     tmp = data[data['occ_fe_strategy_name_mapped'] == algo.upper()]
     if tmp.shape[0] == 0:
         return None
     
     out = plt.figure(figsize = DEFAULT_FIGSIZE)
+    dates = [x.to_datetime() for x in tmp['tmp_date_start']]
     plt.hold(True)
-    plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['Slippage Vwap (mean / bp)'],'o-')
-    plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['IC down : Vwap(mean / bp)'],'-',color = 'r')
-    plt.plot([x.to_datetime() for x in tmp['tmp_date_start']],tmp['IC up : Vwap(mean / bp)'],'-',color = 'g')
+    plt.plot(dates,tmp['Slippage Vwap (mean / bp)'],'o-')
+    plt.plot(dates,tmp['IC down : Vwap(mean / bp)'],'-',color = 'r')
+    plt.plot(dates,tmp['IC up : Vwap(mean / bp)'],'-',color = 'g')
+    plt.plot([dates[0],dates[-1]],[0,0],'--',color = 'k')
     plt.hold(False)
     plt.title('Slippage evolution: ' + algo)
-    # plt.legend('Mean','IC down','IC up')
+    plt.legend(['Mean','IC down','IC up'] , loc='upper left')
+    plt.ylabel('Slippage Vwap (bp)')
     
     return out
 
-    
-    
+
 def plot_basic_stats(start, end, path_list, image_name_list, html_string, image_list):
-    new_path_list = new_image_name_list = []
+    new_path_list = []
+    new_image_name_list = []
     duration = datetime.strftime(start, '%Y%m%d' ) + '_to_' + datetime.strftime(end, '%Y%m%d' ) + '.png'
     image_name = 'Vol_euro_from_' + duration
     new_path_list.append(FOLDER + image_name)
@@ -66,36 +69,31 @@ def plot_basic_stats(start, end, path_list, image_name_list, html_string, image_
     image_name = 'Intraday_algo_vol_from_' + duration
     new_path_list.append(FOLDER + image_name)
     new_image_name_list.append(image_name)
-    
-    
+        
     period = PlotEngine(start_date  = start, end_date = end)
     period.plot_basic_stats(path    = new_path_list)
     period.plot_intraday_exec_curve(duration = 'From ' + datetime.strftime(start, '%Y/%m/%d' ) + ' to ' + datetime.strftime(end, '%Y/%m/%d' )).savefig(FOLDER + image_name)
     
-    html_string = ""
     for image in new_image_name_list:
         html_string += '<img src="cid:%s">\n' %image
-        
-    for image_path in new_image_name_list:
-        image_list.append(Image(image_path))
-        
+    
+    #    for image_path in new_image_name_list:
+    #        image_list.append(Image(image_path))
+    
     path_list.extend(new_path_list)
     image_name_list.extend(new_image_name_list)
     
     return html_string
-        
+
+
 if __name__=='__main__':
     from lib.dbtools.connections import Connections
-#     Connections.change_connections("dev")
+    #     Connections.change_connections("dev")
     
     now     = datetime.now() - timedelta(days=1)
     day     = datetime(year = now.year, month=now.month, day=now.day, hour = 23, minute = 59, second = 59)
     day_str = datetime.strftime(day, '%Y%m%d' )
-
     #doc = SimpleDocTemplate(FOLDER + "Sum_up_" + datetime.strftime(day, '%Y/%m/%d') + ".pdf", pagesize=letter)
-    
-    
-    
     msg = MIMEMultipart()
     msg['Subject'] = 'Algo Summary (Beta test)'
     msg['From'] = 'alababidi@keplercheuvreux.com'
@@ -107,13 +105,13 @@ if __name__=='__main__':
     list_path   = []
     list_tables = []
     html_string = ""    
-
+    
     # HISTORY    
     sdate = day - timedelta(days=90)
     edate = day
     algo_data = AlgoStatsProcessor(start_date = sdate, end_date = edate)
     algo_data.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped','rate_to_euro','turnover','TargetSubID','ExDestination'])
-
+    
     history = lib.tca.algoplot.PlotEngine()
     h, data = history.plot_algo_evolution(algo_data=algo_data,level='sequence',var='mturnover_euro',gvar='is_dma')
     image_name = 'Serie_daily_' + datetime.strftime(sdate, '%Y%m%d' ) + '_to_' + day_str + '.png'
@@ -121,21 +119,21 @@ if __name__=='__main__':
     list_image.append(image_name)
     list_path.append(FOLDER + image_name)
     h.savefig(FOLDER + image_name)
-
+    
     html_string += '<h2>History</h2>'
     html_string += '<img src="cid:%s">\n' %image_name
-    plt.show()
+    #plt.show()
     
     # Daily
     html_string += '<h2>Daily</h2>'
     #return_dic = plot_basic_stats(edate, edate, list_path, list_image, html_string)
     html_string = plot_basic_stats(edate, edate, list_path, list_image, html_string, parts)
     
-#     list_path   = return_dic["path_list"]
-#     list_image  = return_dic["image_name_list"] 
-#     html_string = return_dic["html_string"] 
+    #     list_path   = return_dic["path_list"]
+    #     list_image  = return_dic["image_name_list"] 
+    #     html_string = return_dic["html_string"] 
     
-    plt.show()
+    #plt.show()
        
     # Weekly
     html_string += '<h2>Weekly</h2>'
@@ -143,26 +141,22 @@ if __name__=='__main__':
     html_string = plot_basic_stats(day - timedelta(days=7), edate, list_path, list_image, html_string, parts)
     
     
-#     list_path   = return_dic["path_list"]
-#     list_image  = return_dic["image_name_list"] 
-#     html_string = return_dic["html_string"] 
+    #     list_path   = return_dic["path_list"]
+    #     list_image  = return_dic["image_name_list"] 
+    #     html_string = return_dic["html_string"] 
     
-    plt.show() 
+    #plt.show() 
                
     # Monthly
     html_string += '<h2>Monthly</h2>'
     #return_dic = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string)
     html_string = plot_basic_stats(day - timedelta(days=28), edate, list_path, list_image, html_string, parts)
     
-#     list_path   = return_dic["path_list"]
-#     list_image  = return_dic["image_name_list"] 
-#     html_string = return_dic["html_string"]
+    #     list_path   = return_dic["path_list"]
+    #     list_image  = return_dic["image_name_list"] 
+    #     html_string = return_dic["html_string"]
      
-    plt.show()
-                
-                
-
-    
+    #plt.show()
     
     ###########################################################################
     # Slippage table.
@@ -180,13 +174,13 @@ if __name__=='__main__':
     
     #--- stats defintion
     STATS = {'nb': lambda df : len(df.p_occ_id),
-         'nb_slippage_vwap_bp': lambda df : len(np.where((np.isfinite(df.rate_to_euro)) & (np.isfinite(df.slippage_vwap_bp)) & (df.occ_fe_turnover*df.rate_to_euro>0))[0]),
-         'Slippage Vwap (mean / bp)': lambda df : slicer.weighted_statistics(df.slippage_vwap_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='mean'),
-         'Slippage Vwap (std / bp)': lambda df : slicer.weighted_statistics(df.slippage_vwap_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='std'),
-         'nb_slippage_is_bp': lambda df : len(np.where((np.isfinite(df.rate_to_euro)) & (np.isfinite(df.slippage_is_bp)) & (df.occ_fe_turnover*df.rate_to_euro>0))[0]),
-         'Slippage IS (mean / bp)': lambda df : slicer.weighted_statistics(df.slippage_is_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='mean'),
-         'Slippage IS (std / bp)': lambda df : slicer.weighted_statistics(df.slippage_is_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='std'),
-         'Spread (mean / bp)' : lambda df : slicer.weighted_statistics(df.avg_spread_bp.values,df.occ_fe_turnover.values*df.rate_to_euro.values,mode='mean')}
+         'nb_slippage_vwap_bp': lambda df : len(np.where((np.isfinite(df.rate_to_euro)) & (np.isfinite(df.slippage_vwap_bp)) & (df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro>0))[0]),
+         'Slippage Vwap (mean / bp)': lambda df : slicer.weighted_statistics(df.slippage_vwap_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='mean'),
+         'Slippage Vwap (std / bp)': lambda df : slicer.weighted_statistics(df.slippage_vwap_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='std'),
+         'nb_slippage_is_bp': lambda df : len(np.where((np.isfinite(df.rate_to_euro)) & (np.isfinite(df.slippage_is_bp)) & (df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro>0))[0]),
+         'Slippage IS (mean / bp)': lambda df : slicer.weighted_statistics(df.slippage_is_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='mean'),
+         'Slippage IS (std / bp)': lambda df : slicer.weighted_statistics(df.slippage_is_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='std'),
+         'Spread (mean / bp)' : lambda df : slicer.weighted_statistics(df.avg_spread_bp.values,df.occ_fe_avg_price.apply(lambda x : float(x))*df.occ_fe_exec_shares*df.rate_to_euro,mode='mean')}
                              
     #--- add daily table
     html_string += '<h2>Slippage Daily (from FlexStat)</h2>'
@@ -199,7 +193,9 @@ if __name__=='__main__':
                        group_vars = ['occ_fe_strategy_name_mapped'],
                        stats = STATS)
         
-        html_string += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+        agg_data = agg_data.rename(columns={'occ_fe_strategy_name_mapped': 'Strategy'})
+        
+        html_string += agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
         list_tables.append(agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_latex())       
@@ -214,7 +210,9 @@ if __name__=='__main__':
                        group_vars = ['occ_fe_strategy_name_mapped'],
                        stats = STATS)
         
-        html_string += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+        agg_data = agg_data.rename(columns={'occ_fe_strategy_name_mapped': 'Strategy'})
+        
+        html_string += agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
         list_tables.append(agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_latex())      
@@ -258,14 +256,16 @@ if __name__=='__main__':
     ###########################################################################   
     
     # Assume we know that the image files are all in PNG format
+    i = 0
     for file in list_path:
         # Open the files in binary mode.  Let the MIMEImage class automatically
         # guess the specific image type.
-        fp = open(FOLDER + file, 'rb')
+        fp = open(file, 'rb')
         img = MIMEImage(fp.read())
-        img.add_header('Content-ID', '<%s>'%file)
+        img.add_header('Content-ID', '<%s>'%list_image[i])
         fp.close()
         msg.attach(img)
+        i += 1
         
     ###########################################################################
     # add the text
@@ -292,4 +292,4 @@ if __name__=='__main__':
     s = smtplib.SMTP('172.29.97.16')
     s.sendmail(msg['From'], to, msg.as_string())
     s.quit()
-    plt.show()
+    #plt.show()

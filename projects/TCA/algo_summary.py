@@ -21,10 +21,8 @@ import numpy as np
 import lib.data.dataframe_tools as dftools
 import lib.stats.slicer as slicer
 from lib.tca.algostats import AlgoStatsProcessor
-
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Image
-
+from latex_template import latex_string
+from subprocess import call
 
 if os.name == 'nt':
     FOLDER  = 'C:\\temp\\'
@@ -90,9 +88,9 @@ if __name__=='__main__':
     from lib.dbtools.connections import Connections
 #     Connections.change_connections("dev")
     
-    now = datetime.now() - timedelta(days=1)
-    day = datetime(year = now.year, month=now.month, day=now.day, hour = 23, minute = 59, second = 59)
-    
+    now     = datetime.now() - timedelta(days=1)
+    day     = datetime(year = now.year, month=now.month, day=now.day, hour = 23, minute = 59, second = 59)
+    day_str = datetime.strftime(day, '%Y%m%d' )
 
     #doc = SimpleDocTemplate(FOLDER + "Sum_up_" + datetime.strftime(day, '%Y/%m/%d') + ".pdf", pagesize=letter)
     
@@ -100,7 +98,6 @@ if __name__=='__main__':
     
     msg = MIMEMultipart()
     msg['Subject'] = 'Algo Summary (Beta test)'
-    
     msg['From'] = 'alababidi@keplercheuvreux.com'
     to = ['algoquant@keplercheuvreux.com', 'mnamajee@keplercheuvreux.com', 'glin@keplercheuvreux.com']
     #to = ['alababidi@keplercheuvreux.com','njoseph@keplercheuvreux.com']
@@ -108,7 +105,7 @@ if __name__=='__main__':
     
     list_image  = []
     list_path   = []
-    parts       = []
+    list_tables = []
     html_string = ""    
 
     # HISTORY    
@@ -119,7 +116,7 @@ if __name__=='__main__':
 
     history = lib.tca.algoplot.PlotEngine()
     h, data = history.plot_algo_evolution(algo_data=algo_data,level='sequence',var='mturnover_euro',gvar='is_dma')
-    image_name = 'Serie_daily_' + datetime.strftime(sdate, '%Y%m%d' ) + '_to_' + datetime.strftime(edate, '%Y%m%d' ) + '.png'
+    image_name = 'Serie_daily_' + datetime.strftime(sdate, '%Y%m%d' ) + '_to_' + day_str + '.png'
     
     list_image.append(image_name)
     list_path.append(FOLDER + image_name)
@@ -196,6 +193,7 @@ if __name__=='__main__':
     tmp_ = occ_data_4slippage[ map(lambda x : x >= pytz.UTC.localize(sday) and x <= pytz.UTC.localize(day), occ_data_dates) ]
     if tmp_.shape[0] == 0:
         html_string += 'No Data'
+        list_tables.append('No Data')
     else:
         agg_data = dftools.agg(tmp_,
                        group_vars = ['occ_fe_strategy_name_mapped'],
@@ -203,12 +201,14 @@ if __name__=='__main__':
         
         html_string += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
-              
+        list_tables.append(agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+              'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_latex())       
     #--- add monthly table
     html_string += '<h2>Slippage Monthly (from FlexStat)</h2>'
     tmp_ = occ_data_4slippage[ map(lambda x : x >= pytz.UTC.localize(mday) and x <= pytz.UTC.localize(day), occ_data_dates) ]
     if tmp_.shape[0] == 0:
         html_string += 'No Data'
+        list_tables.append('No Data')
     else:
         agg_data = dftools.agg(tmp_,
                        group_vars = ['occ_fe_strategy_name_mapped'],
@@ -216,6 +216,8 @@ if __name__=='__main__':
         
         html_string += agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
               'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
+        list_tables.append(agg_data[['occ_fe_strategy_name_mapped','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+              'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_latex())      
           
     #--- evolution weekly des perfs 
     occ_data_4slippage['tmp_date_end'] = [datetime.combine(x.to_datetime().date()-timedelta(days=x.to_datetime().date().weekday()-4),time(0,0,0)) for x in occ_data_4slippage.index]
@@ -265,8 +267,25 @@ if __name__=='__main__':
         fp.close()
         msg.attach(img)
         
-    msg.attach(MIMEText(html_string, 'html'))    
+    ###########################################################################
+    # add the text
+    ###########################################################################     
+    msg.attach(MIMEText(html_string, 'html'))   
     
+         
+    ###########################################################################
+    # add the pdf file
+    ###########################################################################
+    latex_doc = latex_string(list_path, list_tables)
+    
+    tex_file_path   = FOLDER + 'latex_' + day_str + ".tex", "w"
+    file_w          = open(tex_file_path)
+    file.write(latex_doc)
+    filew.close()
+    call("pdflatex " + tex_file_path, shell=True)
+    pdf = MIMEText(file("/home/myuser/sample.pdf").read())
+    msg.attach(pdf)
+             
     ###########################################################################
     # Send the email via our own SMTP server.
     ###########################################################################

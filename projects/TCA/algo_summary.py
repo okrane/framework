@@ -266,11 +266,11 @@ if __name__=='__main__':
     latex_doc = latex_string(list_path, list_tables)
         
     tex_file_path   = FOLDER + 'latex_' + day_str
-    file_w          = open(tex_file_path, "w")
+    file_w          = open(tex_file_path + ".tex", "w")
     file_w.write(latex_doc)
     file_w.close()
     
-    call("\"" + LATEX + "\" " + tex_file_path + ".tex" + " --output-directory "+ FOLDER, shell=True)
+    call("\"" + LATEX + "\" " + " --output-directory="+ FOLDER + " " + tex_file_path + ".tex" , shell=False)
     pdf = MIMEBase('application', "octet-stream")
     
     file_r = open(tex_file_path + '.pdf', "rb")

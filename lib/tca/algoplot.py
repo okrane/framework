@@ -36,7 +36,7 @@ class PlotEngine(object):
     ###########################################################################
     # PLOT whithout self infos
     ###########################################################################
-    def plot_algo_evolution(self,algo_data=None,level='sequence',var='mturnover_euro',gvar=None,agg_step='day'):
+    def plot_algo_evolution(self,algo_data=None,level='sequence',var='mturnover_euro',gvar=None,agg_step='day',fig = None,rotation_xtick= 0):
         
         """
         evolution
@@ -92,13 +92,15 @@ class PlotEngine(object):
         title='Evolution by '+ agg_step +'\n From ' + dt.datetime.strftime(min_day,'%d/%m/%Y') + ' To '+ dt.datetime.strftime(max_day,'%d/%m/%Y')
         
         if var == 'mturnover_euro':
-            ylabel='Turnover/Algo (,000,000 Euros)'
+            ylabel='Turnover(,000,000 Euros)'
+        elif var == 'avg_slippage_spread':
+            ylabel='Slippage(in spread size)'
             
         cmap = cm.spectral
         if gvar == 'is_dma':
             cmap = [kc_main_colors()['blue_1'],kc_main_colors()['blue_2']]
         tzname='Europe/London'
-        h=dfplots.stackbar(data, 
+        h = dfplots.stackbar(data, 
                            var = var,
                            gvar ='tmp_date_end',
                            gvar_sbucket = 'tmp_date_start',
@@ -109,7 +111,9 @@ class PlotEngine(object):
                            show = False,
                            cmap = cmap,
                            legend_loc = 'upper center',
-                           FIG_SIZE = DEFAULT_FIGSIZE)
+                           FIG_SIZE = DEFAULT_FIGSIZE,
+                           FIG = fig,
+                           ROTATION_XTICK = rotation_xtick)
         return h,data
         
         
@@ -271,6 +275,26 @@ class PlotEngine(object):
         
         return h,data
         
+    def plot_piechart(self, level = None, algo_data = None, var='mturnover_euro', gvar = 'strategy_name_mapped'):
+        
+        stats_config = statsformula.get_formula(level=level, key=var)
+        if stats_config is None:
+            raise ValueError('Formula is not defined for %s'%var)
+        data = algo_data.agg_stats(level=level,stats_config=stats_config,gvar=gvar)
+        labels = np.unique(data[gvar])            
+        sizes = data[var]
+        pct_size = 1.0*sizes/sum(sizes)
+        idx_other = pct_size < 0.05
+        idx_keep = pct_size >= 0.05
+        size_other = sum(sizes[idx_other])
+        labels = labels[idx_keep]
+        sizes = sizes[idx_keep]
+        if size_other > 0:
+            sizes = np.append(sizes, size_other)
+            labels = np.append(labels, 'Others')
+        plt.pie(sizes, labels=labels,
+                      autopct='%1.1f%%', startangle=90)
+        return data
 
 if __name__=='__main__':
     

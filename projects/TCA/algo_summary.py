@@ -38,7 +38,7 @@ if __name__=='__main__':
     l         = []
     list_path = []
     
-    def  repeat(name):
+    def repeat(name):
         global l
         global list_path
         

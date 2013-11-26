@@ -111,7 +111,7 @@ class Client_Analyst(object):
         avg_seq = {}
         for algo in algo_list:
             if algo in ['DYNAMIC VOLUME', 'VOLUME']:
-                continueocc_fe
+                continue
             tmp_data = algo_data_byalgo[algo]
             occ_num = len(np.unique(tmp_data['p_occ_id']))
             seq_num = len(tmp_data)
@@ -151,7 +151,7 @@ class Client_Analyst(object):
 #            self.images['pct_empty_para_' + algo] = fig
             
         # number of sequence per occurrence pie chart
-        fig = plt.figure(figsize=(16, 12))
+        fig = plt.figure(figsize=(16, 40))
         fig_count = 1
         for algo in ['VWAP','TWAP','VOL','ICEBERG','DYNVOL','IS','CLOSE','HUNT','CROSSFIRE','BLINK']:
             if not algo in algo_data_byalgo.keys():
@@ -162,7 +162,7 @@ class Client_Analyst(object):
             if sum(idx_multisequence) == 0:
                 labels = ['Nb seq = 1']
                 sizes = [len(tmp_data)]
-                plt.subplot(3,3,fig_count)
+                plt.subplot(5,2,fig_count)
                 plt.pie(sizes, labels=labels,
                         autopct='%1.1f%%', startangle=90)
                 plt.title('NbSeq/Occ: ' + algo)
@@ -170,7 +170,7 @@ class Client_Analyst(object):
                 continue
             sizes = [len(np.unique(tmp_data['p_occ_id'])), len(np.unique(tmp_data[idx_multisequence]['p_occ_id']))]
             labels = ['Nb seq = 1','Nb seq > 1']
-            plt.subplot(3,3,fig_count)
+            plt.subplot(5,2,fig_count)
             plt.pie(sizes, labels=labels,
                     autopct='%1.1f%%', startangle=90)
             plt.title('NbSeq/Occ: ' + algo)
@@ -178,7 +178,7 @@ class Client_Analyst(object):
         self.images['nb_seq_dist'] = fig
         
         # for para change between sequences
-        fig = plt.figure(figsize=(16, 12))
+        fig = plt.figure(figsize=(16, 40))
         fig_count = 1
         for algo in ['VWAP','TWAP','VOL','ICEBERG','DYNVOL','IS','CLOSE','HUNT','CROSSFIRE','BLINK']:
             if not algo in algo_data_byalgo.keys():
@@ -219,6 +219,7 @@ class Client_Analyst(object):
                             dict_change[para] += 1
                             no_change = False
                     if no_change:
+                        clr_id
                         dict_change['NoParaChange'] += 1
             self.stats['Para_change' + algo] = dict_change
             labels = np.array(dict_change.keys())
@@ -232,7 +233,7 @@ class Client_Analyst(object):
             if size_other > 0:
                 sizes = np.append(sizes, size_other)
                 labels = np.append(labels, 'Others')
-            plt.subplot(3,3,fig_count)
+            plt.subplot(5,2,fig_count)
             plt.pie(sizes, labels=labels,
                     autopct='%1.1f%%', startangle=90)
             plt.title('para change: ' + algo)
@@ -253,9 +254,10 @@ class Client_Analyst(object):
             self.images['distribution_byalgo'] = fig
             # place turnover distribution
             fig = plt.figure()   
-            self.stats['distribution_byplace'] = self.plotengine.plot_piechart(level = algo_data.entry_level, algo_data = algo_data, var='mturnover_euro', gvar = 'place')     
-            plt.title('turnover distribution by place')
-            self.images['distribution_byplace'] = fig
+            if 'ExDestination' in algo_data.data_occurrence.keys():
+                self.stats['distribution_byplace'] = self.plotengine.plot_piechart(level = algo_data.entry_level, algo_data = algo_data, var='mturnover_euro', gvar = 'place')     
+                plt.title('turnover distribution by place')
+                self.images['distribution_byplace'] = fig
 
     def show_figures(self, stats):
         if stats == 'pct_empty_para':

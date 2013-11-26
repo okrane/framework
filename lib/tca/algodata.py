@@ -63,11 +63,15 @@ class AlgoDataProcessor(object):
         self.deal_collection_name = 'OrderDeals'
         
         #---- excel INFO
-        self.xls_occ_fe_path = 'W:\\Global_Research\\Quant_research\\Data\\tca'
+        if os.name == 'nt':
+            self.xls_occ_fe_path = 'W:\\Global_Research\\Quant_research\\Data\\tca'
+        else:
+            self.xls_occ_fe_path = '/home/quant/prod/tca'
+        
         self.xls_occ_fe_filename = 'Export_EOD_Flex_2013_comma.csv'
         self.xls_occ_fe_filenameg = 'export_renormalized.csv'
         self.data_xls_occ_fe=None
-            
+        
     ###########################################################################
     # METHOD GET DATA
     ###########################################################################
@@ -436,7 +440,7 @@ class AlgoDataProcessor(object):
                     out = [ # - id/order infos
                         u'_id',u'p_cl_ord_id',u'p_occ_id',
                         # - user/client infos
-                        u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',
+                        u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',u'ProgramName',
                         #- security symbol
                         u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',
                         #- info at occurence level

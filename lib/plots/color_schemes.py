@@ -17,6 +17,12 @@ def kc_main_colors(one_scale = True):
     if one_scale:
         return dict((k, 1.0 * v / 256) for k, v in colors.iteritems())
     return colors
+
+def nice_colors(one_scale = True):
+    colors = {"dark_red" : np.array([196, 30, 58])}
+    if one_scale:
+        return dict((k, 1.0 * v / 256) for k, v in colors.iteritems())
+    return colors
     
 def color_grayscale(base_color, nb_points = 5):
     """ Returns a grayscale starting from the base color

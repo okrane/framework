@@ -82,7 +82,7 @@ def convert_symbol(**kwargs):
     # ----------------  
     query = "SELECT distinct %s from SECURITY where %s = '%s'" % (fields[kwargs['dest']], fields[kwargs['source']], kwargs['value'])
     query += " and EXCHGID = '%s'" % kwargs['exchgid'] if kwargs.has_key('exchgid') else ""    
-    print query
+    #print query
     
     val=Connections.exec_sql('KGR',query,schema = False)    
     return val[0][0] if len(val) == 1 else val
@@ -227,6 +227,40 @@ def exchangeidmain(**kwargs):
         for i in range(0,data.shape[0]):
             out[np.nonzero(lids==data['security_id'].values[i])[0]]=data['EXCHANGE'].values[i]
     return out
+
+
+
+#------------------------------------------------------------------------------
+# exchangeidmain
+#------------------------------------------------------------------------------
+def symbol6toname(lids):
+    ##############################################################
+    # input handling
+    ##############################################################
+    if isinstance(lids,list):
+        lids=np.array(lids)
+    elif not isinstance(lids,np.ndarray):
+        lids=np.array([lids])
+    
+    out=['Unknown']*lids.size
+    ##############################################################
+    # request and format
+    ##############################################################
+    str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
+    str_lids=str_lids[:-1]+")"
+    
+    req=("SELECT SYMBOL6, min(SECNAME) "
+        " FROM KGR..SECURITY " 
+        " WHERE SYMBOL6 in %s"
+        " GROUP BY SYMBOL6") % (str_lids) 
+    
+    vals=Connections.exec_sql('KGR',req,schema = True)
+    
+    if not (not vals[0]):
+        for x in vals[0]:
+            out[np.where(lids==int(x[0]))[0]]=str(x[1])
+    
+    return np.array(out)
 
 #------------------------------------------------------------------------------
 # tradingtime

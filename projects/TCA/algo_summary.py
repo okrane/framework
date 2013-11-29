@@ -34,7 +34,7 @@ else:
     LATEX   = '/home/quant/tex/bin/x86_64-linux/pdflatex'
 
 def round_spe(x):
-    if isinstance(x, basestring): 
+    if not isinstance(x, basestring): 
         return round(x,2)
     return x
 

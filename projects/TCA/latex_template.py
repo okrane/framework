@@ -24,8 +24,10 @@ def latex_string(list_image_path,  list_table_string):
     \\usepackage{geometry}
     \\geometry{a4paper,landscape}
     
-    \\author{Algoquant}
+
     
+    \\author{Algoquant}
+    \\setcounter{tocdepth}{3}
     \\setlength{\oddsidemargin}{-9pt}
     \\setlength{\evensidemargin}{9pt}  
     
@@ -50,70 +52,70 @@ def latex_string(list_image_path,  list_table_string):
             
             \\newpage
             \\begin{figure}[h!]
-              \\caption{Number of occurrences}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Number of occurrences}
             \\end{figure}
             
             \\newpage
             \\begin{figure}[h!]
-              \\caption{Countries}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Countries}
             \\end{figure}
             
             \\newpage
             \\begin{figure}[h!]
-              \\caption{Intraday algo volume}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Intraday algo volume}
             \\end{figure}
         
         \\newpage
         \\section{Weekly}
             \\begin{figure}[h!]
-              \\caption{Algo Volume}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Algo Volume}
             \\end{figure}
             
             \\newpage
             \\begin{figure}[h!]
-              \\caption{Number of occurrences}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Number of occurrences}
             \\end{figure}
             
             \\newpage
             \\begin{figure}[h!]
-              \\caption{Countries}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Countries}
             \\end{figure}
             
             \\newpage
             \\begin{figure}[h!]
-              \\caption{Intraday algo volume}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Intraday algo volume}
             \\end{figure}
         
         \\newpage
         \\section{Monthly}
             \\begin{figure}[h!]
-              \\caption{Algo Volume}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Algo Volume}
             \\end{figure}
             
             \\newpage
             \\begin{figure}[h!]
-              \\caption{Number of occurrences}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Number of occurrences}
             \\end{figure}
             
             \\newpage
             \\begin{figure}[h!]
-              \\caption{Countries}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Countries}
             \\end{figure}
             
             \\newpage
             \\begin{figure}[h!]
-              \\caption{Intraday algo volume}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Intraday algo volume}
             \\end{figure}
          
         \\newpage    
@@ -127,23 +129,22 @@ def latex_string(list_image_path,  list_table_string):
         \\newpage
         \\section{Vwap: Weekly Slippage Evolution (from FlexStat)}
             \\begin{figure}[h!]
-              \\caption{Vwap slippage evolution}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Vwap slippage evolution}
             \\end{figure}
         
         \\newpage    
         \\section{Vol: Weekly Slippage Evolution (from FlexStat)}
             \\begin{figure}[h!]
-              \\caption{Vol slippage evolution}
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Vol slippage evolution}
             \\end{figure}
             
         \\newpage    
         \\section{Dynvol: Weekly Slippage Evolution (from FlexStat)}
             \\begin{figure}[h!]
-              \\caption{Dynvol slippage evolution}
-              
                 \\includegraphics[width=650pt]{%s}
+                \\caption{Dynvol slippage evolution}
             \\end{figure}
            
         \\newpage 

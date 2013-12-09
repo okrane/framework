@@ -70,13 +70,6 @@ def plot_basic_stats(start, end, path_list, image_name_list, html_string):
     new_path_list.append(FOLDER + image_name)
     new_image_name_list.append(image_name)
     
-<<<<<<< HEAD
-    def repeat(name):
-        global l
-        global list_path
-        
-        file_path = folder + image_name
-=======
     image_name = 'Place_from_' + duration
     new_path_list.append(FOLDER + image_name)
     new_image_name_list.append(image_name)
@@ -84,7 +77,6 @@ def plot_basic_stats(start, end, path_list, image_name_list, html_string):
     image_name = 'Intraday_algo_vol_from_' + duration
     new_path_list.append(FOLDER + image_name)
     new_image_name_list.append(image_name)
->>>>>>> 0dbef886cbf587798e191c25ee3f7b1154dc0124
         
     period = PlotEngine(start_date  = start, end_date = end)
     period.plot_basic_stats(path    = new_path_list)
@@ -103,7 +95,7 @@ if __name__=='__main__':
     from lib.dbtools.connections import Connections
     #     Connections.change_connections("dev")
     
-    now     = datetime.now() - timedelta(days=1)
+    now     = datetime.now() - timedelta(days=3)
     day     = datetime(year = now.year, month=now.month, day=now.day, hour = 23, minute = 59, second = 59)
     day_str = datetime.strftime(day, '%Y%m%d' )
     #doc = SimpleDocTemplate(FOLDER + "Sum_up_" + datetime.strftime(day, '%Y/%m/%d') + ".pdf", pagesize=letter)

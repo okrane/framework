@@ -33,6 +33,10 @@ else:
     FOLDER  = '/home/quant/temp/'
     LATEX   = '/home/quant/tex/bin/x86_64-linux/pdflatex'
 
+def round_spe(x):
+    if not isinstance(x, basestring): 
+        return round(x,2)
+    return x
 
 def plot_evol_perf(data,algo):
     tmp = data[data['occ_fe_strategy_name_mapped'] == algo.upper()]
@@ -189,11 +193,11 @@ if __name__=='__main__':
                        stats = STATS)
         
         agg_data = agg_data.rename(columns={'occ_fe_strategy_name_mapped': 'Strategy'})
-        
-        html_string += agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
-              'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
-        list_tables.append(agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
-              'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_latex())       
+        slippage_df = agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+              'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']]
+        slippage_df = slippage_df.applymap(round_spe)
+        html_string += slippage_df.to_html()
+        list_tables.append(slippage_df.to_latex())       
     #--- add monthly table
     html_string += '<h2>Slippage Monthly (from FlexStat)</h2>'
     tmp_ = occ_data_4slippage[ map(lambda x : x >= pytz.UTC.localize(mday) and x <= pytz.UTC.localize(day), occ_data_dates) ]
@@ -206,11 +210,11 @@ if __name__=='__main__':
                        stats = STATS)
         
         agg_data = agg_data.rename(columns={'occ_fe_strategy_name_mapped': 'Strategy'})
-        
-        html_string += agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
-              'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_html()
-        list_tables.append(agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
-              'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']].to_latex())      
+        slippage_df = agg_data[['Strategy','Slippage Vwap (mean / bp)','Slippage Vwap (std / bp)',
+              'Slippage IS (mean / bp)','Slippage IS (std / bp)','Spread (mean / bp)']]
+        slippage_df = slippage_df.applymap(round_spe)
+        html_string += slippage_df.to_html()
+        list_tables.append(slippage_df.to_latex())      
           
     #--- evolution weekly des perfs 
     occ_data_4slippage['tmp_date_end'] = [datetime.combine(x.to_datetime().date()-timedelta(days=x.to_datetime().date().weekday()-4),time(0,0,0)) for x in occ_data_4slippage.index]
@@ -273,11 +277,14 @@ if __name__=='__main__':
     ###########################################################################
     latex_doc = latex_string(list_path, list_tables)
         
-    tex_file_path   = FOLDER + 'latex_' + day_str
+    tex_file_path   = FOLDER + 'Report_' + day_str
     file_w          = open(tex_file_path + ".tex", "w")
     file_w.write(latex_doc)
     file_w.close()
     
+    logging.info(LATEX, "-output-directory="+ FOLDER, tex_file_path + ".tex")
+    call([LATEX, "-output-directory="+ FOLDER, tex_file_path + ".tex"], shell=False)
+    # 2 compilations in order to build the index correctly
     call([LATEX, "-output-directory="+ FOLDER, tex_file_path + ".tex"], shell=False)
     pdf = MIMEBase('application', "octet-stream")
     

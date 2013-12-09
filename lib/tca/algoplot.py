@@ -114,7 +114,9 @@ class PlotEngine(object):
                            FIG_SIZE = DEFAULT_FIGSIZE,
                            FIG = fig,
                            ROTATION_XTICK = rotation_xtick,
-                           alpha = 0.7)        return h,data
+                           alpha = 0.7)        
+                    
+        return h,data
         
         
     def plot_algo_hbar(self,algo_data=None,level='sequence',var='mturnover_euro',gvar=None,gvar_vals=None):

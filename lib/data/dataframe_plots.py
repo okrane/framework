@@ -32,6 +32,7 @@ def stackbar(data,
             cmap=cm.spectral,
             show=True,
             VALS_MULTIPLIER=1.05,
+            FIG = None,
             FIG_SIZE = None,
             alpha = 0.85,
             ROTATION_XTICK = 0):
@@ -263,7 +264,7 @@ def stackbar(data,
         if FIG is not None:
             plt.xticks([xlim[0],0.5*(xlim[1]+xlim[0]),xlim[1]],[first_dt_uni_gvar.strftime('%m/%d/%y'), uni_gvar[int(len(uni_gvar)/2)].strftime('%m/%d/%y'), uni_gvar[-1].strftime('%m/%d/%y')])
     
-    plt.xticks(rotation = ROTATION_XTICK)
+    a,b = plt.xticks(rotation = ROTATION_XTICK)
     
     axes.axis(tuple(xlim+ylim))
     plt.xlabel(xlabel)

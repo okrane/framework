@@ -32,7 +32,8 @@ def stackbar(data,
             cmap=cm.spectral,
             show=True,
             VALS_MULTIPLIER=1.05,
-            FIG_SIZE = None):
+            FIG_SIZE = None,
+            alpha = 0.85):
     
     #-----------------------------------
     # TEST input
@@ -104,7 +105,7 @@ def stackbar(data,
             colors_gvar_vals = [cmap[int(x%len(cmap))] for x in range(0,len(uni_gvar_vals))]
         else:
             colors_gvar_vals = cmap(np.linspace(0, 1.0, len(uni_gvar_vals)))
-            
+        
         uni_gvar_vals_islabeled = np.array([False]*len(uni_gvar_vals))
     else:
         colors_gvar_vals=color
@@ -169,7 +170,7 @@ def stackbar(data,
                 tmp_cum_value+=tmp_data[var].values[0]
                 
                 #--        
-                kwargs={'facecolor':colors_gvar_vals[idx_gvar_vals],'alpha':0.85}
+                kwargs={'facecolor':colors_gvar_vals[idx_gvar_vals],'alpha': alpha}
                 
                 if not uni_gvar_vals_islabeled[idx_gvar_vals]:
                     kwargs.update({'label':uni_gvar_vals[idx_gvar_vals]})
@@ -258,16 +259,13 @@ def stackbar(data,
     plt.ylabel(ylabel)
     plt.title(title, size = 'large')
     
-#    if gvar_vals is not None and legend_loc is not None:
-#        plt.legend(loc=legend_loc)   
-              
-#    if show:
-#        plt.show()
-    
+    if gvar_vals is not None and legend_loc is not None:
+        plt.legend(loc=legend_loc)   
+        
+    if show:
+        plt.show()
+        
     return out
-        
-        
-
 
 
 def datetime2matlabdn(date):

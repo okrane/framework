@@ -14,6 +14,38 @@ from datetime import *
 #from lib.data.matlabutils import *
 #import lib.data.st_data as st_data
 
+
+
+
+#--------------------------------------------------------------------------
+# last finite
+#-------------------------------------------------------------------------- 
+def _isfinite(x):
+    return (x is not None) and (x == x) and not (x == np.Inf)
+
+def x_finite(x, mode = 'last'):
+    if not (isinstance(x,np.ndarray) or isinstance(x,list)):
+        raise ValueError('Input should be numpy arrays')
+    
+    out = np.nan
+    irange = range(len(x))
+    
+    if mode == 'last':
+        irange.reverse()
+    
+    for i in irange:
+        if _isfinite(x[i]):
+            out = x[i]
+            break
+    
+    return out
+
+def last_finite(x):
+    return x_finite(x,mode='last')
+
+def first_finite(x):
+    return x_finite(x,mode='first')
+
 #--------------------------------------------------------------------------
 # weighted statistics
 #-------------------------------------------------------------------------- 

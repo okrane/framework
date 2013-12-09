@@ -15,7 +15,7 @@ import logging
 from lib.logger.custom_logger import *
 from lib.dbtools.connections import Connections
 import lib.dbtools.read_dataset as read_dataset
-
+import lib.dbtools.get_repository as get_repository
 
 class MarketDataProcessor(object):
     
@@ -44,6 +44,9 @@ class MarketDataProcessor(object):
         self.data_tick=None
         self.data_daily=None
         
+        # referentiel liee au data
+        self.data_tick_referential=None
+        
         # CONNECTION INFO
         
     ###########################################################################
@@ -57,8 +60,14 @@ class MarketDataProcessor(object):
         
         if (self.end_date-self.start_date).days >= 1:
             raise ValueError('works only on one date')
-            
+        
+        #-- get data tick
         self.data_tick=read_dataset.ftickdb(security_id=self.security_id,date=dt.datetime.strftime(self.start_date,'%d/%m/%Y'))
+        
+        #-- tick referential
+        self.data_tick_referential = pd.DataFrame()
+        if self.data_tick.shape[0]:
+            self.data_tick_referential = get_repository.exchangeinfo(exchange_id = np.unique(self.data_tick['exchange_id'].values).tolist())
         
     def get_data_daily(self, out_colnames = None):
         
@@ -72,13 +81,14 @@ class MarketDataProcessor(object):
 if __name__=='__main__':
     
     from lib.data.ui.Explorer import Explorer
-#    #-----  ENTRY TICK 
-#    test = MarketDataProcessor(date = dt.datetime(2013,8,30,0,0,0), security_id = 110)
-#    test.get_data_tick()
-#    test.get_data_daily()
+    #-----  ENTRY TICK 
+    test = MarketDataProcessor(date = dt.datetime(2013,8,30,0,0,0), security_id = 110)
+    test.get_data_tick()
+    test.get_data_daily()
+    print test.data_tick_referential
     
-     #-----  ENTRY DAILY 
-    test = MarketDataProcessor(start_date = dt.datetime(2013,8,30,0,0,0),end_date = dt.datetime(2013,9,10,0,0,0), security_id = [2,110])
-    test.get_data_daily(out_colnames = ['open_prc'])  
-    print test.data_daily
+#     #-----  ENTRY DAILY 
+#     test = MarketDataProcessor(start_date = dt.datetime(2013,8,30,0,0,0),end_date = dt.datetime(2013,9,10,0,0,0), security_id = [2,110])
+#     test.get_data_daily(out_colnames = ['open_prc'])  
+#     print test.data_daily
         

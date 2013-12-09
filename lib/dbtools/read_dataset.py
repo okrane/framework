@@ -114,7 +114,7 @@ def ft(**kwargs):
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
         if remote == True and os.name != 'nt':
             os.remove(filename)
-        print 'read_dataset:ft - File LOAD <'+filename+'>'
+        logging.info('read_dataset:ft - File LOAD <'+filename+'>')
         
         return st_data.to_dataframe(mat['data'],timezone=True)
     except IOError:
@@ -340,7 +340,8 @@ def bic(step_sec=300,exchange=False,**kwargs):
                     out=out.append(grouped_data)
                 
         except Exception,e:
-            print "%s" % e
+            logging.error("%s" % e)
+            
         curr_newf=curr_newf+timedelta(days=1)
     
     return out       

@@ -13,12 +13,12 @@ import logging
 class Logger:
     __done = False
     logging = None
-    def __init__(self):
+    def __init__(self, level = 5, to_file = False, capture_stdout  = False , capture_stderr  = True , to_file_fname = None):
         if not Logger.__done:
-            level           = 5
-            to_file         = False
-            capture_stdout  = False
-            capture_stderr  = True
+            # level           = 5
+            # to_file         = False
+            # capture_stdout  = False
+            # capture_stderr  = True
             import sys
             for arg in sys.argv:
                 if "loglevel=" in arg.lower():
@@ -32,10 +32,12 @@ class Logger:
             
             Logger.__done = True
             
-            self.set(level, to_file, capture_stdout, capture_stderr)
+            self.set(level, to_file, capture_stdout, capture_stderr, to_file_fname)
             
-    def set(self, level, to_file = False, capture_stdout = False, capture_stderr = False):
-        if level == 4:
+    def set(self, level = None, to_file = False, capture_stdout = False, capture_stderr = True, to_file_fname = None):
+        if level == 5:
+            lev = logging.DEBUG
+        elif level == 4:
             lev = logging.INFO
         elif level == 3:
             lev = logging.WARNING
@@ -57,10 +59,14 @@ class Logger:
         logging.getLogger('').handlers = []
         # Default to file
         if to_file:
-            file = datetime.datetime.now(tz = pytz.timezone('UTC')).strftime("%Y%m%d-%H%M-") + socket.gethostname() + '.log'
+            if to_file_fname is None:
+                file = datetime.datetime.now(tz = pytz.timezone('UTC')).strftime("%Y%m%d-%H%M-") + socket.gethostname() + '.log'
+            else:
+                file = to_file_fname + '.log'
+                
             logging.basicConfig(level   =lev,
-                                format  ='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
-                                datefmt ='%m-%d %H:%M',
+                                format  ='%(asctime)s %(levelname)-8s %(filename)s:%(lineno)d \t %(message)s',
+                                datefmt ='%Y%m%d-%H:%M:%S',
                                 filename= file,
                                 filemode='a')
             print "Log at:" + file

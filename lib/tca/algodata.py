@@ -11,7 +11,6 @@ import pytz
 import time as time
 import numpy as np
 # import lib.data.matlabutils as matlabutils
-import logging
 from lib.logger.custom_logger import *
 import lib.tca.mapping as mapping
 from lib.dbtools.connections import Connections
@@ -438,7 +437,7 @@ class AlgoDataProcessor(object):
                 
                 if level=='sequence':
                     out = [ # - id/order infos
-                        u'_id',u'p_cl_ord_id',u'p_occ_id',
+                        u'_id',u'p_cl_ord_id',u'p_occ_id',u'ClOrdID',
                         # - user/client infos
                         u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',u'ProgramName',
                         #- security symbol
@@ -467,7 +466,7 @@ class AlgoDataProcessor(object):
                         
                 elif level=='occurrence':
                     out = [ # - id/order infos
-                        u'_id',u'p_occ_id',
+                        u'_id',u'p_occ_id',u'ClOrdID',
                         # - user/client infos
                         u'ClientID',u'TargetSubID',u'Account',
                         #- security symbol

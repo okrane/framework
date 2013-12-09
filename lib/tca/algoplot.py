@@ -18,7 +18,7 @@ import lib.data.dataframe_plots as dfplots
 import lib.data.matlabutils as mutils
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from lib.plots.color_schemes import kc_main_colors
+from lib.plots.color_schemes import kc_main_colors, algo_colors
 import lib.dbtools.get_repository as get_repository
 import lib.tca.algodata_formula as statsformula
 
@@ -113,8 +113,8 @@ class PlotEngine(object):
                            legend_loc = 'upper center',
                            FIG_SIZE = DEFAULT_FIGSIZE,
                            FIG = fig,
-                           ROTATION_XTICK = rotation_xtick)
-        return h,data
+                           ROTATION_XTICK = rotation_xtick,
+                           alpha = 0.7)        return h,data
         
         
     def plot_algo_hbar(self,algo_data=None,level='sequence',var='mturnover_euro',gvar=None,gvar_vals=None):
@@ -271,6 +271,7 @@ class PlotEngine(object):
                            xlabel='Hours ('+tzname+')',
                            show=False,
                            legend_loc='upper center',
+                           cmap = algo_colors(),
                            FIG_SIZE=DEFAULT_FIGSIZE)
         
         return h,data
@@ -302,16 +303,38 @@ if __name__=='__main__':
     from lib.tca.algostats import AlgoStatsProcessor
     
     #-----  TEST plot_intraday_exec_curve
-    sdate=dt.datetime(2013,05,01)
-    edate=dt.datetime(2013,9,23)
+    sdate=dt.datetime(2013,12,03)
+    edate=dt.datetime(2013,12,04)
     algo_data = AlgoStatsProcessor(start_date = sdate, end_date = edate)
     algo_data.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped','rate_to_euro','turnover','TargetSubID','ExDestination'])
-    #algo_data.get_db_data(level='deal')
-    #algo_data.get_intraday_agg_deals_data(group_var='strategy_name_mapped',step_sec=60*30)
+    algo_data.get_db_data(level='deal')
+    algo_data.get_intraday_agg_deals_data(group_var='strategy_name_mapped',step_sec=60*30)
     
     #------------------
     #-- all days
     testp=PlotEngine()
+    
+    #- BY DMA
+    testp.plot_algo_hbar(algo_data=algo_data,gvar='strategy_name_mapped',gvar_vals='is_dma')
+    plt.show()
+    
+#     
+#     #- BY PLACE
+#     testp.plot_algo_hbar(algo_data=algo_data,gvar='place',gvar_vals='is_dma')
+#     plt.show()  
+#      
+#     testp.plot_algo_evolution(algo_data=algo_data,level='sequence',var='mturnover_euro',gvar='is_dma')
+#     plt.show() 
+    
+    #- EXEC CURVE
+    testp.plot_intraday_exec_curve(algo_data=algo_data)
+    plt.show()
+    
+#     #------------------
+#     #-- last day  
+#     sdate_tmp=edate - dt.timedelta(seconds=60*60*24)
+#     testp=PlotEngine(start_date = sdate_tmp, end_date = edate)  
+#     
 #     
 #     #- BY DMA
 #     testp.plot_algo_hbar(algo_data=algo_data,gvar='strategy_name_mapped',gvar_vals='is_dma')
@@ -320,31 +343,10 @@ if __name__=='__main__':
 #     #- BY PLACE
 #     testp.plot_algo_hbar(algo_data=algo_data,gvar='place',gvar_vals='is_dma')
 #     plt.show()  
-     
-    testp.plot_algo_evolution(algo_data=algo_data,level='sequence',var='mturnover_euro',gvar='is_dma')
-    plt.show() 
-      
-    #- EXEC CURVE
-    testp.plot_intraday_exec_curve(algo_data=algo_data)
-    plt.show()
-    
-    #------------------
-    #-- last day  
-    sdate_tmp=edate - dt.timedelta(seconds=60*60*24)
-    testp=PlotEngine(start_date = sdate_tmp, end_date = edate)  
-    
-    
-    #- BY DMA
-    testp.plot_algo_hbar(algo_data=algo_data,gvar='strategy_name_mapped',gvar_vals='is_dma')
-    plt.show()
-    
-    #- BY PLACE
-    testp.plot_algo_hbar(algo_data=algo_data,gvar='place',gvar_vals='is_dma')
-    plt.show()  
-            
-    #-- EXEC CURVE
-    testp.plot_intraday_exec_curve(algo_data=algo_data)
-    plt.show()    
+#             
+#     #-- EXEC CURVE
+#     testp.plot_intraday_exec_curve(algo_data=algo_data)
+#     plt.show()    
     
     
     

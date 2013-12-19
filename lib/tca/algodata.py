@@ -20,7 +20,16 @@ import lib.dbtools.get_repository as get_repository
 import os
 
 #-----------------------------------
-# EXPLANATION
+# NOMENCKATURE
+#-----------------------------------
+# prefix 1 : 'occ_' if info is at order level / '' if it is at sequence level
+# prefix 2 : 'exec_' if it is related stats of execution 
+#            else 'm_' if market stats calculated with tickdata
+#            prefix 2b /
+
+
+#-----------------------------------
+# EXPLANATION of entry level
 #-----------------------------------
 # AlgoDataProcessor object is coherent to the class_mode 'sequence', 'occurrence', 'deal'
 # this is like the entry point of the object, meaning filters etc will be related to this object
@@ -399,11 +408,11 @@ class AlgoDataProcessor(object):
         # mandatory cols
         #-----------------------------------
         if level=='sequence':
-            mandatory_cols=['SendingTime','p_cl_ord_id','p_occ_id']
+            mandatory_cols=['_id','SendingTime','p_cl_ord_id','p_occ_id']
         elif level=='occurrence':
-            mandatory_cols=['SendingTime','MsgType','p_occ_id']
+            mandatory_cols=['_id','SendingTime','MsgType','p_occ_id']
         elif  level=='deal':
-            mandatory_cols=['TransactTime','p_exec_id','p_cl_ord_id']
+            mandatory_cols=['_id','TransactTime','p_exec_id','p_cl_ord_id']
         else:
             logging.error('unknown level <'+level+'>')
             raise ValueError('unknown level <'+level+'>')
@@ -437,7 +446,7 @@ class AlgoDataProcessor(object):
                 
                 if level=='sequence':
                     out = [ # - id/order infos
-                        u'_id',u'p_cl_ord_id',u'p_occ_id',u'ClOrdID',
+                        u'p_cl_ord_id',u'p_occ_id',u'ClOrdID',
                         # - user/client infos
                         u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',u'ProgramName',
                         #- security symbol
@@ -459,25 +468,28 @@ class AlgoDataProcessor(object):
                         
                 elif level=='deal':
                     out = [ # - id/order infos
-                        "_id","p_exec_id","p_cl_ord_id",
+                        "p_exec_id","p_cl_ord_id",
                          # - deal infos
                         "Side","Symbol","LastPx","LastShares","LastMkt","ExecType","Currency",
                         "rate_to_euro","cheuvreux_secid","strategy_name_mapped"]
                         
                 elif level=='occurrence':
                     out = [ # - id/order infos
-                        u'_id',u'p_occ_id',u'ClOrdID',
+                        u'p_occ_id',u'ClOrdID',
                         # - user/client infos
                         u'ClientID',u'TargetSubID',u'Account',
                         #- security symbol
                         u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',
+                        #- database infos on occurrence
+                        u'occ_duration',u'occ_nb_replace',
                         #- info at occurrence level
                         u'Side']
                         
                     if all_cols is None:
-                        all_cols=get_field_list(cname=self.algo_collection_name, db_name=self.db_name)           
-                    # add occ_  
-                    out=out+all_cols[np.nonzero([x[:min(4,len(x))]=='occ_' for x in all_cols])[0]].tolist() 
+                        all_cols=get_field_list(cname=self.algo_collection_name, db_name=self.db_name)   
+                        
+                    # add occ_fe_  
+                    out=out+all_cols[np.nonzero([x[:min(7,len(x))]=='occ_fe_' for x in all_cols])[0]].tolist() 
             else:
                 logging.error('unknown mode <'+mode+'>')
                 raise ValueError('unknown mode <'+mode+'>')                    
@@ -569,14 +581,15 @@ def get_field_list(cname=None, db_name="Mars"):
     
     
 if __name__=='__main__':
-    a=1
-#     from lib.dbtools.connections import Connections
-#   
+    from lib.dbtools.connections import Connections
+    
     #-----  EXCEL VALS
     test = AlgoDataProcessor()
     test.get_xls_occ_fe_data()
     print test.data_xls_occ_fe
     a=1
+    
+                    
 #
 #     #-----  ENTRY OCCURENCE 
 #     test = AlgoDataProcessor(filter = {"p_occ_id": {"$in" : ['20130603FY71306030000015RLUIFLT01']}})

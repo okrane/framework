@@ -38,14 +38,14 @@ class MarketDataProcessor(object):
             self.start_date = start_date
             self.end_date = end_date
             
-        self.security_id=security_id
+        self.security_id = security_id
         
         # DATA
-        self.data_tick=None
-        self.data_daily=None
+        self.data_tick = None
+        self.data_daily = None
         
         # referentiel liee au data
-        self.data_tick_referential=None
+        self.data_tick_referential = None
         
         # CONNECTION INFO
         
@@ -54,6 +54,9 @@ class MarketDataProcessor(object):
     ###########################################################################
     def get_data_tick(self):
         
+        #--------------------------------
+        #-- TESTS
+        #--------------------------------
         if self.data_tick is not None:
             logging.info('get_data_tick is already loaded')
             return
@@ -61,13 +64,18 @@ class MarketDataProcessor(object):
         if (self.end_date-self.start_date).days >= 1:
             raise ValueError('works only on one date')
         
+        #--------------------------------
         #-- get data tick
+        #--------------------------------
         self.data_tick=read_dataset.ftickdb(security_id=self.security_id,date=dt.datetime.strftime(self.start_date,'%d/%m/%Y'))
         
+        #--------------------------------
         #-- tick referential
+        #--------------------------------
         self.data_tick_referential = pd.DataFrame()
         if self.data_tick.shape[0]:
             self.data_tick_referential = get_repository.exchangeinfo(exchange_id = np.unique(self.data_tick['exchange_id'].values).tolist())
+        
         
     def get_data_daily(self, out_colnames = None):
         
@@ -76,7 +84,16 @@ class MarketDataProcessor(object):
             return
         
         self.data_daily=read_dataset.trading_daily(start_date=dt.datetime.strftime(self.start_date,'%d/%m/%Y'),
-                                                   end_date=dt.datetime.strftime(self.end_date,'%d/%m/%Y'),security_id=self.security_id,include_agg=True, out_colnames = out_colnames)        
+                                                   end_date=dt.datetime.strftime(self.end_date,'%d/%m/%Y'),
+                                                   security_id=self.security_id,
+                                                   include_agg=True, out_colnames = out_colnames)
+        
+    ###########################################################################
+    # METHOD COMPUTE STATS ON TICKS
+    ###########################################################################
+    #def __index_data_tick(self, start_date = None, end_date = None, exclude_auction = [0,0,0,0]):
+        
+
         
 if __name__=='__main__':
     

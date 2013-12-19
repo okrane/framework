@@ -22,6 +22,8 @@ import lib.stats.slicer as slicer
 import lib.stats.formula as formula
 from lib.io.toolkit import get_traceback
 
+
+
 class AlgoStatsProcessor(AlgoDataProcessor):
     
     ###########################################################################
@@ -31,8 +33,11 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         # Parents attr
         AlgoDataProcessor.__init__(self,*args,**kwargs)
         
-        # data
-        self.data_intraday_agg_deals=None
+        #-- info on update columns (by data type)
+        self.db_stats_enrichment = {}
+        
+        #-- data
+        self.data_intraday_agg_deals = None
         
         
     ###########################################################################
@@ -170,11 +175,11 @@ class AlgoStatsProcessor(AlgoDataProcessor):
     ###########################################################################
     # SELF COMPUTE METHODS FOR ONE OCCURRENCE
     ###########################################################################
-    def compute_tca_stats(self,market_data=None,referential_data=None):
+    def compute_tca_stats(self, market_data = None , referential_data = None , mode_colnames_out = 'tca'):
         #-----------------------------------
         # GET DATA
         #-----------------------------------
-        # TO DO :
+        # TODO :
         # what should be done, is extracting the right columns from the database, here we have to compute it !
         self.compute_db_stats(market_data=market_data,referential_data=referential_data)
         
@@ -240,7 +245,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         #-----------------------------------
         # CONSTRAINt ON COLNAMES
         #----------------------------------- 
-        keep_colnames = self.get_colnames(level = 'occurrence', mode = 'tca')
+        keep_colnames = self.get_colnames(level = 'occurrence', mode = mode_colnames_out)
         self.data_occurrence = self.data_occurrence[keep_colnames]
         
         
@@ -268,7 +273,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             self.data_occurrence['cheuvreux_secid'].values[0]!=market_data.security_id):
             logging.error('')
             raise ValueError('not the same security')           
-        
+            
         #-----------------------------------
         # UPDATE DEALS
         #-----------------------------------
@@ -315,6 +320,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         # ADD intraday market stats on SEQUENCE
         #-----------------------------------  
         new_data_sequence = pd.DataFrame()
+        new_added_columns = []
         
         for iseq in range(0,self.data_sequence.shape[0]):
             
@@ -337,6 +343,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
                                                   limit_price = limit_price , side = side,
                                                   exclude_auction = excl_auction)
             
+            new_added_columns = list(set(new_added_columns+data_stats.columns.tolist()))
             data_stats['p_cl_ord_id'] = p_cl_ord_id
             
             #---
@@ -345,9 +352,14 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             data_this_seq = data_this_seq.reset_index().merge(data_stats,how='left',on=['p_cl_ord_id']).set_index(index_name)
             new_data_sequence = new_data_sequence.append(data_this_seq)
             
+        #--- update data + enrichment colnames
         self.data_sequence = new_data_sequence
+        self.__update_stats_enrichment( mode = 'db' ,level = 'sequence' , columns = new_added_columns)
+        
         del new_data_sequence
-            
+        del new_added_columns
+        
+        
             
     def __compute_db_exec_stats(self):
         #-----------------------------------
@@ -390,6 +402,10 @@ class AlgoStatsProcessor(AlgoDataProcessor):
                     idx_in=np.nonzero(self.data_sequence['p_cl_ord_id']==_add_data.iloc[idx]['p_cl_ord_id'])[0]
                     self.data_sequence.iloc[idx_in,idx_col_in]=_add_data.iloc[idx].values.tolist()
                     
+            #--- update enrichment colnames
+            self.__update_stats_enrichment( mode = 'db' ,level = 'sequence' , columns = config_stats.keys())
+            
+
             #----------------
             # STEP 2 : compute cumulative stats at occurence level : prefixed by occ_prev_
             #----------------
@@ -409,6 +425,9 @@ class AlgoStatsProcessor(AlgoDataProcessor):
                 for x in config_stats.keys():
                     self.data_sequence[x][self.data_sequence['p_occ_id']==p_occ_id]=config_stats[x]['formula'](self.data_sequence[self.data_sequence['p_occ_id']==p_occ_id])
                     
+            #--- update enrichment colnames
+            self.__update_stats_enrichment( mode = 'db' ,level = 'sequence' , columns = config_stats.keys())
+                          
             # print self.data_sequence[['exec_turnover','turnover','exec_qty','occ_prev_exec_turnover','occ_prev_exec_qty']]
             
         #-----------------------------------
@@ -451,8 +470,33 @@ class AlgoStatsProcessor(AlgoDataProcessor):
                 for idx in range(0,_add_data.shape[0]):
                     idx_in=np.nonzero(self.data_occurrence['p_occ_id']==_add_data.iloc[idx]['p_occ_id'])[0]
                     self.data_occurrence.iloc[idx_in,idx_col_in]=_add_data.iloc[idx].values.tolist()                
-                    
-                    
+            
+            #--- update enrichment colnames
+            self.__update_stats_enrichment( mode = 'db' ,level = 'occurrence' , columns = config_stats.keys())
+            
+            
+            
+    def __update_stats_enrichment(self, mode = None , level = None, columns = None):
+        #-----------------------------------
+        # TESTS
+        #-----------------------------------
+        if mode is None or level is None or columns is None or not isinstance(columns,list):
+            raise ValueError('bad inputs')
+        
+        if mode =='db':
+            x = self.db_stats_enrichment
+            
+        else:
+            raise ValueError('Unknown mode <' + mode + '>')
+        #-----------------------------------
+        # DO
+        #-----------------------------------        
+        if level not in x.keys():
+            x.update({level : columns})
+        else:
+            x.update({level : list(set(x[level]+columns))})
+            
+            
     ###########################################################################
     # SELF COMPUTE METHODS ON DEALS
     ###########################################################################
@@ -528,11 +572,14 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         #-----------------------------------
         # UPDATE SEQUENCE
         #-----------------------------------
-        # initialize
+        #--- initialize
         self.data_sequence['bench_starttime']=None
         self.data_sequence['bench_endtime']=None
         
-        # we try to keep in one occurrence separate period for each sequence: add 0.5 seconds to start
+        #--- update enrichment colnames
+        self.__update_stats_enrichment( mode = 'db' ,level = 'sequence' , columns = ['bench_starttime','bench_endtime'])
+          
+        #--- we try to keep in one occurrence separate period for each sequence: add 0.5 seconds to start
         diff_2apply = dt.timedelta(seconds=0.5)
         
         for p_occ_id in np.unique(self.data_sequence['p_occ_id']):
@@ -595,15 +642,15 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         # mandatory cols
         #-----------------------------------
         if level=='sequence':
-            mandatory_cols=['p_cl_ord_id']
+            mandatory_cols=['_id','p_cl_ord_id']
             all_cols = self.data_sequence.columns.values.tolist()
             
         elif level=='occurrence':
-            mandatory_cols=['p_occ_id']
+            mandatory_cols=['_id','p_occ_id']
             all_cols = self.data_occurrence.columns.values.tolist()
             
         elif  level=='deal':
-            mandatory_cols=['p_exec_id']
+            mandatory_cols=['_id','p_exec_id']
             all_cols = self.data_deal.columns.values.tolist()
             
         else:
@@ -643,8 +690,13 @@ class AlgoStatsProcessor(AlgoDataProcessor):
                     
                 else:
                     logging.error('not  level <'+level+'>')
-                    raise ValueError('unknown level <'+level+'>')                  
-                    
+                    raise ValueError('unknown level <'+level+'>')  
+                                
+            elif mode == 'all':
+                out = getattr(self,'data_' + level).columns.tolist()
+                
+            else:
+                raise ValueError('Unknown mode :<' + mode + '>')        
                     
             out=list(set(out+add_cols))
         #-----------------------------------
@@ -906,11 +958,36 @@ if __name__=='__main__':
     
     from lib.data.ui.Explorer import Explorer
     
-    #-----  TEST AGG DEAL
-    test = AlgoStatsProcessor(start_date = dt.datetime(2013,8,12), end_date = dt.datetime(2013,8,14))
-    test.get_db_data(level='deal')
-    test.get_intraday_agg_deals_data()
-    print test.data_intraday_agg_deals
+#     #-----  TEST AGG DEAL
+#     test = AlgoStatsProcessor(start_date = dt.datetime(2013,8,12), end_date = dt.datetime(2013,8,14))
+#     test.get_db_data(level='deal')
+#     test.get_intraday_agg_deals_data()
+#     print test.data_intraday_agg_deals
+    
+    #-----  COMPUTE STATS
+    from lib.tca.referentialdata import ReferentialDataProcessor
+    from lib.tca.marketdata import MarketDataProcessor
+    from lib.dbtools.connections import Connections
+    occ_id = '20130521FY000008193901LUIFLT01'
+    env = 'dev'
+    
+    Connections.change_connections(env)
+    
+    occ_data = AlgoStatsProcessor(filter = {"p_occ_id": {"$in" : ['20130521FY000008193901LUIFLT01']}})
+    occ_data.get_db_data(level = 'occurrence')
+    sec_id = occ_data.data_occurrence['cheuvreux_secid'].values[0]
+    date = occ_data.data_occurrence.index[0].to_datetime()
+    
+    mkt_data = MarketDataProcessor(security_id = sec_id , date = date)
+    mkt_data.get_data_tick()
+    mkt_data.get_data_daily()
+    
+    ref_data = ReferentialDataProcessor(security_id = sec_id , date = date)
+    ref_data.get_data_exchange_info()
+    
+    occ_data.compute_tca_stats(market_data=mkt_data,referential_data=ref_data)
+    
+    a = 1
     
     # Explorer(test.data_intraday_agg_deals)
 # 

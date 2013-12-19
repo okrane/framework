@@ -95,7 +95,7 @@ if __name__=='__main__':
     from lib.dbtools.connections import Connections
     #     Connections.change_connections("dev")
     
-    now     = datetime.now() - timedelta(days=3)
+    now     = datetime.now() - timedelta(days=1)
     day     = datetime(year = now.year, month=now.month, day=now.day, hour = 23, minute = 59, second = 59)
     day_str = datetime.strftime(day, '%Y%m%d' )
     #doc = SimpleDocTemplate(FOLDER + "Sum_up_" + datetime.strftime(day, '%Y/%m/%d') + ".pdf", pagesize=letter)

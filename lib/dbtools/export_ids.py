@@ -73,7 +73,7 @@ def generate_file(day, all=False, export_path=os.path.realpath(__file__), last_d
         l.append(e)
         if i % subdivision == 0 or i == len_ids -1 :
             try:
-                query   = "select SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6, SECID, PARENTCODE from SECURITY where STATUS = 'A'  and SECID in ('%s')" % "','".join(map(str, l))
+                query   = "select SYMBOL1, SYMBOL2, SYMBOL3, SYMBOL4, SYMBOL5, SYMBOL6, SECID, PARENTCODE, CREATETIME from SECURITY where STATUS = 'A'  and SECID in ('%s')" % "','".join(map(str, l))
                 result.extend(connections.Connections.exec_sql('KGR', query, as_dict = True))
             except:
                 print get_traceback()
@@ -84,6 +84,7 @@ def generate_file(day, all=False, export_path=os.path.realpath(__file__), last_d
     dict_secs       = {}
     dict_s6         = {}
     dict_s6['None'] = {}
+    dict_s6['doublon'] = {}
     kgr_list        = []
     
     for sec in result:
@@ -109,7 +110,12 @@ def generate_file(day, all=False, export_path=os.path.realpath(__file__), last_d
             dict_secs[temp]['ticker'] = ticker
             
         if sec['SYMBOL6'] is not None:
-            dict_s6[sec['SYMBOL6']] = dict_secs[temp]
+            if (sec['SYMBOL6'] in dict_s6.keys() and
+                dict_secs[temp]['ticker'] != dict_s6[sec['SYMBOL6']]['ticker']):
+                
+                dict_s6['doublon'][temp] = dict_secs[temp]
+            else:
+                dict_s6[sec['SYMBOL6']] = dict_secs[temp]
         else:
             dict_s6['None'][temp]   = dict_secs[temp]
     l = []
@@ -139,7 +145,7 @@ def generate_file(day, all=False, export_path=os.path.realpath(__file__), last_d
         line += '\n'
         line.replace("|", "")
         return line
-
+    
     for cheuvreux_secids, dict in dict_s6.iteritems():
         if cheuvreux_secids == 'None':
             if with_none:
@@ -151,8 +157,15 @@ def generate_file(day, all=False, export_path=os.path.realpath(__file__), last_d
                         logging.error(str(val))
                         logging.error(str(key))
                         logging.error(get_traceback())
+                        
+        elif cheuvreux_secids== 'doublon':
+            dict_doublon = dict_s6[cheuvreux_secids]
+            for key, val in dict_doublon.iteritems():
+                l.append(line_to_append(val))
+                
         else:
             l.append(line_to_append(dict))
+            
 
     
     if all:
@@ -196,4 +209,5 @@ def generate_file(day, all=False, export_path=os.path.realpath(__file__), last_d
 if __name__ == '__main__':
     day = datetime.strftime(datetime.now(), format= '%Y%m%d')
     generate_file(day)
-    # generate_file(day, export_path='C:\\', export_name='champion.csv',send2flexapp = False, export2json = False)
+    #generate_file(day, export_path='C:\\', export_name='champion.csv',send2flexapp = False, export2json = False)
+    

@@ -85,7 +85,8 @@ if __name__ == "__main__":
                         
     elif ENV == 'prod' and not os.name == 'nt':
         
-        dict_to_send = {'indicator (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexsys' ,
+        dict_to_send = {#-- WATFLT01
+                        'indicator (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexsys' ,
                                        'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
                                        'send_status' : False},
                           
@@ -96,16 +97,43 @@ if __name__ == "__main__":
                         'volume curve generic (WATFLT01)' : {'server' : 'WATFLT01', 'env' : ENV, 'user' : 'flexapp' ,
                                        'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
                                        'send_status' : False},
-                         
-                        'indicator (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexsys' ,
+                        
+                        #-- WATFLT02
+                        'indicator (WATFLT02)' : {'server' : 'WATFLT02', 'env' : ENV, 'user' : 'flexsys' ,
                                        'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
                                        'send_status' : False},
                           
-                        'volume curve specific (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+                        'volume curve specific (WATFLT02)' : {'server' : 'WATFLT02', 'env' : ENV, 'user' : 'flexapp' ,
                                        'path' : '/home/flexapp' , 'file' : 'VWAP_Profile_0',
                                        'send_status' : False},
                           
+                        'volume curve generic (WATFLT02)' : {'server' : 'WATFLT02', 'env' : ENV, 'user' : 'flexapp' ,
+                                       'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
+                                       'send_status' : False},
+                        
+                        #-- LUIFLT01
+                        'indicator (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexsys' ,
+                                       'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
+                                       'send_status' : False},
+                        
+                        'volume curve specific (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+                                       'path' : '/home/flexapp' , 'file' : 'VWAP_Profile_0',
+                                       'send_status' : False},
+                        
                         'volume curve generic (LUIFLT01)' : {'server' : 'LUIFLT01', 'env' : ENV, 'user' : 'flexapp' ,
+                                       'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
+                                       'send_status' : False},
+                        
+                        #-- LUIFLT02
+                        'indicator (LUIFLT02)' : {'server' : 'LUIFLT02', 'env' : ENV, 'user' : 'flexsys' ,
+                                       'path' : '/home/flexsys/flex/data' , 'file' : 'symdata',
+                                       'send_status' : False},
+                        
+                        'volume curve specific (LUIFLT02)' : {'server' : 'LUIFLT02', 'env' : ENV, 'user' : 'flexapp' ,
+                                       'path' : '/home/flexapp' , 'file' : 'VWAP_Profile_0',
+                                       'send_status' : False},
+                        
+                        'volume curve generic (LUIFLT02)' : {'server' : 'LUIFLT02', 'env' : ENV, 'user' : 'flexapp' ,
                                        'path' : '/home/flexapp/usrs' , 'file' : 'USR.vwap.opts',
                                        'send_status' : False}}
          

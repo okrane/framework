@@ -57,8 +57,8 @@ class AlgoDataProcessor(object):
             self.start_date = start_date
             self.end_date = end_date
         self.filter = filter
-        self.mode_colnames=mode_colnames
-        self.merge_colnames_sequence2deal=None # Now only for deals when we merge data
+        self.mode_colnames = mode_colnames
+        self.merge_colnames_sequence2deal = None # Now only for deals when we merge data
         
         #---- DATABASE ALGO
         self.data_sequence=None
@@ -66,6 +66,8 @@ class AlgoDataProcessor(object):
         self.data_deal=None
         
         #---- CONNECTION INFO
+        self.database_name = 'Mars'
+        self.database_server = 'MARS'
         self.db_name = 'Mars'
         self.algo_collection_name = 'AlgoOrders'
         self.deal_collection_name = 'OrderDeals'
@@ -130,8 +132,8 @@ class AlgoDataProcessor(object):
         #-----------------------------------
         # CONNECTION DB  
         #-----------------------------------        
-        client = Connections.getClient(self.db_name.upper())
-        occ_db = client[self.db_name][cname]
+        client = Connections.getClient(self.database_server)
+        occ_db = client[self.database_name][cname]
         
         #-----------------------------------
         # CONSTRUCT REQUEST
@@ -436,9 +438,9 @@ class AlgoDataProcessor(object):
                 
                 if all_cols is None:
                     if level=='deal':
-                        out=get_field_list(cname=self.deal_collection_name, db_name=self.db_name)
+                        out=get_field_list(cname=self.deal_collection_name, db_server = self.database_server , db_name=self.database_name)
                     else:
-                        out=get_field_list(cname=self.algo_collection_name, db_name=self.db_name)
+                        out=get_field_list(cname=self.algo_collection_name, db_server = self.database_server , db_name=self.database_name)
                 else:
                     out=all_cols
                     
@@ -486,7 +488,7 @@ class AlgoDataProcessor(object):
                         u'Side']
                         
                     if all_cols is None:
-                        all_cols=get_field_list(cname=self.algo_collection_name, db_name=self.db_name)   
+                        all_cols=get_field_list(cname=self.algo_collection_name, db_server = self.database_server , db_name=self.database_name)   
                         
                     # add occ_fe_  
                     out=out+all_cols[np.nonzero([x[:min(7,len(x))]=='occ_fe_' for x in all_cols])[0]].tolist() 
@@ -502,9 +504,9 @@ class AlgoDataProcessor(object):
         
         # check if in database
         if level=='deal':
-            all_cols=get_field_list(cname=self.deal_collection_name, db_name=self.db_name)
+            all_cols=get_field_list(cname=self.deal_collection_name, db_server = self.database_server , db_name=self.database_name)
         else:
-            all_cols=get_field_list(cname=self.algo_collection_name, db_name=self.db_name)
+            all_cols=get_field_list(cname=self.algo_collection_name, db_server = self.database_server , db_name=self.database_name)
             
         if not all([x in all_cols for x in out]):
             logging.error('asked colnames should be available in database')
@@ -556,12 +558,12 @@ def get_sequence_data_from_cl_ord_id(cl_ord_id=None,colnames=None,db_name=None,a
     return out
     
 
-def get_field_list(cname=None, db_name="Mars"):
+def get_field_list(cname=None, db_server = 'MARS' , db_name="Mars"):
     #-----------------------------------
     # CONNECTION DB  
     #----------------------------------- 
     map_name="field_map"
-    client = Connections.getClient(db_name.upper())
+    client = Connections.getClient(db_server)
     
     #-----------------------------------
     # CONSTRUCT REQUEST

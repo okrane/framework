@@ -54,6 +54,8 @@ class FixTranslator(object):
         else:
             self.ignore_tags    = ignore_tags
         
+        self.error = []
+        
     def translate_tag(self, value):
         """Two way translator tag fix <-> name
         @param value: either a tagfix Name or a tagfix number, for number, str or int are accepted"""
@@ -75,7 +77,9 @@ class FixTranslator(object):
                 self.mapping[value]             = tag[value_type]
                 self.mapping[tag[value_type]]   = value
                 return tag[value_type]
-        logging.error('This tag %s is not valid' %value) 
+        if value not in self.error:
+            logging.error('This tag %s is not valid, please update configuration (fix_types.json)' %value) 
+            self.error.append(value)
         return ''
     def line_translator(self, line):
         line                = line.rsplit('|')

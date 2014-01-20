@@ -10681,6 +10681,46 @@
           "number": "9271",
           "name": "BridgeRejection",
           "type": "STRING"
+        },
+        {
+          "number": "10030",
+          "name": "RefFlexTrade",
+          "type": "STRING"
+        },
+        {
+          "number": "10085",
+          "name": "noUtiForTrader",
+          "type": "STRING"
+        },
+        {
+          "number": "7933",
+          "name": "BrokerID",
+          "type": "STRING"
+        },
+        {
+          "number": "10915",
+          "name": "SORDecisionID",
+          "type": "STRING"
+        },
+        {
+          "number": "10587",
+          "name": "LiquidityIndicator",
+          "type": "STRING"
+        },
+        {
+          "number": "30",
+          "name": "MIFIDTradExchange",
+          "type": "STRING"
+        },
+        {
+          "number": "10597",
+          "name": "MIFIDTradeMnemo",
+          "type": "STRING"
+        },
+        {
+          "number": "10076",
+          "name": "LastCounterPartExe",
+          "type": "STRING"
         }
         
       ]

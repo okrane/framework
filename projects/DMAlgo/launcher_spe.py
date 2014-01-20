@@ -12,7 +12,7 @@ if __name__ == '__main__':
 
     
     dates               = sorted(dates)
-
+ 
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 

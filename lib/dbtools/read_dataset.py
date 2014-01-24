@@ -390,7 +390,7 @@ def trading_daily(start_date=None,end_date=None,security_id=[],include_agg=False
         out_colnames=np.unique(out_colnames+['date','security_id','trading_destination_id'])
         select_req='SELECT '+''.join(['tddaily.'+x+',' for x in out_colnames])+'exchref.EXCHANGETYPE '
     #---- from
-    from_req=(" FROM Market_data..trading_daily tddaily "
+    from_req=(" FROM MARKET_DATA..trading_daily tddaily "
     " LEFT JOIN KGR..EXCHANGEREFCOMPL exchref ON ( "
     "    exchref.EXCHANGE=tddaily.trading_destination_id "
     " ) ")

@@ -115,7 +115,9 @@ def vwasbp(bid,ask,price,size,auction):
 
 if __name__ == "__main__":
     import lib.dbtools.read_dataset as read_dataset
+    import pytz 
     data=read_dataset.ftickdb(security_id=110,date='03/05/2013')
-    vwasbp(data['bid'].values,data['ask'].values,data['price'].values,data['volume'].values,data['auction'].values)
+    vwasbp(data['bid'].values,data['ask'].values,data['price'].values,data['volume'].values,data['auction'].values) 
+    first_finite(data[(data['bid']>8.14)]['bid'].values)
 
 

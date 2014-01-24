@@ -128,7 +128,9 @@ if __name__ == "__main__":
     
     Connections.change_connections('production')
     # -- check
-    print check_db_update(dt.datetime(2013,10,8))
+    #print check_db_update(dt.datetime(2013,10,8))
+    
+    print get_reference_run(estimator_id=2,level='generic')
     
 #     all_runs=get_reference_run(estimator_id=2,level='specific')
 #     print all_runs

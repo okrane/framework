@@ -73,20 +73,22 @@ def plot_intraday(data,start_datetime=None,end_datetime=None,exclude_auction=[0,
             start_datetime=start_datetime.replace(tzinfo=data.index.tz)
             end_datetime=end_datetime.replace(tzinfo=data.index.tz)
         # -- filter
-        data=data.ix[nonzero(map(lambda x : x>=start_datetime and x<=end_datetime,[x.to_datetime() for x in data.index]))[0]]
+        data=data.ix[np.nonzero(map(lambda x : x>=start_datetime and x<=end_datetime,[x.to_datetime() for x in data.index]))[0]]
+        
     # -- filter auction
     if any(np.array(exclude_auction)==1):
         if exclude_auction[0]==1:
-           data=data[data['opening_auction']==0]
+            data=data[data['opening_auction']==0]
         if exclude_auction[1]==1:
-           data=data[data['intraday_auction']==0]
+            data=data[data['intraday_auction']==0]
         if exclude_auction[2]==1:
-           data=data[data['closing_auction']==0]
+            data=data[data['closing_auction']==0]
         if exclude_auction[3]==1:
-           data=data[~((data['auction']==1) & (data['opening_auction']==0) & (data['intraday_auction']==0) & (data['closing_auction']==0))]
+            data=data[~((data['auction']==1) & (data['opening_auction']==0) & (data['intraday_auction']==0) & (data['closing_auction']==0))]
     # -- filter time
     if exclude_dark:
-       data=data[data['dark']==0]
+        data=data[data['dark']==0]
+        
     #--------------------------------------------------------------------------
     # compute aggregation
     #--------------------------------------------------------------------------    
@@ -151,7 +153,7 @@ if __name__ == "__main__":
     from lib.dbtools.get_repository import convert_symbol
     security_id = int(convert_symbol(source = 'bloomberg', dest = 'security_id', value = "SAN FP", exchgid='SEPA'))
     print security_id
-    data=read_dataset.ft(security_id=security_id, date='05/09/2013')
+    data=read_dataset.ft(security_id = 110, date='08/01/2014')
     # data = from_mat_file("Q:/dev_repository/get_tick/ft/FTE.PA/2013_05_02.mat")    kcintraday(data)        
    
     plot_intraday(data,exclude_auction=[0,0,0,0],step_sec=5*60)

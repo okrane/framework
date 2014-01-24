@@ -210,6 +210,7 @@ if __name__ == "__main__":
     
     export_symdata(data_security_referential = security_ref,
                        path_export = os.path.join(GPATH, 'test'), 
-                       filename_export = 'symdata')
+                       filename_export = 'symdata',
+                       indicators2export = [25])
 
     

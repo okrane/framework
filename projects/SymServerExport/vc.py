@@ -528,13 +528,13 @@ if __name__ == "__main__":
     
     GPATH = 'W:\\Global_Research\\Quant_research\\projets\\export_sym'
     
-    security_ref = pd.read_csv(os.path.join(GPATH,'test','TRANSCOSYMBOLCHEUVREUX.csv'),sep = ';')
-    security_ref = security_ref[['cheuvreux_secid', 'ticker', 'tickerAG']]
-    
-    export_vc_specific(data_security_referential = security_ref,
-                       path_export = os.path.join(GPATH, 'test'), 
-                       filename_export = 'VWAP_Profile_0',
-                       separator = '\t')
+#     security_ref = pd.read_csv(os.path.join(GPATH,'test','TRANSCOSYMBOLCHEUVREUX.csv'),sep = ';')
+#     security_ref = security_ref[['cheuvreux_secid', 'ticker', 'tickerAG']]
+#     
+#     export_vc_specific(data_security_referential = security_ref,
+#                        path_export = os.path.join(GPATH, 'test'), 
+#                        filename_export = 'VWAP_Profile_0',
+#                        separator = '\t')
     
     #-- security test
     exchange_ref = pd.read_csv(os.path.join(GPATH,'backup', 'ref_trd_destination.csv'))

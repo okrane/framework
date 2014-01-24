@@ -253,7 +253,7 @@ occ_data.get_occ_fe_stats()
 #data_occ.index.min()
 ## test on market data
 #data=read_dataset.ftickdb(security_id=110,date='17/05/2013')
-#stats=compute_stats.aggmarket(data=data,exchange_id_main=np.min(data['exchange_id']),start_datetime=data.index[1].to_datetime(),end_datetime=data.index[5000].to_datetime(),limit_price=8.23,side=-1)
+#stats=compute_stats.aggmarket(data=data,exchan ge_id_main=np.min(data['exchange_id']),start_datetime=data.index[1].to_datetime(),end_datetime=data.index[5000].to_datetime(),limit_price=8.23,side=-1)
 #
 #
 #data_occ=get_algostats.sequence_info(occurence_id=['FY2000007221801','FY2000007089101'])

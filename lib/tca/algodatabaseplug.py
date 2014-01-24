@@ -26,15 +26,18 @@ from lib.tca.referentialdata import ReferentialDataProcessor
 from lib.tca.marketdata import MarketDataProcessor
 from lib.tca.algostats import AlgoStatsProcessor
 from lib.tca.algodata import AlgoDataProcessor
+from lib.tca.algoconfig import AlgoComputeStatsConfig
 from lib.logger import *
-Logger(level = 5, capture_stderr  = True)
+# Logger(level = 5, capture_stderr  = True)
 
 class AlgoDatabasePlug(object):
     
     ###########################################################################
     # INIT
     ###########################################################################
-    def __init__(self,date = None, start_date = None, end_date = None, filter = None, env = 'dev'):
+    def __init__(self,date = None, start_date = None, end_date = None, filter = None, env = 'dev',
+                 push_params = {'sequence' : {'merge_columns' : ['_id','p_cl_ord_id']} ,
+                                'occurrence' : {'merge_columns' : ['_id','p_occ_id']}}):
         
         #---- INPUT
         """start_date and end_date are datetime"""
@@ -51,17 +54,17 @@ class AlgoDatabasePlug(object):
         #---- CONNECTION INFO
         self.database_name = 'Mars'
         self.database_server = 'MARS'
-        self.sequence_collection_name = 'AlgoOrders'
-        self.occurrence_collection_name = 'AlgoOrders'
-        self.deal_collection_name = 'OrderDeals'
+        self.level_collection_dict = {'sequence' : 'AlgoOrders',
+                                      'occurrence' : 'AlgoOrders',
+                                      'deal' : 'OrderDeals'}
         self.field_collection_name = 'field_map'
         self.client = None
         self.env = env
         self.is_connected = False
         
         #---- Missing infos when pushing data
-        self.push_params = {'sequence' : {'merge_columns' : ['_id','p_cl_ord_id']} ,
-                            'occurrence' : {'merge_columns' : ['_id','p_occ_id']}}
+        self.push_compte_stats_mode = 'db_one_occurrence'
+        self.push_params = push_params
         self.push_enrichment = {}
         self.push_missing_sec_id = [] # list of dictionary
         self.push_missing_tickdata = [] # list of dictionary
@@ -220,7 +223,12 @@ class AlgoDatabasePlug(object):
                 #----------------
                 # GET occurrence list for this security_id
                 #----------------
-                tmp = AlgoDataProcessor(date = date,filter = dict(self.filter.items() + {"cheuvreux_secid": {"$in" : [sec_id]}}.items()))
+                if self.filter is not None:
+                    filter_ = dict(self.filter.items() + {"cheuvreux_secid": {"$in" : [sec_id]}}.items())
+                else:
+                    filter_ = {"cheuvreux_secid": {"$in" : [sec_id]}}
+                    
+                tmp = AlgoDataProcessor(date = date,filter = filter_)
                 tmp.get_db_data(level = 'occurrence')
                 uni_occ_id = np.unique(tmp.data_occurrence['p_occ_id'].values).tolist()
                 
@@ -248,7 +256,7 @@ class AlgoDatabasePlug(object):
                     occ_data = AlgoStatsProcessor(filter = {"p_occ_id": {"$in" : [occ_id]}})
                     has_compute = True
                     try: 
-                        occ_data.compute_tca_stats(market_data = mkt_data , referential_data = ref_data , mode_colnames_out = 'all')
+                        occ_data.compute_stats(config_mode = self.push_compte_stats_mode , market_data = mkt_data , referential_data = ref_data)
                     except:
                         #TODO : handle properly the error
                         has_compute = False
@@ -259,7 +267,10 @@ class AlgoDatabasePlug(object):
                     #----------------
                     # PUSH data
                     #----------------
-                    if has_compute:
+                    if has_compute and len(self.push_params) == 0:
+                        logging.info('stats computed but not pushed')
+                        
+                    elif has_compute and len(self.push_params) > 0:
                         for level in self.push_params.keys():
                             #-- push
                             info_push = dbmodif_fromdf(mode = 'update', 
@@ -280,7 +291,7 @@ class AlgoDatabasePlug(object):
                                 self.push_missing_nopush += info_push[2]
             
             #-- next date                                
-            date+= dt.timedelta(days=1)
+            date += dt.timedelta(days=1)
                                 
         self.__disconnect()
         
@@ -407,30 +418,48 @@ def dbmodif_fromdf(mode = None,
     
     
 if __name__=='__main__':
-    
     #-----------------------
-    # - PLUG TEST IN DEV
-    #----------------------
+    # - TEST COMPUTE STATS WHITOUT PUSH
+    #----------------------    
     #------ config
-    t1 = AlgoDatabasePlug(date = dt.datetime(2013,5,21), 
-                          filter = {'p_occ_id' : {'$in' : ['20130521FY000008193901LUIFLT01']}}
-                          ,env = 'dev')  
-    
-    #-----  test fieldmap
-    t1.update_fieldmap(collection_name = t1.sequence_collection_name, columns = [])
+    date_ = dt.datetime(2013,5,21)
+    # filter_ = {'p_occ_id' : {'$in' : ['20130521FY000008193901LUIFLT01']}}
+    # filter_ = {'p_occ_id' : {'$in' : ['20130521FY000008283001WATFLT01']}}
+    filter_ = None
+    t1 = AlgoDatabasePlug(date = date_, 
+                          filter = filter_,
+                          env = 'dev',
+                          push_params = {})
     
     #-----  test push_algostats
     t1.push_algostats()
     print t1.push_enrichment
-    print t1.push_missing_errorpush
+    print t1.push_missing_errorpush    
     
-    #-----  erase what has been pushed (all database !)
-    t_push = AlgoDatabasePlug()
-    t_data = AlgoDataProcessor()
-    for level in t1.push_enrichment.keys():
-        list_in_db = t_data.get_db_colnames(level = level , mode = 'base')
-        list_add = list(set(t1.push_enrichment[level]) - set(list_in_db))
-        t_push.remove_algostats(mode = 'all' , level = level , columns = list_add)
+# 
+#     #-----------------------
+#     # - PLUG TEST IN DEV
+#     #----------------------
+#     #------ config
+#     t1 = AlgoDatabasePlug(date = dt.datetime(2013,5,21), 
+#                           filter = {'p_occ_id' : {'$in' : ['20130521FY000008193901LUIFLT01']}},
+#                           env = 'dev')
+#     
+#     #-----  test fieldmap
+#     t1.update_fieldmap(collection_name = t1.sequence_collection_name, columns = [])
+#     
+#     #-----  test push_algostats
+#     t1.push_algostats()
+#     print t1.push_enrichment
+#     print t1.push_missing_errorpush
+#     
+#     #-----  erase what has been pushed (all database !)
+#     t_push = AlgoDatabasePlug()
+#     t_data = AlgoDataProcessor()
+#     for level in t1.push_enrichment.keys():
+#         list_in_db = t_data.get_db_colnames(level = level , mode = 'base')
+#         list_add = list(set(t1.push_enrichment[level]) - set(list_in_db))
+#         t_push.remove_algostats(mode = 'all' , level = level , columns = list_add)
     
     
     

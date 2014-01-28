@@ -816,7 +816,7 @@ def local_tz_from(**kwargs):
 if __name__ == "__main__":
     
     print get_symbol6_from_ticker("BEId.AG")
-    
+    print currency(security_id = 2)
 #     print exchangeinfo(exchange_id = [-11,159,183])
 #     print exchangeinfo(security_id = 2) 
 #     print tag100_to_place_name()

@@ -106,5 +106,5 @@ class Logger:
         if capture_stderr:
             sys.stderr = sl
 
-#Logger()
+Logger()
 

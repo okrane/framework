@@ -23,10 +23,11 @@
             <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
 				<!-- OLD copy-->
 				<!--<SERVER NAME="KGR">172.29.0.24:1433|LUIDBC01_KGR|python_ro|python4ever!!</SERVER>-->
-                <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
-				<SERVER NAME="KGR">172.29.100.64:1433|KGR|python_ro|python4ever!!</SERVER>
-				<SERVER NAME="MARKET_DATA">172.29.100.64:1433|Market_data|batch_algo|25b175f3e5</SERVER>
-				<SERVER NAME="QUANT">172.29.100.119:52799|QUANT|batch_algo|25b175f3e5</SERVER>
+				<SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
+				<SERVER NAME="KGR">172.29.100.35:1433|KGR|python_ro|python4ever!!</SERVER>
+				<SERVER NAME="MARKET_DATA">172.29.100.35:1433|Market_data|batch_algo|25b175f3e5</SERVER>
+                <!--<SERVER NAME="QUANT">172.29.100.119\DEV_KEPL_2008R2:52799|quant|kgr_dev|gregisgood!</SERVER>-->
+                <SERVER NAME="QUANT">172.29.100.35:1433|QUANT|batch_quant|051ed87c3a</SERVER>
 			</connections>
 			<connections driver="Mongo"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
 				<SERVER NAME="MARS">172.29.100.143:27017|Mars|python_write|pythonpasswrite</SERVER>
@@ -112,9 +113,10 @@
             </connections>
             <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
                 <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
-				<SERVER NAME="KGR">172.29.100.64:1433|KGR|python_ro|python4ever!!</SERVER>
-				<SERVER NAME="MARKET_DATA">172.29.100.64:1433|Market_data|batch_algo|25b175f3e5</SERVER>
-                <SERVER NAME="QUANT">172.29.100.119\DEV_KEPL_2008R2:52799|quant|kgr_dev|gregisgood!</SERVER>
+				<SERVER NAME="KGR">172.29.100.35:1433|KGR|python_ro|python4ever!!</SERVER>
+				<SERVER NAME="MARKET_DATA">172.29.100.35:1433|Market_data|batch_algo|25b175f3e5</SERVER>
+				<SERVER NAME="QUANT">172.29.100.35:1433|QUANT|batch_quant|051ed87c3a</SERVER>
+                <!--<SERVER NAME="QUANT">172.29.100.119\DEV_KEPL_2008R2:52799|quant|kgr_dev|gregisgood!</SERVER>-->
             </connections> 
 			<connections driver="Mongo"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
 				<SERVER NAME="MARS">172.29.100.27:27017|Mars|python_read|pythonpassread</SERVER>
@@ -175,9 +177,10 @@
             </connections>
             <connections driver="SQL Server"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
                 <SERVER NAME="Fidessa">nysql001:1433|Fidessa|syarc|syarc</SERVER>
-				<SERVER NAME="KGR">172.29.100.64:1433|KGR|python_ro|python4ever!!</SERVER>		
-				<SERVER NAME="MARKET_DATA">172.29.100.64:1433|Market_data|batch_algo|25b175f3e5</SERVER>
-				<SERVER NAME="QUANT">172.29.100.119\DEV_KEPL_2008R2:52799|quant|kgr_dev|gregisgood!</SERVER>
+				<SERVER NAME="KGR">172.29.100.35:1433|KGR|python_ro|python4ever!!</SERVER>		
+				<SERVER NAME="MARKET_DATA">172.29.100.35:1433|Market_data|batch_algo|25b175f3e5</SERVER>
+				<!--<SERVER NAME="QUANT">172.29.100.119\DEV_KEPL_2008R2:52799|quant|kgr_dev|gregisgood!</SERVER>-->
+				<SERVER NAME="QUANT">172.29.100.35:1433|QUANT|batch_quant|051ed87c3a</SERVER>
             </connections>
             <connections driver="Mongo"> <!--com.microsoft.sqlserver.jdbc.SQLServerDriver-->
 				<SERVER NAME="MARS">172.29.100.27:27017|Mars|python_write|pythonpasswrite</SERVER>

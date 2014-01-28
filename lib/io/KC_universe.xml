@@ -36,7 +36,15 @@
 			<user username='flexsys' passwd='flexsys1' />
 			<user username='flexapp' passwd='flexapp1' />
 		</server>
+		<server name='LUIFLT02' ip_addr='81.255.55.51' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
 		<server name='WATFLT01' ip_addr='172.25.152.73' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+		<server name='WATFLT02' ip_addr='172.25.152.78' >
 			<user username='flexsys' passwd='flexsys1' />
 			<user username='flexapp' passwd='flexapp1' />
 		</server>

@@ -25,9 +25,9 @@ def _isfinite(x):
 
 def x_finite(x, mode = 'last'):
     if not (isinstance(x,np.ndarray) or isinstance(x,list)):
-        raise ValueError('Input should be numpy arrays')
+        raise ValueError('Input should be numpy array ior list')
     
-    out = np.nan
+    out = None
     irange = range(len(x))
     
     if mode == 'last':
@@ -55,6 +55,7 @@ def weighted_statistics(x,w,mode='mean',handle_nan=True):
         raise ValueError('Input should be numpy arrays')
     if x.shape[0]!=w.shape[0]:
         raise ValueError('Input should have same numbers of rows')
+    
     #----- handle nan 
     if handle_nan:
         idx_ok=np.nonzero(map(lambda x,y : np.isfinite(x) and np.isfinite(y),x,w))[0]
@@ -114,7 +115,9 @@ def vwasbp(bid,ask,price,size,auction):
 
 if __name__ == "__main__":
     import lib.dbtools.read_dataset as read_dataset
+    import pytz 
     data=read_dataset.ftickdb(security_id=110,date='03/05/2013')
-    vwasbp(data['bid'].values,data['ask'].values,data['price'].values,data['volume'].values,data['auction'].values)
+    vwasbp(data['bid'].values,data['ask'].values,data['price'].values,data['volume'].values,data['auction'].values) 
+    first_finite(data[(data['bid']>8.14)]['bid'].values)
 
 

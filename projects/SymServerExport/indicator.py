@@ -16,7 +16,7 @@ from lib.dbtools.connections import Connections
 from lib.logger import *
 from lib.io.toolkit import get_traceback
 from lib.data.ui.Explorer import Explorer
-
+import lib.data.matlabutils as mutils
 
 
 def mappingflid():
@@ -81,11 +81,11 @@ def export_symdata(data_security_referential = None,
     NB_MIN_SYMBOL = 5000
     NB_MAX_SEC = 2000
     last_idx = -1
+    NONE_ = -999
     
     while last_idx < len(all_sec_ids)-1:
         
         # logging.info('pct adv'+str(last_idx/(len(all_sec_ids))))
-        
         #--------------------
         #- get indicators from database
         #--------------------
@@ -93,7 +93,7 @@ def export_symdata(data_security_referential = None,
         last_idx = np.min([ last_idx+NB_MAX_SEC, len(all_sec_ids)-1 ])
         str_secids = "".join([str(x)+',' for x in all_sec_ids[range( s_idx, last_idx+1 )]])[:-1]
         
-        query_indicatops=" SELECT si.security_id,si.trading_destination_id,si.indicator_id,si.indicator_value " \
+        query_indicatops=" SELECT si.security_id,isnull(si.trading_destination_id, %d) as trading_destination_id,si.indicator_id,si.indicator_value " \
             " FROM MARKET_DATA..ci_security_indicator si " \
             " LEFT JOIN KGR..EXCHANGEREFCOMPL erefcompl on ( " \
             " si.trading_destination_id=erefcompl.EXCHANGE " \
@@ -101,55 +101,47 @@ def export_symdata(data_security_referential = None,
             " WHERE si.security_id in (%s)  " \
             " AND si.indicator_id in (%s) " \
             " AND ( erefcompl.EXCHANGETYPE is NULL or erefcompl.EXCHANGETYPE = 'M' ) " \
-            " ORDER BY si.security_id, si.trading_destination_id, si.indicator_id " % (str_secids,str_indicators2export)
+            " ORDER BY si.security_id, trading_destination_id, si.indicator_id " % (NONE_,str_secids,str_indicators2export)
         
         vals=Connections.exec_sql('MARKET_DATA',query_indicatops,schema = True)
         if not vals[0]:
             continue
         
+        vals = pd.DataFrame.from_records(vals[0],columns=vals[1])
+        
+        uni_ = mutils.uniqueext(vals[['security_id','trading_destination_id']].values, rows = True)
+        
         #--------------------
         #- add to symdata
-        #--------------------
-        last_symbol = ''
-        
-        for i in range(0, len(vals[0])):
-            # l is one indicator line
+        #--------------------                
+        for i in range(0, len(uni_)):
+            #--- for each couple (sec_id, td_id)
+            tmp_data = vals[(vals['security_id'] == uni_[i][0]) & (vals['trading_destination_id'] == uni_[i][1])]
             
-            #-- flid id
-            flidid = map_flid_indid[map_flid_indid['indicator_id'] == int(vals[0][i][2])]['flid'].values[0]
+            #--- for each flex symbol
+            this_sec_info = data_security_referential[ data_security_referential['cheuvreux_secid'] ==  uni_[i][0]]
             
-            #-- symbol
-            sec_id = int(vals[0][i][0])
-            this_sec_info = data_security_referential[ data_security_referential['cheuvreux_secid'] ==  sec_id]
-            symbol = this_sec_info['ticker'].values[0]
-            
-            if vals[0][i][1] is None:
-                symbol = this_sec_info['tickerAG'].values[0]
-            
-            if symbol is None or not isinstance(symbol,basestring):
-                continue
-            
-            #-- write str
-            # there is a double '\n' at each symbol change
-            add_str = ''
-            if i > 0 and last_symbol != symbol:
-                add_str += '\n'
+            for isec in range(0, this_sec_info.shape[0]):
+                #-- get flex symbol
+                symbol = this_sec_info['ticker'].values[isec]
                 
-            add_str += str(symbol) + ':' + str(flidid) + '=' + str(vals[0][i][3]) + '\n'
-            
-            if i==len(vals[0])-1:
-                add_str += '\n'
+                if uni_[i][1] == NONE_:
+                    symbol = this_sec_info['tickerAG'].values[isec]
+                    
+                if symbol is None or not isinstance(symbol,basestring):
+                    continue
                 
-            out.write(add_str)
-            
-            #-- add to data
-            if last_symbol != symbol:
+                #-- write str
+                add_str = ''
+                for idata in range(0,tmp_data.shape[0]):
+                    #--- for each indicators 
+                    flidid = map_flid_indid[map_flid_indid['indicator_id'] == int(tmp_data.iloc[idata]['indicator_id'])]['flid'].values[0]
+                    add_str += str(symbol) + ':' + str(flidid) + '=' + str(tmp_data.iloc[idata]['indicator_value']) + '\n'
+                    
+                add_str += '\n'
+                out.write(add_str)
                 with_data_symbol.append(symbol)
-            
-            #-- for next loop
-            last_symbol = symbol
-            
-            
+                
     out.close()   
     logging.info('END export_symdata: successfully create indicator export')
     
@@ -209,9 +201,16 @@ def check_db_update(date):
 
 if __name__ == "__main__":
     
-    Connections.change_connections('production')
-    # -- check
-    print check_db_update(dt.datetime(2013,10,5))
+    Connections.change_connections('production_copy')
+    
+    GPATH = 'W:\\Global_Research\\Quant_research\\projets\\export_sym'
+    
+    security_ref = pd.read_csv(os.path.join(GPATH,'test','TRANSCOSYMBOLCHEUVREUX.csv'),sep = ';')
+    security_ref = security_ref[['cheuvreux_secid', 'ticker', 'tickerAG']]
+    
+    export_symdata(data_security_referential = security_ref,
+                       path_export = os.path.join(GPATH, 'test'), 
+                       filename_export = 'symdata',
+                       indicators2export = [25])
 
-         
     

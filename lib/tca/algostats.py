@@ -130,7 +130,9 @@ CONFIG_FORMULA_TCA={'occ_exec_vwap' : lambda df : df.occ_exec_turnover/df.occ_ex
                         'occ_fe_arrival_price' : lambda df : df.occ_fe_arrival_price.apply(lambda x : np.nan if x<=0.0 else x)
                        }
          
-                
+
+# derived from the class algodataprocessor, for computing statistics
+
 class AlgoStatsProcessor(AlgoDataProcessor):
     
     ###########################################################################
@@ -939,7 +941,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
                     
     def apply_formula(self, level = None , formula = None , in_sort = None , in_sort_ascending = True):
         #--------------------
-        #-- TEST
+        #-- compute statistics according to formula, which is a dict containing the name of the statistics and its formula
         #--------------------
         #-
         if level is None:
@@ -982,7 +984,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             
     def apply_slicer(self, in_level = None , out_level = None, group_vars = None , slicer = {} , in_sort = None , in_sort_ascending = True , replace_cols = False):
         #--------------------
-        #-- TEST
+        #-- compute aggregated statistics, return either a dataframe of the statistics (out_level = None) or add the statistics to the self.dataxxx
         #--------------------
         # - in data
         if in_level is None or getattr(self,'data_' + in_level) is None:
@@ -1077,7 +1079,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         
     def apply_aggregate_market_stats(self, level = None , market_slicer = {} , formula = {} , market_data = None, referential_data = None):
         #-----------------------------------
-        # TESTS INPUT
+        # compute aggregate market data statistics, and add them to self.dataxxx, one 
         #-----------------------------------
         # -
         if level is None or getattr(self,'data_' + level) is None:

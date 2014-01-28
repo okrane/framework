@@ -38,7 +38,8 @@ import os
 # 2/  we want to analyse starting from orders, and then getting deals related to this order, then we use the cl_ord_id_list
 #  -> deal_mode='sequence' or 'occurrence'
 
-
+# purpose of this class is to read data from the base, with different modes (different columes and different filters)
+# Data is stocked in class.data_xxx
 class AlgoDataProcessor(object):
     
     ###########################################################################
@@ -63,6 +64,7 @@ class AlgoDataProcessor(object):
         #---- CONNECTION INFO
         self.database_name = 'Mars'
         self.database_server = 'MARS'
+        # this dict links the type of data with the data base name
         self.level_collection_dict = {'sequence' : 'AlgoOrders',
                                       'occurrence' : 'AlgoOrders',
                                       'deal' : 'OrderDeals'}    

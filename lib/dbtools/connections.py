@@ -84,7 +84,7 @@ class Connections:
         database = handler.mapping[server.upper()][1]            
         user = handler.mapping[server.upper()][2]
         password = handler.mapping[server.upper()][3]
-        #print driver, address, database, user, password, port
+        print driver, address, database, user, password, port
         
         cnxn = pyodbc.connect('DRIVER={%s};SERVER=%s;DATABASE=%s;UID=%s;PWD=%s;Port=%s;TDS_Version=7.0' % (driver, address, database, user, password, port ))        
         curs = cnxn.cursor()        

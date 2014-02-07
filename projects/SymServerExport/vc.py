@@ -240,13 +240,10 @@ def export_vc_specific(data_security_referential = None,
         
         # -- needed
         this_sec_info = data_security_referential[ data_security_referential['cheuvreux_secid'] ==  sec_id]
-        symbol = this_sec_info['ticker'].values[0]
+        symbols = this_sec_info['ticker'].values
         if tdid == DEFAULT_VAL:
-            symbol = this_sec_info['tickerAG'].values[0]
-            
-        if symbol is None or not isinstance(symbol,basestring):
-            continue
-              
+            symbols = this_sec_info['tickerAG'].values
+                  
         #-- get  data
         params,context=se.get_reference_param(data['context_id'].values[i],data['domain_id'].values[i],data['estimator_id'].values[i])
         
@@ -278,26 +275,36 @@ def export_vc_specific(data_security_referential = None,
                 
         #-- check  data : number of slice continuous
         if max_num > NB_CONT_SLICE:
-            cb_id_error.append(symbol + ':' + data['id'].values[i])
-            logging.error('curve ' + data['id'].values[i] + 'has more than the required nb slice')
+            for symbol in symbols:
+                if symbol is None or not isinstance(symbol,basestring):
+                    continue
+                cb_id_error.append(symbol + ':' + data['id'].values[i])
+                logging.error('curve ' + data['id'].values[i] + 'has more than the required nb slice')
             continue
             
         #-- check  data : number of slice continuous
         if np.sum(all_values) < 0.999 or np.sum(all_values) > 1.001:
-            cb_id_error.append(symbol + ':' + data['id'].values[i])
-            logging.error('curve ' + data['id'].values[i] + 'do not sum at 1')
+            for symbol in symbols:
+                if symbol is None or not isinstance(symbol,basestring):
+                    continue
+                cb_id_error.append(symbol + ':' + data['id'].values[i])
+                logging.error('curve ' + data['id'].values[i] + 'do not sum at 1')
             continue
                             
         #-------------------
         #-- write str
         #-------------------
-        # default values
-        add_str = symbol + separator
-        add_str += "".join([str(x) + separator for x in all_values])[:-1]
-        add_str += '\n'
-        
-        out.write(add_str)
-        cb_added.append(symbol)
+        for symbol in symbols:
+            # one ecurity id, can describe multiple
+            if symbol is None or not isinstance(symbol,basestring):
+                continue
+            # default values
+            add_str = symbol + separator
+            add_str += "".join([str(x) + separator for x in all_values])[:-1]
+            add_str += '\n'
+            
+            out.write(add_str)
+            cb_added.append(symbol)
         
         #-- for next loop
         last_tdid = tdid
@@ -519,28 +526,22 @@ if __name__ == "__main__":
     
     Connections.change_connections('production_copy')
     
-    # export_vc(vc_level='generic',vc_estimator_id=2,path='C:\\',filename='test_generic')
-    # export_vc(vc_level='specific',vc_estimator_id=2,path='C:\\',filename='test_specific')
+    GPATH = 'W:\\Global_Research\\Quant_research\\projets\\export_sym'
     
-    #-- security test
-     
-#     security_ref = pd.read_csv(os.path.join('C:\\export_sym\\backup', 'TRANSCOSYMBOLCHEUVREUX.csv'),sep = ';')
+#     security_ref = pd.read_csv(os.path.join(GPATH,'test','TRANSCOSYMBOLCHEUVREUX.csv'),sep = ';')
 #     security_ref = security_ref[['cheuvreux_secid', 'ticker', 'tickerAG']]
-#      
-#     res = export_vc_specific(data_security_referential = security_ref,
-#                    path_export = 'H:\\', 
-#                    filename_export = 'test.txt',
-#                    separator = '\t')
 #     
-#     print res
-    
+#     export_vc_specific(data_security_referential = security_ref,
+#                        path_export = os.path.join(GPATH, 'test'), 
+#                        filename_export = 'VWAP_Profile_0',
+#                        separator = '\t')
     
     #-- security test
-    exchange_ref = pd.read_csv(os.path.join('C:\\export_sym\\backup', 'ref_trd_destination.csv'))
+    exchange_ref = pd.read_csv(os.path.join(GPATH,'backup', 'ref_trd_destination.csv'))
                  
     res = export_vc_generic(data_exchange_referential = exchange_ref,
-                path_export = 'H:\\', 
-                filename_export = 'test_specific.txt',
+                path_export = os.path.join(GPATH, 'test'), 
+                filename_export = 'USR.vwap.opts',
                 separator = ':')
     print res
      

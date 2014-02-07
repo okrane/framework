@@ -298,9 +298,15 @@ class DatabasePlug:
 
     def get_dico_header(self, day):
         
-        mkt_data_fields = ['EXEC_SHARES', 'INMKT_VOLUME','AVG_PRICE','INMKT_TURNOVER',
-                           'PRV_VOLUME','PRV_TURNOVER','AVG_SPRD','ARRIVAL_PRICE',
-                           'FINAL_PRICE','PERIOD_LOW','PERIOD_HIGH','PRV_WEXEC']
+        mkt_data_fields = ['SYM', 'PORT', 'SIDE', 'EXEC_SHARES', 'LIMIT_PRICE', 'STARTTIME',
+                           'ENDTIME', 'AVG_PRICE', 'ORDER_PERC', 'INMKT_VOLUME', 'INMKT_TURNOVER',
+                           'PRV_VOLUME', 'PRV_TURNOVER', 'ASSIGN', 'MANUAL_INPUT', 'TAG_115', 'STRAT',
+                           'TIMING_OPT', 'REPLACE_MODE', 'TRD_STYLE', 'TICK_SIZE', 'AVG_SPRD', 'BUY_EXEC',
+                           'SELL_EXEC', 'PRV_B_EXEC', 'PRV_S_EXEC', 'IN_VWAS', 'WOULD_LEVEL', 'ARRIVAL_PRICE',
+                           'FINAL_PRICE', 'PERIOD_LOW', 'PERIOD_HIGH', 'OMS_REF', 'CURNCY', 'PRV_WEXEC', 'WOULD_EXEC',
+                           'WOD', 'OID', 'USUAL_DAILY_VOLUME', 'USUAL_OPENING_VOLUME', 'USUAL_CLOSING_VOLUME',
+                           'USUAL_CONTINUOUS_NB_DEALS', 'USUAL_CONTINUOUS_DAILY_VOLUME', 'AVERAGE_TRADE_SIZE',
+                           'USUAL_DAILY_AMOUNT', 'VOLUME_Q1', 'VOLUME_Q2', 'VOLUME_Q3', 'VOLUME_Q4', 'USUAL_DAILY_SPREAD', 'USUAL_DAILY_VOLATILITY']
         
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())

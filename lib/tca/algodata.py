@@ -11,7 +11,6 @@ import pytz
 import time as time
 import numpy as np
 # import lib.data.matlabutils as matlabutils
-import logging
 from lib.logger.custom_logger import *
 import lib.tca.mapping as mapping
 from lib.dbtools.connections import Connections
@@ -21,7 +20,16 @@ import lib.dbtools.get_repository as get_repository
 import os
 
 #-----------------------------------
-# EXPLANATION
+# NOMENCKATURE
+#-----------------------------------
+# prefix 1 : 'occ_' if info is at order level / '' if it is at sequence level
+# prefix 2 : 'exec_' if it is related stats of execution 
+#            else 'm_' if market stats calculated with tickdata
+#            prefix 2b /
+
+
+#-----------------------------------
+# EXPLANATION of entry level
 #-----------------------------------
 # AlgoDataProcessor object is coherent to the class_mode 'sequence', 'occurrence', 'deal'
 # this is like the entry point of the object, meaning filters etc will be related to this object
@@ -30,7 +38,8 @@ import os
 # 2/  we want to analyse starting from orders, and then getting deals related to this order, then we use the cl_ord_id_list
 #  -> deal_mode='sequence' or 'occurrence'
 
-
+# purpose of this class is to read data from the base, with different modes (different columes and different filters)
+# Data is stocked in class.data_xxx
 class AlgoDataProcessor(object):
     
     ###########################################################################
@@ -49,19 +58,21 @@ class AlgoDataProcessor(object):
             self.start_date = start_date
             self.end_date = end_date
         self.filter = filter
-        self.mode_colnames=mode_colnames
-        self.merge_colnames_sequence2deal=None # Now only for deals when we merge data
-        
-        #---- DATABASE ALGO
-        self.data_sequence=None
-        self.data_occurrence=None
-        self.data_deal=None
+        self.mode_colnames = mode_colnames
+        self.merge_colnames_sequence2deal = None # Now only for deals when we merge data
         
         #---- CONNECTION INFO
-        self.db_name = 'Mars'
-        self.algo_collection_name = 'AlgoOrders'
-        self.deal_collection_name = 'OrderDeals'
+        self.database_name = 'Mars'
+        self.database_server = 'MARS'
+        # this dict links the type of data with the data base name
+        self.level_collection_dict = {'sequence' : 'AlgoOrders',
+                                      'occurrence' : 'AlgoOrders',
+                                      'deal' : 'OrderDeals'}    
         
+        #---- DATABASE ALGO
+        for level in self.level_collection_dict.keys():
+            setattr(self, 'data_' + level, None)   
+            
         #---- excel INFO
         if os.name == 'nt':
             self.xls_occ_fe_path = 'W:\\Global_Research\\Quant_research\\Data\\tca'
@@ -75,6 +86,18 @@ class AlgoDataProcessor(object):
     ###########################################################################
     # METHOD GET DATA
     ###########################################################################
+    def set_mode_colnames(self, mode ):
+        #-----
+        #- TEST
+        #- can only be changed if the no data has been extracted !
+        if any([getattr(self,'data_' + level) is not None for level in self.level_collection_dict.keys()]):
+            raise ValueError('set_mode_colnames can only be used if if the no data has been extracted')
+        
+        self.mode_colnames = mode
+        
+    ###########################################################################
+    # METHOD GET DATA
+    ###########################################################################
     def get_db_data(self, level=None,
                     force_colnames_only=None):
         
@@ -83,47 +106,33 @@ class AlgoDataProcessor(object):
         #-----------------------------------
         # DETERMINE ENTRY LEVEL
         #-----------------------------------
-        if self.data_deal is None and self.data_occurrence is None and self.data_sequence is None:
-            self.entry_level=level
+        if self.entry_level is None:
+            self.entry_level = level
             
         #-----------------------------------
         # TEST INPUT + DEFAULT OUTPUT  + PARAMS
         #-----------------------------------
-        if level == 'sequence':
-            if self.data_sequence is not None:
+        if level in self.level_collection_dict.keys():
+            if getattr(self, 'data_' + level) is not None:
                 logging.info('get_db_data is already loaded')
-                return
+                return        
                 
-            self.data_sequence=pd.DataFrame()
+            setattr(self, 'data_' + level, pd.DataFrame())
             
-            cname=self.algo_collection_name
-        elif level == 'occurrence':
-            if self.data_occurrence is not None:
-                logging.info('get_db_data is already loaded')
-                return
-                
-            self.data_occurrence=pd.DataFrame()
+            cname=self.level_collection_dict[level]
             
-            cname=self.algo_collection_name
-        elif level == 'deal':
-            if self.data_deal is not None:
-                logging.info('get_db_data is already loaded')
-                return
-                
-            self.data_deal=pd.DataFrame() 
-            
-            cname=self.deal_collection_name       
         else:
-            logging.error('level should be sequence or occurrence')
-            raise ValueError('Bad inputs')
+            logging.error('Undefined level <' + level +'>')
+            raise ValueError('Bad inputs')            
+            
         
         NEEDED_COLNAMES=self.get_db_colnames(level=level,mode=self.mode_colnames,only=force_colnames_only)
           
         #-----------------------------------
         # CONNECTION DB  
         #-----------------------------------        
-        client = Connections.getClient(self.db_name.upper())
-        occ_db = client[self.db_name][cname]
+        client = Connections.getClient(self.database_server)
+        occ_db = client[self.database_name][cname]
         
         #-----------------------------------
         # CONSTRUCT REQUEST
@@ -159,6 +168,7 @@ class AlgoDataProcessor(object):
                 criterion.append(self.filter)
                 
         else:
+            #--- 
             # CASE 2 : all merge is done by sequence information
             if self.entry_level == 'sequence':
                 
@@ -276,12 +286,7 @@ class AlgoDataProcessor(object):
         #-----------------------------------
         # OUT
         #-----------------------------------        
-        if level == 'sequence':
-            self.data_sequence = data
-        elif level == 'occurrence':
-            self.data_occurrence = data
-        elif level == 'deal':
-            self.data_deal = data
+        setattr(self , 'data_' + level, data)
                         
         logging.debug('get_db_data  took <%3.2f> secs ' %(time.clock()-t0))
         
@@ -400,11 +405,11 @@ class AlgoDataProcessor(object):
         # mandatory cols
         #-----------------------------------
         if level=='sequence':
-            mandatory_cols=['SendingTime','p_cl_ord_id','p_occ_id']
+            mandatory_cols=['_id','SendingTime','p_cl_ord_id','p_occ_id']
         elif level=='occurrence':
-            mandatory_cols=['SendingTime','MsgType','p_occ_id']
+            mandatory_cols=['_id','SendingTime','MsgType','p_occ_id']
         elif  level=='deal':
-            mandatory_cols=['TransactTime','p_exec_id','p_cl_ord_id']
+            mandatory_cols=['_id','TransactTime','p_exec_id','p_cl_ord_id']
         else:
             logging.error('unknown level <'+level+'>')
             raise ValueError('unknown level <'+level+'>')
@@ -427,10 +432,8 @@ class AlgoDataProcessor(object):
             if mode=='all':
                 
                 if all_cols is None:
-                    if level=='deal':
-                        out=get_field_list(cname=self.deal_collection_name, db_name=self.db_name)
-                    else:
-                        out=get_field_list(cname=self.algo_collection_name, db_name=self.db_name)
+                    out = get_field_list(cname = self.level_collection_dict[level] , db_server = self.database_server , db_name=self.database_name)
+                    
                 else:
                     out=all_cols
                     
@@ -438,13 +441,11 @@ class AlgoDataProcessor(object):
                 
                 if level=='sequence':
                     out = [ # - id/order infos
-                        u'_id',u'p_cl_ord_id',u'p_occ_id',
+                        u'p_cl_ord_id',u'p_occ_id',u'ClOrdID',
                         # - user/client infos
-                        u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',
+                        u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',u'ProgramName',
                         #- security symbol
-                        u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',
-                        #- info at occurence level
-                        u'occ_prev_exec_qty',u'occ_prev_turnover',   
+                        u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',   
                         #- exec info
                         u'exec_qty',u'turnover',u'volume_at_would',u'nb_replace',u'nb_exec',
                         #- time infos
@@ -460,25 +461,28 @@ class AlgoDataProcessor(object):
                         
                 elif level=='deal':
                     out = [ # - id/order infos
-                        "_id","p_exec_id","p_cl_ord_id",
+                        "p_exec_id","p_cl_ord_id",
                          # - deal infos
                         "Side","Symbol","LastPx","LastShares","LastMkt","ExecType","Currency",
                         "rate_to_euro","cheuvreux_secid","strategy_name_mapped"]
                         
                 elif level=='occurrence':
                     out = [ # - id/order infos
-                        u'_id',u'p_occ_id',
+                        u'p_occ_id',u'ClOrdID',
                         # - user/client infos
                         u'ClientID',u'TargetSubID',u'Account',
                         #- security symbol
                         u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',
+                        #- database infos on occurrence
+                        u'occ_duration',u'occ_nb_replace',
                         #- info at occurrence level
                         u'Side']
                         
                     if all_cols is None:
-                        all_cols=get_field_list(cname=self.algo_collection_name, db_name=self.db_name)           
-                    # add occ_  
-                    out=out+all_cols[np.nonzero([x[:min(4,len(x))]=='occ_' for x in all_cols])[0]].tolist() 
+                        all_cols=get_field_list(cname = self.level_collection_dict[level] , db_server = self.database_server , db_name=self.database_name)   
+                        
+                    # add occ_fe_  
+                    out=out+all_cols[np.nonzero([x[:min(7,len(x))]=='occ_fe_' for x in all_cols])[0]].tolist() 
             else:
                 logging.error('unknown mode <'+mode+'>')
                 raise ValueError('unknown mode <'+mode+'>')                    
@@ -490,11 +494,8 @@ class AlgoDataProcessor(object):
         #-----------------------------------
         
         # check if in database
-        if level=='deal':
-            all_cols=get_field_list(cname=self.deal_collection_name, db_name=self.db_name)
-        else:
-            all_cols=get_field_list(cname=self.algo_collection_name, db_name=self.db_name)
-            
+        all_cols = get_field_list(cname = self.level_collection_dict[level], db_server = self.database_server , db_name=self.database_name)
+        
         if not all([x in all_cols for x in out]):
             logging.error('asked colnames should be available in database')
             raise ValueError('asked colnames hould be available in database')
@@ -545,12 +546,12 @@ def get_sequence_data_from_cl_ord_id(cl_ord_id=None,colnames=None,db_name=None,a
     return out
     
 
-def get_field_list(cname=None, db_name="Mars"):
+def get_field_list(cname=None, db_server = 'MARS' , db_name="Mars"):
     #-----------------------------------
     # CONNECTION DB  
     #----------------------------------- 
     map_name="field_map"
-    client = Connections.getClient(db_name.upper())
+    client = Connections.getClient(db_server)
     
     #-----------------------------------
     # CONSTRUCT REQUEST
@@ -570,20 +571,21 @@ def get_field_list(cname=None, db_name="Mars"):
     
     
 if __name__=='__main__':
-    a=1
-#     from lib.dbtools.connections import Connections
-#   
-    #-----  EXCEL VALS
-    test = AlgoDataProcessor()
-    test.get_xls_occ_fe_data()
-    print test.data_xls_occ_fe
-    a=1
-#
-#     #-----  ENTRY OCCURENCE 
-#     test = AlgoDataProcessor(filter = {"p_occ_id": {"$in" : ['20130603FY71306030000015RLUIFLT01']}})
-#     test.get_db_data(level='occurrence')
-#     test.get_db_data(level='sequence')
-#     test.get_db_data(level='deal')
+    from lib.dbtools.connections import Connections
+    
+#     #-----  EXCEL VALS
+#     test = AlgoDataProcessor()
+#     test.get_xls_occ_fe_data()
+#     print test.data_xls_occ_fe
+#     a=1
+
+    #-----  ENTRY OCCURENCE 
+    test = AlgoDataProcessor(filter = {"p_occ_id": {"$in" : ['20130603FY71306030000015RLUIFLT01']}})
+    test.get_db_data(level='occurrence')
+    test.get_db_data(level='sequence')
+    test.get_db_data(level='deal')
+    print test.data_occurrence
+    
 #     
 #     print test.data_sequence.shape
 #     print test.data_occurrence.shape

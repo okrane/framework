@@ -114,7 +114,7 @@ def ft(**kwargs):
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
         if remote == True and os.name != 'nt':
             os.remove(filename)
-        print 'read_dataset:ft - File LOAD <'+filename+'>'
+        logging.info('read_dataset:ft - File LOAD <'+filename+'>')
         
         return st_data.to_dataframe(mat['data'],timezone=True)
     except IOError:
@@ -340,7 +340,8 @@ def bic(step_sec=300,exchange=False,**kwargs):
                     out=out.append(grouped_data)
                 
         except Exception,e:
-            print "%s" % e
+            logging.error("%s" % e)
+            
         curr_newf=curr_newf+timedelta(days=1)
     
     return out       
@@ -389,7 +390,7 @@ def trading_daily(start_date=None,end_date=None,security_id=[],include_agg=False
         out_colnames=np.unique(out_colnames+['date','security_id','trading_destination_id'])
         select_req='SELECT '+''.join(['tddaily.'+x+',' for x in out_colnames])+'exchref.EXCHANGETYPE '
     #---- from
-    from_req=(" FROM Market_data..trading_daily tddaily "
+    from_req=(" FROM MARKET_DATA..trading_daily tddaily "
     " LEFT JOIN KGR..EXCHANGEREFCOMPL exchref ON ( "
     "    exchref.EXCHANGE=tddaily.trading_destination_id "
     " ) ")

@@ -225,8 +225,44 @@ def exchangeidmain(**kwargs):
     if data.shape[0]>0:
         data=data[data['EXCHANGETYPE']=='M']
         for i in range(0,data.shape[0]):
-            out[np.nonzero(lids==data['security_id'].values[i])[0]]=data['EXCHANGE'].values[i]
+            out[np.nonzero(lids==data['security_id'].values[i])[0]]=data['exchange_id'].values[i]
     return out
+
+
+
+#------------------------------------------------------------------------------
+# symbol6toname
+#------------------------------------------------------------------------------
+def symbol6toname(lids):
+    ##############################################################
+    # input handling
+    ##############################################################
+    if isinstance(lids,list):
+        lids=np.array(lids)
+    elif not isinstance(lids,np.ndarray):
+        lids=np.array([lids])
+    
+    out=['Unknown']*lids.size
+    ##############################################################
+    # request and format
+    ##############################################################
+    str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
+    str_lids=str_lids[:-1]+")"
+    
+    req=("SELECT SYMBOL6, min(SECNAME) "
+        " FROM KGR..SECURITY " 
+        " WHERE SYMBOL6 in %s"
+        " GROUP BY SYMBOL6") % (str_lids) 
+    
+    vals=Connections.exec_sql('KGR',req,schema = True)
+    
+    if not (not vals[0]):
+        for x in vals[0]:
+            # print x
+            for i in np.where(lids==int(x[0]))[0]:
+                out[i]=str(x[1])
+    
+    return np.array(out)
 
 #------------------------------------------------------------------------------
 # tradingtime
@@ -255,6 +291,7 @@ def tradingtime(security_id=None,date=None,data_exchange_info=None,mode='main'):
         " FROM trading_hours_master " 
         " WHERE trading_destination_id = %d "
         " AND context_id is null "
+        " AND end_date is null "
         " AND quotation_group = '%s'") % (data_exchange_info['exchange_id'].values[i],data_exchange_info['quotation_group'].values[i]) 
         
         vals=Connections.exec_sql('KGR',req,schema = True)
@@ -264,7 +301,8 @@ def tradingtime(security_id=None,date=None,data_exchange_info=None,mode='main'):
                 ' FROM trading_hours_master ' 
                 ' WHERE trading_destination_id = %d '
                 ' AND context_id is null '
-                ' AND quotation_group is null') % (data_exchange_info['exchange_id'])
+                ' AND end_date is null '
+                ' AND quotation_group is null') % (data_exchange_info['exchange_id'].values[i])
             vals=Connections.exec_sql('KGR',req,schema = True)
             if not vals[0]:
                 logging.warning('get_repository:tradingtime - No trading hours/ exchange: '+str(data_exchange_info['exchange_id'].values[i])+' / quotation_group: '+data_exchange_info['quotation_group'].values[i])
@@ -305,20 +343,27 @@ def tradingtime(security_id=None,date=None,data_exchange_info=None,mode='main'):
 #------------------------------------------------------------------------------
 # exchangeinfo
 #------------------------------------------------------------------------------
-def exchangeinfo(**kwargs):
+def exchangeinfo(security_id = None, exchange_id = None, date = None):
     ##############################################################
     # input handling
     ##############################################################
-    #---- exchange_id
-    if "security_id" in kwargs.keys():
-        lids=kwargs["security_id"]
-        if isinstance(lids,list):
-            lids=np.array(lids)
-        elif not isinstance(lids,np.ndarray):
-            lids=np.array([lids])
+    #---- extract
+    if security_id is not None and exchange_id is not None:
+        raise ValueError('only security_id or exchange_id')
+    elif security_id is not None:
+        lids = security_id
+    elif exchange_id is not None:
+        lids = exchange_id
     else:
-        raise NameError('get_repository:exchangeinfo - Bad input : security_id is missing')
+        raise ValueError('missing inputs')
     
+    #---- transform
+    if isinstance(lids,list):
+        lids=np.array(lids)
+    elif not isinstance(lids,np.ndarray):
+        lids=np.array([lids])
+
+        
     ##############################################################
     # request and format
     ##############################################################
@@ -330,22 +375,37 @@ def exchangeinfo(**kwargs):
     # ----------------
     # request
     # ----------------
-    req=(" SELECT  sm.security_id,sm.ranking,sm.quotation_group, "
-     " erefcompl.EXCHANGE,erefcompl.EXCHGID,erefcompl.MIC,erefcompl.EXCHANGETYPE,erefcompl.TIMEZONE, "
-     " gzone.NAME as GLOBALZONE,ex.EXCHGNAME "
-     " FROM  security_market sm "
-     " LEFT JOIN EXCHANGEREFCOMPL erefcompl ON ( "
-     " sm.trading_destination_id=erefcompl.EXCHANGE  "
-     " )  "
-     " LEFT JOIN GLOBALZONE gzone ON ( "
-     " erefcompl.GLOBALZONEID=gzone.GLOBALZONEID  "
-     " )  "
-     " LEFT JOIN EXCHANGE ex ON ( "
-     " erefcompl.EXCHGID=ex.EXCHGID  "
-     " )  "
-     " WHERE  sm.security_id in %s "
-     " ORDER BY sm.security_id,sm.ranking ") % (str_lids)
-    
+    if security_id is not None:
+        req=(" SELECT  sm.security_id,sm.ranking,sm.quotation_group, "
+         " erefcompl.EXCHANGE,erefcompl.EXCHGID,erefcompl.MIC,erefcompl.EXCHANGETYPE,erefcompl.TIMEZONE, "
+         " gzone.NAME as GLOBALZONE,ex.EXCHGNAME "
+         " FROM  security_market sm "
+         " LEFT JOIN EXCHANGEREFCOMPL erefcompl ON ( "
+         " sm.trading_destination_id=erefcompl.EXCHANGE  "
+         " )  "
+         " LEFT JOIN GLOBALZONE gzone ON ( "
+         " erefcompl.GLOBALZONEID=gzone.GLOBALZONEID  "
+         " )  "
+         " LEFT JOIN EXCHANGE ex ON ( "
+         " erefcompl.EXCHGID=ex.EXCHGID  "
+         " )  "
+         " WHERE  sm.security_id in %s "
+         " ORDER BY sm.security_id,sm.ranking ") % (str_lids)
+         
+    elif exchange_id is not None:
+        
+        req=(" SELECT erefcompl.EXCHANGE,erefcompl.EXCHGID,erefcompl.MIC,erefcompl.EXCHANGETYPE,erefcompl.TIMEZONE, "
+         " gzone.NAME as GLOBALZONE,ex.EXCHGNAME "
+         " FROM  EXCHANGEREFCOMPL erefcompl "
+         " LEFT JOIN GLOBALZONE gzone ON ( "
+         " erefcompl.GLOBALZONEID=gzone.GLOBALZONEID  "
+         " )  "
+         " LEFT JOIN EXCHANGE ex ON ( "
+         " erefcompl.EXCHGID=ex.EXCHGID  "
+         " )  "
+         " WHERE  erefcompl.EXCHANGE in %s "
+         " ORDER BY erefcompl.EXCHANGE ") % (str_lids)        
+         
     vals=Connections.exec_sql('KGR',req,schema = True)
     
     out=pd.DataFrame.from_records(vals[0],columns=vals[1])
@@ -533,7 +593,7 @@ def mic2exchangeid(mic=None):
     if not (not vals):
         for x in vals:
             out[np.where(lids==x[0])[0]]=x[1]
-    
+            
     return out  
     
 #------------------------------------------------------------------------------
@@ -754,15 +814,20 @@ def local_tz_from(**kwargs):
     
     
 if __name__ == "__main__":
-    print tag100_to_place_name()
-    print get_symbol6_from_ticker("MMK.VN")
-    print get_symbol6_from_ticker("PSMd.AG")
-    print exchangeinfo(security_id = 2)    
     
-    print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110, exchgid='SEPA'))
-    print "security_id(%s)->SECID=%s"% (110, convert_symbol(source = 'security_id', dest = 'SECID', value = 110, exchgid='SEPA'))
-    print "security_id(%s)->ISIN=%s"% (110, convert_symbol(source = 'security_id', dest = 'ISIN', value = 110, exchgid='SEPA'))
-    print "security_id(%s)->bloomberg=%s"% (110, convert_symbol(source = 'security_id', dest = 'bloomberg', value = 110, exchgid='SEPA'))
+    print get_symbol6_from_ticker("BEId.AG")
+    print currency(security_id = 2)
+#     print exchangeinfo(exchange_id = [-11,159,183])
+#     print exchangeinfo(security_id = 2) 
+#     print tag100_to_place_name()
+#     
+#     print get_symbol6_from_ticker("PSMd.AG")
+#        
+#     
+#     print "security_id(%s)->glid=%s"% (110, convert_symbol(source = 'security_id', dest = 'glid', value = 110, exchgid='SEPA'))
+#     print "security_id(%s)->SECID=%s"% (110, convert_symbol(source = 'security_id', dest = 'SECID', value = 110, exchgid='SEPA'))
+#     print "security_id(%s)->ISIN=%s"% (110, convert_symbol(source = 'security_id', dest = 'ISIN', value = 110, exchgid='SEPA'))
+#     print "security_id(%s)->bloomberg=%s"% (110, convert_symbol(source = 'security_id', dest = 'bloomberg', value = 110, exchgid='SEPA'))
     
     
     

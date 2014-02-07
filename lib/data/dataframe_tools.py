@@ -19,6 +19,40 @@ def rolling_aggregate_vwap(data, sampling, delta_t):
     return pd.Series(value, index = data_sampling.index), data_sampling
 
 
+
+###############################################################################
+# to_listdict
+###############################################################################
+
+def to_listdict(data,
+        columns = None,
+        type2native = False):
+    
+    if not isinstance(data,pd.DataFrame):
+        raise ValueError('Input has to be a DataFrame')
+    
+    out = []
+    
+    if data.shape[0] == 0:
+        return out
+    
+    for idx in range(0,data.shape[0]):
+        #-- get dict
+        if columns is not None:
+            dict_add = data.ix[idx][columns].to_dict()
+        else:
+            dict_add = data.ix[idx].to_dict()
+            
+        #-- renormalize type
+        if type2native:
+            for x in dict_add.keys():
+                if isinstance(dict_add[x], np.generic):
+                    dict_add[x] = np.asscalar(dict_add[x])
+        
+        out += [dict_add]
+        
+    return out
+
 ###############################################################################
 # Aggregate dataframe
 ###############################################################################

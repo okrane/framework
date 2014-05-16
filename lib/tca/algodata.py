@@ -17,6 +17,7 @@ from lib.dbtools.connections import Connections
 import lib.data.matlabutils as matlabutils
 import lib.dbtools.read_dataset as read_dataset
 import lib.dbtools.get_repository as get_repository
+import lib.stats.formula as formula
 import os
 
 #-----------------------------------
@@ -67,7 +68,8 @@ class AlgoDataProcessor(object):
         # this dict links the type of data with the data base name
         self.level_collection_dict = {'sequence' : 'AlgoOrders',
                                       'occurrence' : 'AlgoOrders',
-                                      'deal' : 'OrderDeals'}    
+                                      'deal' : 'OrderDeals',
+                                      'tca' : 'AlgoTCA'}
         
         #---- DATABASE ALGO
         for level in self.level_collection_dict.keys():
@@ -91,7 +93,7 @@ class AlgoDataProcessor(object):
         #- TEST
         #- can only be changed if the no data has been extracted !
         if any([getattr(self,'data_' + level) is not None for level in self.level_collection_dict.keys()]):
-            raise ValueError('set_mode_colnames can only be used if if the no data has been extracted')
+            raise ValueError('set_mode_colnames can only be used if no data has already been extracted')
         
         self.mode_colnames = mode
         
@@ -126,6 +128,7 @@ class AlgoDataProcessor(object):
             raise ValueError('Bad inputs')            
             
         
+        # extract only the colnames that are in the interception of mode_colnames and force_colnames_only
         NEEDED_COLNAMES=self.get_db_colnames(level=level,mode=self.mode_colnames,only=force_colnames_only)
           
         #-----------------------------------
@@ -145,12 +148,15 @@ class AlgoDataProcessor(object):
         # --- CRITERION 
         criterion = []
         index_colname='SendingTime'
+        
         if level == 'deal':
             index_colname='TransactTime'
             
-        #--- specific occurrence
-        if level == 'occurrence':
+        elif level == 'occurrence':
             criterion.append({'MsgType':'D'})
+            
+        elif level == 'tca':
+            index_colname='SendingTime_'
             
         if self.entry_level == level:
             # CASE 1 : entry level, then we use the inputs information !   
@@ -163,7 +169,8 @@ class AlgoDataProcessor(object):
             if self.filter is not None:
                 
                 if np.any([x not in NEEDED_COLNAMES for x in self.filter.keys()]):
-                    raise ValueError('one filter keys is not in the needed colnames')
+                    cols = self.filter.keys()
+                    raise ValueError('at least one of the filter keys <' + cols[np.nonzero([x not in NEEDED_COLNAMES for x in self.filter.keys()])[0][0]] + '> is not in the needed colnames')
                     
                 criterion.append(self.filter)
                 
@@ -182,13 +189,13 @@ class AlgoDataProcessor(object):
                     return
                 criterion.append({'p_cl_ord_id': {"$in": np.unique(self.data_deal['p_cl_ord_id']).tolist()}})
                 
-            elif self.entry_level == 'occurrence':
+            elif self.entry_level == 'occurrence' or self.entry_level == 'tca':
                 
-                if self.data_occurrence.shape[0]==0:
+                if getattr(self,'data_' + self.entry_level).shape[0]==0:
                     return
                     
                 if level == 'sequence':
-                    criterion.append({'p_occ_id': {"$in": np.unique(self.data_occurrence['p_occ_id']).tolist()}})
+                    criterion.append({'p_occ_id': {"$in": np.unique(getattr(self,'data_' + self.entry_level)['p_occ_id']).tolist()}})
                     
                 elif level == 'deal':
                     if self.data_sequence is None:
@@ -218,12 +225,16 @@ class AlgoDataProcessor(object):
             
         if not documents:
             return
-              
+            
         # Dataframe
-        data=pd.DataFrame.from_records(documents, columns=columns,index=index_colname)
+        #data=pd.DataFrame.from_records(documents, columns=columns , index=index_colname)
+        # bidouille pour conserver l'index sous un autre nom (au cas ou)
+        data=pd.DataFrame.from_records(documents, columns=columns)
+        data.set_index(index_colname , drop = False , inplace = True)
+        data.rename(columns = {index_colname : index_colname +'_'} , inplace = True)
         data=data.sort_index()  
         
-        NEEDED_COLNAMES=np.setdiff1d(NEEDED_COLNAMES,[index_colname])
+        NEEDED_COLNAMES=np.setdiff1d(NEEDED_COLNAMES + [index_colname + '_'],[index_colname]).tolist()
         
         # HANDLING COLNAMES : drop
         for x in data.columns.tolist():
@@ -233,7 +244,7 @@ class AlgoDataProcessor(object):
         # HANDLING COLNAMES : add
         for x in NEEDED_COLNAMES:
             if x not in data.columns.tolist():
-                data[x]=np.NaN 
+                data[x] = None 
                 
         #-----------------------------------
         # RENORMALIZATION
@@ -249,7 +260,7 @@ class AlgoDataProcessor(object):
         #--- DEAL 
         if level == 'deal':
             # rename
-            dict_rename={'LastPx': 'price','LastShares': 'volume', 'LastMkt' :'MIC'}
+            dict_rename={'LastPx': 'price','LastShares': 'volume', 'LastMkt' :'MIC' , 'LastLiquidityInd' : 'liquidity_ind'}
             for x in dict_rename.keys():
                 if x in data.columns.tolist():
                     data = data.rename(columns={x:dict_rename[x]})
@@ -257,9 +268,9 @@ class AlgoDataProcessor(object):
         #--- ORDERS : 
         if level in ['sequence','occurrence']:
             # nb_replace
-            if (('nb_replace' in data.columns.tolist()) and (any(np.isnan(data['nb_replace'].values)))):
-                tmp=data['nb_replace']
-                tmp[np.nonzero(np.isnan(data['nb_replace'].values))[0]]=0
+            if (('nb_replace' in data.columns.tolist()) and (any(formula.isfinite(data['nb_replace'].values , notfinite = True)))):
+                tmp = data['nb_replace']
+                tmp[np.nonzero(formula.isfinite(data['nb_replace'].values , notfinite = True))[0]]=0
                 data['nb_replace']=tmp
                 
         #-----------------------------------
@@ -394,7 +405,9 @@ class AlgoDataProcessor(object):
     ###########################################################################
     # METHOD GET COLNAMES
     ###########################################################################
-    def get_db_colnames(self,level=None,mode='base',only=None,at_least=None):
+    def get_db_colnames(self,level = None , mode = 'base' , only = None , at_least = None , check = False):
+        # get the colnames for different modes, only: return only the columns in the list + the mandatory ones; atleast: union
+        # TODO : create a classe !!!
         #-----------------------------------
         # TEST input
         #-----------------------------------
@@ -408,6 +421,8 @@ class AlgoDataProcessor(object):
             mandatory_cols=['_id','SendingTime','p_cl_ord_id','p_occ_id']
         elif level=='occurrence':
             mandatory_cols=['_id','SendingTime','MsgType','p_occ_id']
+        elif level=='tca':
+            mandatory_cols=['_id','SendingTime_','p_occ_id']
         elif  level=='deal':
             mandatory_cols=['_id','TransactTime','p_exec_id','p_cl_ord_id']
         else:
@@ -417,7 +432,8 @@ class AlgoDataProcessor(object):
         #-----------------------------------
         # mode cols
         #-----------------------------------
-        all_cols=None
+        all_cols = get_field_list(cname = self.level_collection_dict[level], db_server = self.database_server , db_name=self.database_name)
+        
         # CASE 1 :
         if only is not None:
             out=list(set(mandatory_cols+only))  
@@ -437,17 +453,19 @@ class AlgoDataProcessor(object):
                 else:
                     out=all_cols
                     
-            elif mode=='base':
+            elif mode == 'base' or  mode == 'base_fe':
                 
                 if level=='sequence':
+                    
+                    #-- comes from db
                     out = [ # - id/order infos
                         u'p_cl_ord_id',u'p_occ_id',u'ClOrdID',
                         # - user/client infos
-                        u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',u'ProgramName',
+                        u'ClientID',u'TargetSubID',u'Account', u'MsgType',u'server',u'ProgramName',u'OnBehalfOfCompID',
                         #- security symbol
                         u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',   
                         #- exec info
-                        u'exec_qty',u'turnover',u'volume_at_would',u'nb_replace',u'nb_exec',
+                        u'exec_qty',u'turnover',u'nb_replace',u'nb_exec',
                         #- time infos
                         u'eff_endtime',u'duration',u'first_deal_time',
                         #- parameter info
@@ -458,31 +476,41 @@ class AlgoDataProcessor(object):
                         u'AggreggatedStyle',u'WouldDark', u'MinSize',u'MaxFloor',u'BenchPrice',u'ExecutionStyle',u'OBType', u'SweepLit', u'MinQty',
                         # - others
                         u'reason']
-                        
+                        # u'volume_at_would'
+                    #-- TODO : add needed stats for base_stats
+                    
                 elif level=='deal':
                     out = [ # - id/order infos
                         "p_exec_id","p_cl_ord_id",
                          # - deal infos
-                        "Side","Symbol","LastPx","LastShares","LastMkt","ExecType","Currency",
+                        "Side","Symbol","LastPx","LastShares","LastMkt","LastLiquidityInd","ExecType","Currency",
                         "rate_to_euro","cheuvreux_secid","strategy_name_mapped"]
                         
                 elif level=='occurrence':
                     out = [ # - id/order infos
                         u'p_occ_id',u'ClOrdID',
                         # - user/client infos
-                        u'ClientID',u'TargetSubID',u'Account',
+                        u'ClientID',u'TargetSubID',u'Account',u'ProgramName',u'OnBehalfOfCompID',u'server',
                         #- security symbol
                         u'Symbol',u'cheuvreux_secid',u'ExDestination',u'Currency',u'rate_to_euro',
                         #- database infos on occurrence
-                        u'occ_duration',u'occ_nb_replace',
+                        #u'occ_duration',u'occ_nb_replace',
                         #- info at occurrence level
                         u'Side']
                         
-                    if all_cols is None:
-                        all_cols=get_field_list(cname = self.level_collection_dict[level] , db_server = self.database_server , db_name=self.database_name)   
-                        
                     # add occ_fe_  
-                    out=out+all_cols[np.nonzero([x[:min(7,len(x))]=='occ_fe_' for x in all_cols])[0]].tolist() 
+                    if mode == 'base_fe':
+                        all_cols = np.array(all_cols)
+                        out=out + all_cols[np.nonzero([x[:min(7,len(x))]=='occ_fe_' for x in all_cols])[0]].tolist()
+                        all_cols = all_cols.tolist()
+                        
+                    # add stats
+                    # Attention, bien ajouter le 'm_d_'...  
+                    
+                elif level == 'tca':
+                    out = []
+                    # bidouille for now
+                            
             else:
                 logging.error('unknown mode <'+mode+'>')
                 raise ValueError('unknown mode <'+mode+'>')                    
@@ -492,13 +520,10 @@ class AlgoDataProcessor(object):
         #-----------------------------------
         # out + check
         #-----------------------------------
-        
-        # check if in database
-        all_cols = get_field_list(cname = self.level_collection_dict[level], db_server = self.database_server , db_name=self.database_name)
-        
-        if not all([x in all_cols for x in out]):
-            logging.error('asked colnames should be available in database')
-            raise ValueError('asked colnames hould be available in database')
+        if check:
+            if not all([x in all_cols for x in out]):
+                logging.error('asked colnames should be available in database')
+                raise ValueError('asked colnames hould be available in database')
             
         return out
 
@@ -566,7 +591,7 @@ def get_field_list(cname=None, db_server = 'MARS' , db_name="Mars"):
     for v in req_:
         out.append(v)
         
-    return np.array(out[0]['list_columns']+['_id'])
+    return np.array(out[0]['list_columns']+['_id']).tolist()
     
     
     

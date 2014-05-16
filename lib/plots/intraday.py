@@ -153,6 +153,7 @@ if __name__ == "__main__":
     from lib.dbtools.get_repository import convert_symbol
     security_id = int(convert_symbol(source = 'bloomberg', dest = 'security_id', value = "SAN FP", exchgid='SEPA'))
     print security_id
+    data=read_dataset.ft(security_id = 110, date='08/01/2014')
     # data = from_mat_file("Q:/dev_repository/get_tick/ft/FTE.PA/2013_05_02.mat")    kcintraday(data)        
    
     plot_intraday(data,exclude_auction=[0,0,0,0],step_sec=5*60)

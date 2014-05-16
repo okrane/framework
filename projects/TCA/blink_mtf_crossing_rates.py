@@ -9,12 +9,11 @@ from datetime import datetime, timedelta
 import pandas as pd
 import matplotlib.pyplot as plt
 from lib.plots.color_schemes import kc_main_colors
-import sets
 
 def daily_buy_sell(security_id, start, end):
     db = Connections.getClient("Mars")["Mars"]["AlgoOrders"]
     deals = Connections.getClient("Mars")["Mars"]["OrderDeals"]
-    #result_deals = deals.aggregate([{"$match": {"cheuvreux_secid": security_id, "TransactTime":{"$gte": start, "$lte": end}}}, {"$project": {"LastMkt": 1, "OrderQty": 1, "_id": 0}} ])        
+    #result_deals = deals.aggregate([{"$match": {"cheuvreux_secid": security_id, "TransactTime":{"$gte": start, "$lte": end}, "LastMkt": "BLNK"}}, {"$project": {"LastMkt": 1, "OrderQty": 1, "_id": 0}} ])        
     
     #deal_list = deals.find({"cheuvreux_secid": security_id, "TransactTime":{"$gte": start, "$lte": end}, "LastMkt": "BLNK"})        
         
@@ -90,20 +89,4 @@ if __name__=="__main__":
     print results
     results.to_csv("C:/st_sim/repository/blink_cross_rate_cagr.csv", sep=";")
     """
-    #build_graph("C:/st_sim/repository/blink_cross_rate_cagr.csv")
-    start = datetime(2013, 12, 01)
-    end   = datetime(2013, 12, 30)
-    db = Connections.getClient("Mars")["Mars"]["AlgoOrders"]
-    deals = Connections.getClient("Mars")["Mars"]["OrderDeals"]
-    day = start
-    venues = sets.Set()
-    while day <= end:
-        result_deals = deals.aggregate([{"$match": {"TransactTime":{"$gte": day, "$lte": day+timedelta(days=1)}}}, {"$project": {"LastMkt": 1, "OrderQty": 1, "_id": 0}} ])                
-        day = day + timedelta(days = 1)
-        for k in result_deals['result']:
-            if k.has_key('LastMkt'):
-                venues.add(k['LastMkt'])
-            
-        print venues
-        
-    
+    build_graph("C:/st_sim/repository/blink_cross_rate_cagr.csv")

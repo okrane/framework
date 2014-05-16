@@ -23,11 +23,11 @@ from datetime import *
 def _isfinite(x):
     return (x is not None) and (x == x) and not (x == np.Inf)
 
-def x_finite(x, mode = 'last'):
+def x_finite(x, mode = 'last' , default = None):
     if not (isinstance(x,np.ndarray) or isinstance(x,list)):
         raise ValueError('Input should be numpy array ior list')
     
-    out = None
+    out = default
     irange = range(len(x))
     
     if mode == 'last':
@@ -40,11 +40,11 @@ def x_finite(x, mode = 'last'):
     
     return out
 
-def last_finite(x):
-    return x_finite(x,mode='last')
+def last_finite(x , default = None):
+    return x_finite(x,mode='last' , default = default)
 
-def first_finite(x):
-    return x_finite(x,mode='first')
+def first_finite(x , default = None):
+    return x_finite(x,mode='first' , default = default)
 
 #--------------------------------------------------------------------------
 # weighted statistics

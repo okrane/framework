@@ -39,6 +39,7 @@ def mappingflid():
         [ 40, 320 ],   # volume_q4
         [ 73, 321 ],  # usual_daily_spread
         [ 75, 322 ],   # usual_daily_volatility
+        [ 86, 323 ],   # MktShare
         ]
     
     return pd.DataFrame(out,columns=['indicator_id','flid'])
@@ -46,7 +47,7 @@ def mappingflid():
 
 def export_symdata(data_security_referential = None,
                    path_export = None, filename_export = None,
-                   indicators2export = [1, 2, 3, 21, 22, 24, 25, 27, 29, 31, 33, 35, 37, 38, 39, 40 , 73, 75]):
+                   indicators2export = [1, 2, 3, 21, 22, 24, 25, 27, 29, 31, 33, 35, 37, 38, 39, 40 , 73, 75 , 86]):
 
     #--------------------
     #- TEST INPUT
@@ -108,6 +109,9 @@ def export_symdata(data_security_referential = None,
             continue
         
         vals = pd.DataFrame.from_records(vals[0],columns=vals[1])
+        
+        
+        
         
         uni_ = mutils.uniqueext(vals[['security_id','trading_destination_id']].values, rows = True)
         
@@ -174,7 +178,7 @@ def check_db_update(date):
         date_f = dt.datetime.strftime((date - dt.timedelta(days=1)).date(),'%Y%m%d')
         
         query=""" SELECT date , jobname ,status
-                  FROM Market_data..ciupdate_report
+                  FROM MARKET_DATA..ciupdate_report
                   WHERE date >= '%s' and date < '%s' """ % (date_f,date_e)
                   
         vals = Connections.exec_sql('MARKET_DATA',query,schema = True)
@@ -203,6 +207,8 @@ if __name__ == "__main__":
     
     Connections.change_connections('production_copy')
     
+    check_db_update(dt.datetime.now())
+    
     GPATH = 'W:\\Global_Research\\Quant_research\\projets\\export_sym'
     
     security_ref = pd.read_csv(os.path.join(GPATH,'test','TRANSCOSYMBOLCHEUVREUX.csv'),sep = ';')
@@ -211,6 +217,6 @@ if __name__ == "__main__":
     export_symdata(data_security_referential = security_ref,
                        path_export = os.path.join(GPATH, 'test'), 
                        filename_export = 'symdata',
-                       indicators2export = [25])
+                       indicators2export = [1,86])
 
     

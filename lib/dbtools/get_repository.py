@@ -139,6 +139,7 @@ def get_symbol6_from_ticker(ticker):
                 EXCHANGEMAPPING exhm,
                 FlextradeExchangeMapping exflex
                 where sec.SYMBOL1='%s'
+                and sec.STATUS = 'A'
                 and sec.EXCHGID=exhm.EXCHGID
                 and exflex.SUFFIX='%s'
                 and exhm.EXCHANGE=exflex.EXCHANGE
@@ -147,29 +148,43 @@ def get_symbol6_from_ticker(ticker):
         result = Connections.exec_sql('KGR', query, as_dict = True)
         
         if len(result) == 0:
+            
             query = """SELECT distinct sec.SYMBOL6
                 FROM SECURITY sec,
                 EXCHANGEMAPPING exhm,
                 FlextradeExchangeMapping exflex
-                where sec.SYMBOL2='%s'
+                where sec.SYMBOL1='%s'
                 and sec.EXCHGID=exhm.EXCHGID
                 and exflex.SUFFIX='%s'
                 and exhm.EXCHANGE=exflex.EXCHANGE
                 AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
                 
             result = Connections.exec_sql('KGR', query, as_dict = True)
+            
             if len(result) == 0:
                 query = """SELECT distinct sec.SYMBOL6
                     FROM SECURITY sec,
                     EXCHANGEMAPPING exhm,
                     FlextradeExchangeMapping exflex
-                    where sec.SYMBOL3='%s'
+                    where sec.SYMBOL2='%s'
                     and sec.EXCHGID=exhm.EXCHGID
                     and exflex.SUFFIX='%s'
                     and exhm.EXCHANGE=exflex.EXCHANGE
                     AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
                     
                 result = Connections.exec_sql('KGR', query, as_dict = True)
+                if len(result) == 0:
+                    query = """SELECT distinct sec.SYMBOL6
+                        FROM SECURITY sec,
+                        EXCHANGEMAPPING exhm,
+                        FlextradeExchangeMapping exflex
+                        where sec.SYMBOL3='%s'
+                        and sec.EXCHGID=exhm.EXCHGID
+                        and exflex.SUFFIX='%s'
+                        and exhm.EXCHANGE=exflex.EXCHANGE
+                        AND sec.SYMBOL6 <> 'NULL'""" % (symbol1, suffix)
+                        
+                    result = Connections.exec_sql('KGR', query, as_dict = True)
     
     if len(result) == 0:
         logging.info(query)
@@ -182,8 +197,37 @@ def get_symbol6_from_ticker(ticker):
     else:
         return result[0]['SYMBOL6']
         
-
-
+def add_symbol_info_to_df(df = None):
+    # tres sale...avec ces bases de donnees impropre on ne peut pas faire mieux
+    #----------------------------
+    # TEST
+    #----------------------------
+    if ((df is None) or 
+        ('security_id' not in df.columns.tolist()) or ('EXCHGID' not in df.columns.tolist())):
+        raise ValueError('bad inputs')
+    
+    if df.shape[0] == 0:
+        return
+    
+    df['code_bloomberg'] = None
+    df['ISIN'] = None
+    
+    #----------------------------
+    # ADD
+    #----------------------------    
+    for i in range(0,df.shape[0]):
+        if df.security_id.values[i] > 0 and df.EXCHGID.values[i] is not None:
+            query = """ select top 1 SYMBOL2,SYMBOL5 from KGR..SECURITY
+                        where SYMBOL6 = %d
+                        and EXCHGID = '%s'
+                        and STATUS = 'A' """ %(int(df.security_id.values[i]),str(df.EXCHGID.values[i]))
+            
+            vals = Connections.exec_sql('KGR',query)
+            if len(vals) > 0:
+                df.code_bloomberg.values[i] = vals[0][1]
+                df.ISIN.values[i] = vals[0][0]
+    
+    
 #------------------------------------------------------------------------------
 # def
 #------------------------------------------------------------------------------
@@ -261,9 +305,9 @@ def symbol6toname(lids):
             # print x
             for i in np.where(lids==int(x[0]))[0]:
                 out[i]=str(x[1])
-    
+                
     return np.array(out)
-
+    
 #------------------------------------------------------------------------------
 # tradingtime
 #------------------------------------------------------------------------------
@@ -322,8 +366,8 @@ def tradingtime(security_id=None,date=None,data_exchange_info=None,mode='main'):
     # timezone
     for cols in colnumns_date:
         cols_vals=[]
-        for i in range(0,data_exchange_info.shape[0]):
-            if (out[cols].values[i] is not None):
+        for i in range(0,out.shape[0]):
+            if (out[cols].values[i] is not None and out[cols].values[i] == out[cols].values[i]):
                 tz=pytz.timezone(data_exchange_info['TIMEZONE'].values[i])
                 _tmp=tz.localize(datetime.combine(datetime(2000,1,1).date(),datetime.strptime(out[cols].values[i][0:8],'%H:%M:%S').time())).timetz()
                 if not (date==[]) and date is not None:
@@ -443,6 +487,7 @@ def exchangeid2tz(**kwargs):
 
     str_lids="("+"".join([str(x)+',' for x in uniqueext(lids)])
     str_lids=str_lids[:-1]+")"
+    
     # ----------------
     # request
     # ----------------
@@ -650,6 +695,66 @@ def local_tz_from(**kwargs):
     return out
 
 #------------------------------------------------------------------------------
+# index_component
+#------------------------------------------------------------------------------
+def index_component(index_name = None):
+    
+    if isinstance(index_name,basestring):
+        index_name = [index_name]
+    
+    if index_name is not None:
+        str_lids="("+"".join(["'" + str(x)+"'," for x in index_name])
+        str_lids=str_lids[:-1]+")"
+            
+        req = """SELECT ind.INDEXID , ind.INDEXNAME , ind.SYMBOL2 , ind.SYMBOL3  , ic.security_id
+                FROM KGR..indice_component ic , [KGR].[dbo].[INDEX] as ind
+                WHERE ind.INDEXID = ic.INDEXID
+                AND ind.INDEXNAME in %s
+                ORDER BY ic.security_id """ % (str_lids)        
+        
+        vals=Connections.exec_sql('KGR',req,schema = True)
+    else:
+        raise ValueError('TO DO')
+    
+    out=pd.DataFrame.from_records(vals[0],columns=vals[1])
+    
+    return out
+
+
+#------------------------------------------------------------------------------
+# index_component
+#------------------------------------------------------------------------------
+def get_sector_info(security_id = None):
+    ##############################################################
+    # input handling
+    ##############################################################
+    if isinstance(security_id,list):
+        security_id=np.array(security_id)
+    elif not isinstance(security_id,np.ndarray):
+        security_id=np.array([security_id])
+    
+    ##############################################################
+    # request and format
+    ##############################################################
+    str_lids="("+"".join([str(x)+',' for x in uniqueext(security_id)])
+    str_lids=str_lids[:-1]+")"
+    
+    req=("SELECT security_id,NAME,COUNTRY,CRNCY ,REL_INDEX , INDUSTRY_SECTOR, INDUSTRY_GROUP , INDUSTRY_SUBGROUP , ICB_INDUSTRY_NAME , ICB_SECTOR_NAME , ICB_SUBSECTOR_NAME , ICB_SUPERSECTOR_NAME"
+        " FROM KGR..TICKERREF" 
+        " WHERE security_id in %s"
+        " AND ENDDATE is null") % (str_lids) 
+        
+    vals=Connections.exec_sql('KGR',req,schema = True)
+    
+    if len(vals[0]) > 0:
+        out = pd.DataFrame.from_records(vals[0],columns=vals[1])
+    else:
+        out = pd.DataFrame()
+    
+    return out
+
+
+#------------------------------------------------------------------------------
 # matlab 'trading-destination'
 #------------------------------------------------------------------------------ 
 #case { 'trading-destination', 'trading_destination', 'trading_destination_id', 'td', 'tdi' }
@@ -815,10 +920,15 @@ def local_tz_from(**kwargs):
     
 if __name__ == "__main__":
     
-    print get_symbol6_from_ticker("BEId.AG")
-    print currency(security_id = 2)
+#     print get_sector_info(security_id = [2,26])
+     print get_symbol6_from_ticker("SMIF.LN")
+#     print get_symbol6_from_ticker("FR.PA")
+#     print index_component(index_name = ['CAC40','AEX'])
+    
+    #print currency(security_id = 2)
 #     print exchangeinfo(exchange_id = [-11,159,183])
-#     print exchangeinfo(security_id = 2) 
+#     print exchangeinfo(security_id = 58357) 
+#     print exchangeidmain(security_id = [58357,110,58357])
 #     print tag100_to_place_name()
 #     
 #     print get_symbol6_from_ticker("PSMd.AG")

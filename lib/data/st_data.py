@@ -11,13 +11,16 @@ from lib.data.matlabutils import *
 ###############################################################################
 # to_dataframe (mat -> datframe)
 ###############################################################################
-def to_dataframe(data,timezone=False):
+def to_dataframe(data, timezone=False, add_exch_main_id = False):
     
     if not data:
         return pd.DataFrame()
     #--------------------------------------------------------------------------
     # EXTRACT ST_DATA needed info
     #--------------------------------------------------------------------------
+    if len(data[0][0].colnames) == 0 or len(data[0][0].colnames) == 0:
+        return pd.DataFrame()
+    
     value = data[0][0].value
     colnames = [x[0] for x in data[0][0].colnames[0]]
     dates = [x[0] for x in data[0][0].date]
@@ -33,25 +36,41 @@ def to_dataframe(data,timezone=False):
     
     dataframe=pd.DataFrame.from_records(frame,columns=colnames.append('date'),index = ['date'])    
     
+    if add_exch_main_id:
+        exch_main_id = np.nan
+        if (('info' in data[0][0]._fieldnames) and
+            ('td_info' in data[0][0].info[0][0]._fieldnames) and
+            ('trading_destination_id' in data[0][0].info[0][0].td_info[0][0]._fieldnames)):
+            exch_main_id = int(data[0][0].info[0][0].td_info[0][0].trading_destination_id[0][0])
+            
+    
     # test if it is old cheuvreux data info
     is_old_data=True
     if (('info' in data[0][0]._fieldnames) and
         ('version' in data[0][0].info[0][0]._fieldnames) and
-        (data[0][0].info[0][0].version[0] =='kepche_1')):
+        (data[0][0].info[0][0].version[0] =='kepche_1' or  data[0][0].info[0][0].version[0] =='matgen_1.0')):
             is_old_data=False
             
     #--------------------------------------------------------------------------
     # Mapping des destinations de trading : Cheuvreux -> Kepler
     #--------------------------------------------------------------------------
     if (is_old_data and ('trading_destination_id' in colnames)):
+        
         if ('security_id' not in data[0][0].info[0][0]._fieldnames):
-                raise NameError('to_dataframe:security_id - Security_id info is missing !')      
+            raise NameError('to_dataframe:security_id - Security_id info is missing !')
+            
         td_newvals=get_repository.tdidch2exchangeid(td_id=dataframe['trading_destination_id'].values,
                                     security_id=data[0][0].info[0][0].security_id[0][0])
+        
+        if add_exch_main_id and exch_main_id > 0:
+            exch_main_id = int(get_repository.tdidch2exchangeid(td_id=[exch_main_id] , security_id=data[0][0].info[0][0].security_id[0][0]))
+            
         del dataframe['trading_destination_id']
         dataframe.insert(0,'exchange_id',td_newvals)    
+        
     elif ('trading_destination_id' in colnames):
         dataframe=dataframe.rename(columns={'trading_destination_id':'exchange_id'})
+        
     else:
         raise NameError('to_dataframe:trading_destination_id - trading_destination_id columns is missing !')
     
@@ -76,7 +95,13 @@ def to_dataframe(data,timezone=False):
                 raise NameError('to_dataframe:timezone - No timezone found in database')
         else:
             raise NameError('to_dataframe:timezone - Timezone can"t be found in the input matfile')
-       
+    
+    if add_exch_main_id:
+        dataframe['is_exchange_id_main'] = np.nan
+        if exch_main_id > 0:
+            dataframe['is_exchange_id_main'] = 0
+            dataframe['is_exchange_id_main'][dataframe['exchange_id'] == exch_main_id] = 1
+    
     return dataframe
     
     

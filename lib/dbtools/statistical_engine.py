@@ -53,7 +53,7 @@ def get_reference_run(estimator_id=None,level=None):
     
     return out
 
-##------------------------------------------------------------------------------
+##-----------------------------------------------------------------------------
 # get_reference_param
 #------------------------------------------------------------------------------
 def get_reference_param(context_id,domain_id,estimator_id):
@@ -124,6 +124,100 @@ def check_db_update(date):
     
     return out
    
+   
+##-----------------------------------------------------------------------------
+# param curve 2 df
+ #------------------------------------------------------------------------------   
+def paramscurve_to_df(params_curve = None,slice_duration_min = 5):
+    
+    # TODO : handle timezone....
+    
+    #---------------
+    #- TEST
+    if params_curve is None:
+        raise ValueError('bad inputs')
+        
+    if params_curve.shape[0] == 0:
+        return
+        
+    out = pd.DataFrame()
+    
+    #-- end of first slice time
+    nb_seconds = round((params_curve['value'][params_curve['parameter_name'] == 'end_of_first_slice'].values[0])*24*60*60)
+    eofs = (dt.datetime(2014,1,1,0,0,0) + dt.timedelta(seconds = nb_seconds)).timetz()
+    
+    #-- slices
+    slices = params_curve['parameter_name'].values
+    slices = np.sort(slices[np.nonzero([x[:min(5,len(x))]=='slice' for x in slices])[0]]).tolist()
+    
+    for i in range(0,len(slices)):
+        out = out.append(pd.DataFrame([{'begin_slice' : (dt.datetime.combine(dt.datetime(2014,1,1,0,0,0),eofs) + dt.timedelta(seconds = (i-1)*slice_duration_min*60)).timetz(),
+                                  'end_slice' : (dt.datetime.combine(dt.datetime(2014,1,1,0,0,0),eofs) + dt.timedelta(seconds = (i)*slice_duration_min*60)).timetz(),
+                                  'proportion' : params_curve['value'][params_curve['parameter_name'] == slices[i]].values[0]}]))
+    
+    
+    
+    
+    #-- opening auction
+    out['opening_auction'] = 0
+    out['intraday_auction'] = 0
+    out['closing_auction'] = 0
+    
+    auctions = ['open','mid','close']
+    
+    for _aa in  auctions:
+        
+        if 'auction_' + _aa + '_closing' in params_curve['parameter_name'].values.tolist():
+            value = 0
+            atime = round((params_curve['value'][params_curve['parameter_name'] == 'auction_' + _aa + '_closing'].values[0])*24*60*60)
+            atime = (dt.datetime(2014,1,1,0,0,0) + dt.timedelta(seconds = atime)).timetz()
+            
+            if 'auction_' + _aa in params_curve['parameter_name'].values.tolist():
+                value = params_curve['value'][params_curve['parameter_name'] == 'auction_' + _aa].values[0]
+            
+            if _aa == 'open':
+                #-- first slice begin time to change
+                out.begin_slice.values[0] = atime
+                #-- update the dataframe
+                out = out.append(pd.DataFrame([{'begin_slice' : atime,
+                                                'end_slice' : atime,
+                                                'proportion' : value,
+                                                'opening_auction' : 1,
+                                                'intraday_auction' : 0,
+                                                'closing_auction' : 0}]))
+            elif _aa == 'mid':
+                #-- update the dataframe
+                out = out.append(pd.DataFrame([{'begin_slice' : atime,
+                                                'end_slice' : atime,
+                                                'proportion' : value,
+                                                'opening_auction' : 0,
+                                                'intraday_auction' : 1,
+                                                'closing_auction' : 0}]))
+            elif _aa == 'close':
+                #-- update the dataframe
+                out = out.append(pd.DataFrame([{'begin_slice' : atime,
+                                                'end_slice' : atime,
+                                                'proportion' : value,
+                                                'opening_auction' : 0,
+                                                'intraday_auction' : 0,
+                                                'closing_auction' : 1}]))
+                                                
+    
+    out.set_index('end_slice', drop = False , inplace = True)
+    out.sort_index(inplace = True)
+    
+    return out
+
+
+                                        
+
+ 
+                                        
+        
+         
+
+
+
 if __name__ == "__main__":
     
     Connections.change_connections('production')

@@ -10,11 +10,27 @@ from datetime import datetime
 from lib.dbtools.connections import Connections
 import simplejson
 #import pytz
+import logging
+from lib.logger.custom_logger import *
 
 #------------------------------------------------------------------------------
 # SIDE
 #------------------------------------------------------------------------------
 def Side(x):
+    #-- test if do not need to map
+    if all(map(lambda y : (not isinstance(y,basestring)) and (float(y) == 1.0 or float(y) == -1.0),x)):
+        if isinstance(x,pd.DataFrame) or isinstance(x,pd.TimeSeries):
+            out = x.values
+        elif isinstance(x,list):
+            out = np.array(x)
+        elif isinstance(x,np.array):
+            out = x
+        else:
+            raise ValueError('bad')
+        
+        return out
+    
+    #-- or map
     out=np.array([np.NaN]*len(x))
     out[np.nonzero([y in ['1','3'] for y in x])[0]]=1
     out[np.nonzero([y in ['2','4','6','5'] for y in x])[0]]=-1
@@ -24,17 +40,35 @@ def Side(x):
 #------------------------------------------------------------------------------
 # ExcludeAuction
 #------------------------------------------------------------------------------
-def ExcludeAuction(x):
-    if x==0:
-        out=[0,0,0,1]
-    elif x==1:
+def ExcludeAuction(x , exec_opening = None,exec_closing = None):
+    
+    if str(x) == 'True' or str(x) == 'False':
         out=[1,1,1,1]
-    elif x==2:
-        out=[1,0,0,1]    
-    elif x==3:
-        out=[0,0,1,1]   
+        
+        if exec_opening is None or exec_closing is None:
+            raise ValueError('auction exec volume is needed')
+        
+        if exec_opening > 0:
+            out[0] = 0
+            
+        if exec_closing > 0:
+            out[2] = 0
+            
+        logging.warning('ExcludeAuction fix tag is an boolean - executed quantity has been used')
     else:
-        raise NameError('mapping:ExcludeAuction - Bad inputs')
+        if x==0:
+            out=[0,0,0,1]
+        elif x==1:
+            out=[1,1,1,1]
+        elif x==2:
+            out=[1,0,0,1]    
+        elif x==3:
+            out=[0,0,1,1]
+        elif isinstance(x,basestring) and x.lower() == 'no auctions exclude':
+            out=[0,0,0,1]
+        else:
+            raise NameError('mapping:ExcludeAuction - Bad inputs')
+        
     return out
 
 #------------------------------------------------------------------------------
@@ -81,6 +115,8 @@ def StrategyName(id, sweep_lit = None, database = 'Mars'):
     result     = collection.find(req).sort([("validity_date",-1)])
     l_result   = list(result)
     if len(l_result) == 0:
+        if id == 9:
+            return "HUNT"
         raise NameError('mapping:StrategyName - Bad inputs')
     return l_result[0]["short_name"]
 

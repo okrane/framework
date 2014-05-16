@@ -31,8 +31,9 @@ def autolabel_barh(rects):
     # attach some text labels
     for rect in rects:
         width = rect.get_width()
-        plt.text('%d'%(int(width)*1.02+2 ), rect.get_y() + rect.get_height()/2.5, width,
-                ha='left', va='bottom', size = 12, weight = 750)
+        if width > 0:
+            plt.text('%d'%(int(width)*1.02+2 ), rect.get_y() + rect.get_height()/2.5, width,
+                    ha='left', va='bottom', size = 12, weight = 750)
         
 class DataProcessor(object):
     get_done = 0

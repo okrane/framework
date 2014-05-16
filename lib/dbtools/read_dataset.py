@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import scipy.io
 from datetime import *
+import time
 import os as os
 from lib.dbtools.connections import Connections
 # import lib.dbtools.get_repository as get_repository
@@ -82,16 +83,24 @@ def ft(**kwargs):
     #---- date info
     if "date" in kwargs.keys():
         date=kwargs["date"]
-        date_newf=datetime.strftime(datetime.strptime(date, '%d/%m/%Y'),'%Y_%m_%d') 
+        date_ = datetime.strptime(date, '%d/%m/%Y')
+        date_newf = datetime.strftime(date_,'%Y_%m_%d')
+        year_newf = datetime.strftime(date_,'%Y')
+        month_newf = datetime.strftime(date_,'%m')
     else:
         raise NameError('read_dataset:ft - Bad input') 
-        
+    
+    #---- date info
+    add_exch_main_id = False
+    if "add_exch_main_id" in kwargs.keys():
+        add_exch_main_id = kwargs["add_exch_main_id"]
+    
     #### CONFIG and CONNECT
     # TODO: in xml file
     if os.name=='nt':
-        ft_root_path="Q:\\kc_repository"
+        ft_root_path="Q:\\kc_repository_new"
     else:
-        ft_root_path="/quant/kc_repository"
+        ft_root_path="/quant/kc_repository_new"
         
     ##############################################################
     # load and format
@@ -108,15 +117,17 @@ def ft(**kwargs):
         
         filename = '%s/%s.mat'%(path, date_newf)
     else:
-        filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
+        # filename=os.path.join(ft_root_path,'get_tick','ft','%d'%(ids),'%s.mat'%(date_newf))
+        filename = os.path.join(ft_root_path,'get_tick','ft','%d'%(ids % 100),'%d'%(ids),year_newf,month_newf,'%s.mat'%(date_newf))
 
     try:
+        t0 = time.clock()
         mat = scipy.io.loadmat(filename, struct_as_record  = False)
         if remote == True and os.name != 'nt':
             os.remove(filename)
-        logging.info('read_dataset:ft - File LOAD <'+filename+'>')
+        logging.info('read_dataset:ft -' +  'TIME : <%3.2f> secs ' %(time.clock()-t0) + 'File LOAD <'+filename+'>')
         
-        return st_data.to_dataframe(mat['data'],timezone=True)
+        return st_data.to_dataframe(mat['data'] , timezone=True , add_exch_main_id = add_exch_main_id)
     except IOError:
         get_traceback()
 #         raise NameError('read_dataset:ft - This file does not exist <'+filename+'>')
@@ -131,9 +142,13 @@ def ft(**kwargs):
 #  ftickdb : filter and LOAD MATFILES OF STOCK TBT DATA
 #--------------------------------------------------------------------------
 def ftickdb(**kwargs):
+    t0 = time.clock()
     data=ft(**kwargs)
     if data.shape[0]>0:
         data=data[(data['trading_after_hours']==0) & (data['trading_at_last']==0) & (data['cross']==0)]
+    
+    logging.info('read_dataset:ftickdb - All load process took : <%3.2f> secs ' %(time.clock()-t0))
+    
     return data
 
 

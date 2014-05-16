@@ -10649,7 +10649,7 @@
         {
           "number": "9257",
           "name": "ExcludeAuction",
-          "type": "BOOLEAN"
+          "type": "INT"
         },
         {
           "number": "9252",

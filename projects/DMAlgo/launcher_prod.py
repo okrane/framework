@@ -12,6 +12,9 @@ if __name__ == '__main__':
     date                = datetime.strftime(yesterday, "%Y%m%d")
     dates               = [date]
    
+    # data_server: mongodb
+    # database: mongodb
+    # source: FIX Logs
     DatabasePlug(database_server    = database_server, 
                  database           = database,
                  environment        = environment, 

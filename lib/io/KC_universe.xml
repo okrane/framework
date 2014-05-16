@@ -17,7 +17,19 @@
 			<user username='flexsys' passwd='flexsys1' />
 			<user username='flexapp' passwd='flexapp1' />
 		</server>
-	</env >
+		<server name='PARALG01' ip_addr='172.29.0.51' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+		<server name='PARALG02' ip_addr='172.29.0.52' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+        <server name='PARALG03' ip_addr='172.29.0.53' >
+            <user username='flexsys' passwd='flexsys1' />
+            <user username='flexapp' passwd='flexapp1' />
+        </server>
+	</env>
 	<env name='HPP'>
 		<server name='PARFLT02' ip_addr='172.29.0.32' >
 			<user username='flexsys' passwd='flexsys1' />
@@ -30,23 +42,28 @@
 			<user username='flexsys' passwd='flexsys1' />
 			<user username='flexapp' passwd='flexapp1' />
 		</server>
-	</env >
+	</env>
 	<env name='prod'>
 		<server name='LUIFLT01' ip_addr='81.255.55.50' >
 			<user username='flexsys' passwd='flexsys1' />
 			<user username='flexapp' passwd='flexapp1' />
 		</server>
+        <server name='TELFLT01' ip_addr='172.25.156.40' >
+			<user username='flexsys' passwd='flexsys1' />
+			<user username='flexapp' passwd='flexapp1' />
+		</server>
+
+	</env>
+	<env name='dr'>
 		<server name='LUIFLT02' ip_addr='81.255.55.51' >
 			<user username='flexsys' passwd='flexsys1' />
 			<user username='flexapp' passwd='flexapp1' />
 		</server>
-		<server name='WATFLT01' ip_addr='172.25.152.73' >
+        <server name='TELFLT02' ip_addr='172.25.156.41' >
 			<user username='flexsys' passwd='flexsys1' />
 			<user username='flexapp' passwd='flexapp1' />
 		</server>
-		<server name='WATFLT02' ip_addr='172.25.152.78' >
-			<user username='flexsys' passwd='flexsys1' />
-			<user username='flexapp' passwd='flexapp1' />
-		</server>
+
+
 	</env>
 </universe>

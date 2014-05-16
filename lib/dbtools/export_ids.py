@@ -22,7 +22,7 @@ def generate_file(day, all=False, export_path=os.path.realpath(__file__), last_d
     gl_list  = [] 
     
     conf    = get_conf('prod')
-    server  = conf['WATFLT01']
+    server  = conf['TELFLT01']
     ssh     = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     ssh.connect(server['ip_addr'], 

@@ -23,114 +23,9 @@ import lib.stats.formula as formula
 from lib.tca.formulatca import FormulaTCA
 from lib.tca.algoconfig import AlgoComputeStatsConfig
 from lib.io.toolkit import get_traceback
+import copy
 
-# m_ = 'market'
-#_p_ : period / _b_ : before / _d_ : daily
-CONFIG_SLICER_SEQUENCE_STATS = {'before_lit' :
-                         {'order_constr' : False,
-                          'period_time_constr' : True,
-                          'period_phase_constr' : True,
-                          'filter' : {'mode' : 'before' , 'market' : 'all' , 'market_visibility' : 'lit'},
-                          'slicer' : {'m_b_arrival_price_lit' : lambda df : slicer.last_finite(df.volume.values)},
-                         },
-                         'period_lit' :
-                         {'order_constr' : False,
-                          'period_time_constr' : True,
-                          'period_phase_constr' : True,
-                          'filter' : {'mode' : 'during' , 'market' : 'all' , 'market_visibility' : 'lit'},
-                          'slicer' : {'m_p_volume_lit' : lambda df : np.sum(df.volume.values),
-                                      'm_p_turnover_lit' : lambda df : np.sum(df.volume.values*df.price.values),
-                                      'm_p_volume_opening' : lambda df : np.sum(df[df['opening_auction']==1].volume.values),
-                                      'm_p_volume_closing' : lambda df : np.sum(df[df['closing_auction']==1].volume.values),
-                                      'm_p_volume_intraday' : lambda df : np.sum(df[df['intraday_auction']==1].volume.values),
-                                      'm_p_volume_other_auctions' : lambda df : np.sum(df[(df['auction']==1) & (df['opening_auction']==0) & (df['intraday_auction']==0) & (df['closing_auction']==0)].volume.values),
-                                      'm_p_open_lit' : lambda df : slicer.first_finite(df.price.values),
-                                      'm_p_high_lit' : lambda df : np.max(df.price.values),
-                                      'm_p_low_lit' : lambda df : np.min(df.price.values),
-                                      'm_p_close_lit' : lambda df : slicer.last_finite(df.price.values),
-                                      'm_p_vwas_lit' : lambda df : slicer.vwas(df.bid.values,df.ask.values,df.price.values,df.volume.values,df.auction.values),
-                                      'm_p_vol_GK_lit' : lambda df : float(formula.vol_gk(np.array([slicer.first_finite(df.price.values)]), np.array([np.max(df.price.values)]), np.array([np.min(df.price.values)]),
-                                                                np.array([slicer.last_finite(df.price.values)]),np.array([ np.size(df.price.values)]), 
-                                                                np.array([slicer.last_finite([x.to_datetime() for x in df.index])-slicer.first_finite([x.to_datetime() for x in df.index])]))),
-                                      'm_p_nb_trades_lit_cont' : lambda df : np.size(df[df['auction'] == 0].volume.values)},
-                         },
-                         'period_lit_main' :
-                         {'order_constr' : False,
-                          'period_time_constr' : True,
-                          'period_phase_constr' : True,
-                          'filter' : {'mode' : 'during' , 'market' : 'main' , 'market_visibility' : 'lit'},
-                          'slicer' : {'m_p_volume_lit_main' : lambda df : np.sum(df.volume.values),
-                                      'm_p_turnover_lit_main' : lambda df : np.sum(df.volume.values*df.price.values),
-                                      'm_p_vwas_lit_main' : lambda df : slicer.vwas(df.bid.values,df.ask.values,df.price.values,df.volume.values,df.auction.values),
-                                      'm_p_nb_trades_lit_main_cont' : lambda df : np.size(df[df['auction'] == 0].volume.values)},
-                         },
-                         'period_dark' :
-                         {'order_constr' : False,
-                          'period_time_constr' : True,
-                          'period_phase_constr' : True,
-                          'filter' : {'mode' : 'during' , 'market' : 'all' , 'market_visibility' : 'dark'},
-                          'slicer' : {'m_p_volume_dark' : lambda df : np.sum(df.volume.values),
-                                      'm_p_turnover_dark' : lambda df : np.sum(df.volume.values*df.price.values)},
-                         },
-                         'period_lit_constr' :
-                         {'order_constr' : True,
-                          'period_time_constr' : True,
-                          'period_phase_constr' : True,
-                          'filter' : {'mode' : 'during' , 'market' : 'all' , 'market_visibility' : 'lit'},
-                          'slicer' : {'m_p_volume_lit_constr' : lambda df : np.sum(df.volume.values),
-                                      'm_p_turnover_lit_constr' : lambda df : np.sum(df.volume.values*df.price.values)},
-                         },
-                         'period_lit_main_constr' :
-                         {'order_constr' : True,
-                          'period_time_constr' : True,
-                          'period_phase_constr' : True,
-                          'filter' : {'mode' : 'during' , 'market' : 'main' , 'market_visibility' : 'lit'},
-                          'slicer' : {'m_p_volume_lit_main_constr' : lambda df : np.sum(df.volume.values),
-                                      'm_p_turnover_lit_main_constr' : lambda df : np.sum(df.volume.values*df.price.values)},
-                         },
-                         'period_dark_constr' :
-                         {'order_constr' : True,
-                          'period_time_constr' : True,
-                          'period_phase_constr' : True,
-                          'filter' : {'mode' : 'during' , 'market' : 'all' , 'market_visibility' : 'dark'},
-                          'slicer' : {'m_p_volume_dark_constr' : lambda df : np.sum(df.volume.values),
-                                      'm_p_turnover_dark_constr' : lambda df : np.sum(df.volume.values*df.price.values)},
-                         },
-                        }
-
-CONFIG_FORMULA_SEQUENCE_STATS = {'m_b_arrival_price_lit' : lambda df : map(lambda x,y : x if x > 0 else y, df.m_b_arrival_price_lit.values , df.m_p_open_lit.values)}
-
-
-CONFIG_SLICER_TCA = {'occ_exec_first_deal_time' : {'default': None ,'slicer' : lambda df : df.exec_first_deal_time.values[0]},
-                    'occ_exec_last_deal_time' : {'default': None ,'slicer' : lambda df : df.exec_last_deal_time.values[-1]},
-                    'occ_bench_starttime' : {'default': None ,'slicer' : lambda df : df.bench_starttime.values[0]},
-                    'occ_bench_endtime' : {'default': None ,'slicer' : lambda df : df.bench_endtime.values[-1]},
-                    #--- order market stats
-                    'occ_m_p_vwap_lit' : {'default': np.nan ,'slicer' : lambda df : np.nan if np.sum(df.m_p_volume_lit.values) == 0 else np.sum(df.m_p_turnover_lit.values)/np.sum(df.m_p_volume_lit.values)},
-                    'occ_m_p_volume_lit' : {'default': np.nan ,'slicer' : lambda df : np.sum(df.m_p_volume_lit.values)},
-                    'occ_m_p_turnover_lit' : {'default': np.nan ,'slicer' : lambda df : np.sum(df.m_p_turnover_lit.values)},
-                    'occ_m_p_vwap_lit_constr' : {'default': np.nan ,'slicer' : lambda df : np.nan if np.sum(df.m_p_volume_lit_constr.values) == 0 else np.sum(df.m_p_turnover_lit_constr.values)/np.sum(df.m_p_volume_lit_constr.values)},
-                    'occ_m_p_volume_lit_constr' : {'default': np.nan ,'slicer' : lambda df : np.sum(df.m_p_volume_lit_constr.values)},
-                    'occ_m_p_turnover_lit_constr' : {'default': np.nan ,'slicer' : lambda df : np.sum(df.m_p_turnover_lit_constr.values)},
-                    'occ_m_p_vwas_lit': {'default': np.nan ,'slicer' : lambda df : slicer.weighted_statistics(df.m_p_vwas_lit.values,df.m_p_volume_lit.values,mode='mean')},
-                    'occ_m_p_vwas_lit_main': {'default': np.nan ,'slicer' : lambda df : slicer.weighted_statistics(df.m_p_vwas_lit_main.values,df.m_p_volume_lit_main.values,mode='mean')},
-                    'occ_m_b_arrival_price_lit': {'default': np.nan ,'slicer' : lambda df : slicer.first_finite(df.m_b_arrival_price_lit.values)},
-                    'occ_m_p_close_lit': {'default': np.nan ,'slicer' : lambda df : slicer.last_finite(df.m_p_close_lit.values)}}
-
-CONFIG_FORMULA_TCA={'occ_exec_vwap' : lambda df : df.occ_exec_turnover/df.occ_exec_qty,
-                        #--- performance
-                        'occ_slippage_vwap_bp' : lambda df : FormulaTCA.slippage_tca(df = df, bench='vwap', units='bp', exclude_dark=True, constr=False, agg=True, data_level='occurrence'),
-                        'occ_slippage_vwap_constr_bp' :  lambda df : FormulaTCA.slippage_tca(df = df, bench='vwap', units='bp', exclude_dark=True, constr=True, agg=True, data_level='occurrence'),
-                        'occ_slippage_is_bp' :  lambda df : FormulaTCA.slippage_tca(df = df, bench='is', units='bp', exclude_dark=True, constr=False, agg=True, data_level='occurrence'),
-                        'occ_spread_bp' :  lambda df : map(lambda x,y : 10000 * min(x,y),df.occ_m_p_vwas_lit,df.occ_m_p_vwas_lit_main)/df.occ_m_p_vwap_lit,
-                        #--- check against fe data
-                        'occ_fe_turnover' :  lambda df : df.occ_fe_inmkt_turnover + df.occ_fe_prv_turnover,
-                        'occ_fe_volume' : lambda df : df.occ_fe_inmkt_volume + df.occ_fe_prv_volume,
-                        'occ_fe_vwap' : lambda df : ((df.occ_fe_inmkt_turnover + df.occ_fe_prv_turnover) / (df.occ_fe_inmkt_volume + df.occ_fe_prv_volume)),
-                        'occ_fe_arrival_price' : lambda df : df.occ_fe_arrival_price.apply(lambda x : np.nan if x<=0.0 else x)
-                       }
-         
-
+        
 # derived from the class algodataprocessor, for computing statistics
 
 class AlgoStatsProcessor(AlgoDataProcessor):
@@ -163,7 +58,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         # --
         self.get_xls_occ_fe_data()
         dates = [x.to_datetime() for x in self.data_xls_occ_fe.index]
-        max_date_xls = pytz.UTC.localize(dt.datetime.combine(np.max(dates).date(),dt.time(23,59)))
+        max_date_xls = pytz.UTC.localize(dt.datetime.combine(max(dates).date(),dt.time(23,59)))
         
         # -- filter start end
         if self.start_date is not None and self.end_date is not None:
@@ -273,7 +168,7 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             logging.info('data_intraday_agg_deals already loaded')
             return
         
-        # TODO : aggréger ces infos dans la base de données
+        # TODO : aggreger ces infos dans la base de donnees
         #-----------------------------------
         # COMPUTE AGG DATA
         #-----------------------------------
@@ -340,322 +235,199 @@ class AlgoStatsProcessor(AlgoDataProcessor):
                 else:
                     self.data_sequence['bench_starttime'][id_seq]=self.data_sequence[id_seq].index[0].to_datetime() + diff_2apply
                     
-                if (isinstance(self.data_sequence['StartTime'][id_seq],dt.datetime) and 
-                    self.data_sequence['StartTime'][id_seq].astimezone(tz=pytz.utc)>self.data_sequence['bench_starttime'][id_seq]):
+                if (isinstance(self.data_sequence['StartTime'][id_seq].values[0],dt.datetime) and 
+                    self.data_sequence['StartTime'][id_seq].values[0].astimezone(tz=pytz.utc) > self.data_sequence['bench_starttime'][id_seq].values[0]):
                     
-                    self.data_sequence['bench_starttime'][id_seq]=self.data_sequence['StartTime'][id_seq].astimezone(tz=pytz.utc)
+                    self.data_sequence['bench_starttime'][id_seq]=self.data_sequence['StartTime'][id_seq].values[0].astimezone(tz=pytz.utc)
                     
                 #---------
                 # -- bench_endtime
                 if i < (len(uni_nb_replace)-1):
                     # if not last sequence : endtime = start time next sequence
-                    id_next_seq = (self.data_sequence['nb_replace']==uni_nb_replace[i+1])
+                    id_next_seq = (self.data_sequence['nb_replace'] == uni_nb_replace[i+1])
                     self.data_sequence['bench_endtime'][id_seq] = self.data_sequence[id_next_seq].index[0].to_datetime() + diff_2apply
                     
                 else:
                     # if last sequence : max(start time, eff_endtime,last_deal)
-                    if isinstance(self.data_sequence['eff_endtime'][id_seq],dt.datetime):
-                        self.data_sequence['bench_endtime'][id_seq] = max(self.data_sequence['bench_starttime'][id_seq],self.data_sequence['eff_endtime'][id_seq]) + dt.timedelta(seconds=1)
+                    if isinstance(self.data_sequence['eff_endtime'][id_seq].values[0],dt.datetime):
+                        self.data_sequence['bench_endtime'][id_seq] = max(self.data_sequence['bench_starttime'][id_seq].values[0],self.data_sequence['eff_endtime'][id_seq].values[0]) + dt.timedelta(seconds=1)
                     else:
                         self.data_sequence['bench_endtime'][id_seq] = self.data_sequence['bench_starttime'][id_seq] + dt.timedelta(seconds=1)
-                    
-                    if (self.data_sequence['strategy_name_mapped'][id_seq].values[0].lower()=="vwap" and 
+                        
+                    if isinstance(self.data_sequence['exec_last_deal_time'][id_seq].values[0],dt.datetime):
+                        # bidouille si proche du time de closing de notre base, on prend bien une marge
+                        if isinstance(lasttick_datetime,dt.datetime) and (abs((self.data_sequence['exec_last_deal_time'][id_seq].values[0] - lasttick_datetime).total_seconds()) < 5):
+                            self.data_sequence['bench_endtime'][id_seq] = lasttick_datetime + dt.timedelta(seconds=5)
+                            
+                        self.data_sequence['bench_endtime'][id_seq] = max(self.data_sequence['bench_endtime'][id_seq].values[0],self.data_sequence['exec_last_deal_time'][id_seq].values[0] + dt.timedelta(seconds=1)) 
+                        
+                    if (isinstance(self.data_sequence['strategy_name_mapped'][id_seq].values[0],basestring) and self.data_sequence['strategy_name_mapped'][id_seq].values[0].lower()=="vwap" and 
                             self.data_sequence['reason'][id_seq].values[0].lower()=="filled"):
                                 # fullfiled vwap end time is the one set by the client if it is set or the end of trading
-                                if isinstance(self.data_sequence['EndTime'][id_seq],dt.datetime):
-                                    self.data_sequence['bench_endtime'][id_seq]=max(self.data_sequence['bench_endtime'][id_seq],self.data_sequence['EndTime'][id_seq].astimezone(tz=pytz.utc))
-                                    
-                    self.data_sequence['bench_endtime'][id_seq] = max(self.data_sequence['bench_endtime'][id_seq],self.data_sequence['exec_last_deal_time'][id_seq])        
-                    
-                # on coupe 5 secondes après notre dernière données tick                    
+                                if isinstance(self.data_sequence['EndTime'][id_seq].values[0],dt.datetime):
+                                    self.data_sequence['bench_endtime'][id_seq]=max(self.data_sequence['bench_endtime'][id_seq].values[0],self.data_sequence['EndTime'][id_seq].values[0].astimezone(tz=pytz.utc))
+                                     
+                # on coupe 5 secondes apres notre derniere donnees tick                    
                 if isinstance(lasttick_datetime,dt.datetime):
                     self.data_sequence['bench_endtime'][id_seq]=min(self.data_sequence['bench_endtime'][id_seq].values[0],lasttick_datetime+dt.timedelta(seconds=5))
             
             #--- update enrichment colnames
             self.__update_stats_enrichment( mode = 'db' ,level = level , columns = ['bench_starttime','bench_endtime'])
             
+        elif level == 'occurrence':
+            #--
+            #- test if only on one occurrence and market data correspond to the right security
+            if len(np.unique(getattr(self,'data_' + level)['p_occ_id'].values).tolist()) > 1:
+                logging.error('__add_bentime only works for one occurrence')
+                raise ValueError('__add_bentime only works for one occurrence')
+            
+            #--
+            #- only works if it has been computed at the sequence level                      
+            if (getattr(self,'data_sequence') is None) or (getattr(self,'data_sequence').shape[0] == 0) or ('bench_starttime' not in getattr(self,'data_sequence').columns.tolist()):
+                raise ValueError('__add_bench_time should be launch before at sequence level')
+            
+            self.data_occurrence['occ_bench_starttime'] = [slicer.first_finite(self.data_sequence['bench_starttime'].values)]
+            self.data_occurrence['occ_bench_endtime'] = [slicer.last_finite(self.data_sequence['bench_endtime'].values)]
+            
         else:
             raise ValueError('Not defined for level <' + level + '>')   
         
-    def compute_tca_stats(self, market_data = None , referential_data = None , mode_colnames_out = 'tca'):
-        #-----------------------------------
-        # GET DATA
-        #-----------------------------------
-        # TODO :
-        # what should be done, is extracting the right columns from the database, here we have to compute it !
-        self.compute_db_stats(market_data=market_data,referential_data=referential_data)
-                
-        #-----------------------------------
-        # AGG STATS BY OCCURENCE
-        #-----------------------------------        
-        # TCA is on occurrence, we have to aggregate execution and market
-        self.apply_slicer(in_level = 'sequence' , out_level = 'occurrence', 
-                          group_vars = ['p_occ_id'] , slicer = CONFIG_SLICER_TCA) 
-                               
-        #-----------------------------------
-        # FORMULA ON OCCURENCE
-        #-----------------------------------      
-        # A TESTER
-        self.apply_formula(level = 'occurrence', formula = CONFIG_FORMULA_TCA)
-          
-        #-----------------------------------
-        # CONSTRAINt ON COLNAMES
-        #----------------------------------- 
-        keep_colnames = self.get_colnames(level = 'occurrence', mode = mode_colnames_out)
-        self.data_occurrence = self.data_occurrence[keep_colnames]
         
         
-    def compute_db_stats(self,market_data=None,referential_data=None):
-        #-----------------------------------
-        # GET DATA
-        #-----------------------------------
-        self.get_db_data(level='occurrence')
-        self.get_db_data(level='sequence')
-        self.get_db_data(level='deal')
+    def __flag_deals(self, market_data = None, referential_data = None):
+        # create columns columns 'phase'
+        # value taken : 'MF': manual fill / 'AO' : opening / 'AC' : closing
         
-        #-----------------------------------
-        # TESTS INPUTS
-        #-----------------------------------
-        if (self.data_occurrence is None or self.data_sequence is None or self.data_deal is None or 
-            market_data is None or referential_data is None):
-            logging.error('bad inputs')
-            raise ValueError('bad inputs')
-            
-        if self.data_occurrence.shape[0] != 1:
-            logging.error('only works for one occurrence')
-            raise ValueError('only works for one occurrence')
-            
-        if (market_data.security_id!=referential_data.security_id or 
-            self.data_occurrence['cheuvreux_secid'].values[0]!=market_data.security_id):
-            logging.error('not the same security')
-            raise ValueError('not the same security')           
-            
-        #-----------------------------------
-        # UPDATE DEALS
-        #-----------------------------------
-        # TO DO
-        
-        #-----------------------------------
-        # EXEC STATS
-        #-----------------------------------        
-        self.__compute_db_exec_stats()
-        
-        #-----------------------------------
-        # MARKET STATS
-        #-----------------------------------        
-        self.__compute_db_market_stats(market_data=market_data,referential_data=referential_data)
-        
-        
-    def __compute_db_market_stats(self, market_data=None, referential_data=None):
-        
-        self.apply_aggregate_market_stats(level = 'sequence', 
-                                          market_slicer = CONFIG_SLICER_SEQUENCE_STATS, formula = CONFIG_FORMULA_SEQUENCE_STATS, 
-                                          market_data = market_data, referential_data = referential_data)
-        
-#         #-----------------------------------
-#         # add benchtime
-#         #-----------------------------------
-#         lasttick_datetime=None
-#         if market_data.data_tick.shape[0]>0:
-#             lasttick_datetime=market_data.data_tick.index[-1].to_datetime()
-#             
-#         self.__add_benchtime(lasttick_datetime=lasttick_datetime)
-#         
-#         #-----------------------------------
-#         # ADD intraday market stats on SEQUENCE
-#         #-----------------------------------  
-#         new_data_sequence = pd.DataFrame()
-#         new_added_columns = []
-#         
-#         for iseq in range(0,self.data_sequence.shape[0]):
-#             
-#             data_this_seq = self.data_sequence[self.data_sequence['p_cl_ord_id'] == self.data_sequence.ix[iseq]['p_cl_ord_id']]
-#             
-#             #---
-#             #- compute stats
-#             data_stats = {}
-#             for periodstats in CONFIG_SLICER_SEQUENCE_STATS.keys():
-#                 print periodstats
-#                 #-- create filter
-#                 filter_ = CONFIG_SLICER_SEQUENCE_STATS[periodstats]['filter']
-#                 
-#                 if CONFIG_SLICER_SEQUENCE_STATS[periodstats]['period_time_constr']:
-#                     filter_.update({'start_date' : data_this_seq['bench_starttime'].values[0], 'end_date': data_this_seq['bench_endtime'].values[0]})
-#                     
-#                 if CONFIG_SLICER_SEQUENCE_STATS[periodstats]['period_phase_constr']:
-#                     filter_.update({'exclude_auction': mapping.ExcludeAuction(data_this_seq['ExcludeAuction'].values[0])})
-#                 
-#                 if CONFIG_SLICER_SEQUENCE_STATS[periodstats]['order_constr']:
-#                     filter_.update({'order_limit': data_this_seq['Price'].values[0], 'order_side': data_this_seq['Side'].values[0]})
-#                     
-#                 #-- compute           
-#                 # To DO : gérer si il n y ' a pas de data ? valeur par défaut ?            
-#                 data_stats.update(market_data.compute_agg_period_tick(filterd = filter_, 
-#                                                     slicerd = CONFIG_SLICER_SEQUENCE_STATS[periodstats]['slicer']))
-#                 
-#             new_added_columns = list(set(new_added_columns+data_stats.keys()))
-#             data_stats = pd.DataFrame([data_stats])
-#             data_stats['p_cl_ord_id'] = data_this_seq['p_cl_ord_id'].values[0]
-#             
-#             #---
-#             #- add
-#             index_name = data_this_seq.index.name
-#             data_this_seq = data_this_seq.reset_index().merge(data_stats,how='left',on=['p_cl_ord_id']).set_index(index_name)
-#             new_data_sequence = new_data_sequence.append(data_this_seq)
-#             
-#         #--- update data + enrichment colnames
-#         self.data_sequence = new_data_sequence
-#         self.__update_stats_enrichment( mode = 'db' ,level = 'sequence' , columns = new_added_columns)
-#         del new_data_sequence
-#         del new_added_columns 
-#         
-#         #-----------------------------------
-#         # Apply formula
-#         #-----------------------------------
-#         self.apply_formula(level = 'sequence' ,  formula = CONFIG_FORMULA_SEQUENCE_STATS)
-            
-            
-        
-
-        
-        
-            
-    def __compute_db_exec_stats(self):
-        #-----------------------------------
-        # TESTS
-        #-----------------------------------
+        #-----------------
+        #-- TEST
+        #-----------------
         if self.data_deal is None:
-            logging.error('data_deal should be loaded')
-            raise ValueError('data_deal should be loaded')
+            raise ValueError('data_deal has to be loaded')
+            
+        if market_data is None or market_data.data_tick is None:
+            raise ValueError('market_data tick has to be loaded')
+            
+        if referential_data is None or referential_data.data_exchange_info is None:
+            raise ValueError('market_data tick has to be loaded')
+            
+        if self.data_deal.shape[0] == 0:
+            return
+            
+        #-----------------
+        #-- PREPROCESS
+        #-----------------
+        #-- in case, already the variable
+        add_columns = ['tphase','exchange_id','EXCHANGETYPE','dark']
+        for cols_ in add_columns:
+            if cols_ in self.data_deal.columns.tolist():
+                self.data_deal.drop(cols_ ,axis = 1)  
+            
+        self.data_deal['tphase'] = None
+        self.data_deal['dark'] = None
+        self.data_deal['EXCHANGETYPE'] = None
+        #--
+        if market_data.data_tick.shape[0] == 0:
+            self.data_deal['exchange_id'] = None
+            return
         
-        #-----------------------------------
-        # UPDATE Sequence
-        #-----------------------------------
-        if self.data_sequence is not None and self.data_sequence.shape[0]>0:
-            
-            #----------------
-            # STEP 1 : compute aggregate stats from deals
-            #----------------
-            
-            #---  config des stats to compute
-            config_stats={'exec_qty':{'default': 0.0 ,'slicer' : lambda df : np.sum(df.volume.values)},
-                    'exec_nb_trades': {'default': 0.0 ,'slicer' : lambda df : np.size(df.volume.values)},
-                    'exec_turnover': {'default': 0.0 ,'slicer' : lambda df : np.sum(map(lambda x,y : x*y,df.volume.values,df.price.values))},
-                    'exec_first_deal_time' : {'default': None ,'slicer' : lambda df : np.min([x.to_datetime() for x in df.index])},
-                    'exec_last_deal_time' : {'default': None ,'slicer' : lambda df : np.max([x.to_datetime() for x in df.index])}}
-                            
-            #--- compute
-            _add_data=pd.DataFrame()
-            if self.data_deal.shape[0]>0:
-                _add_data=dftools.agg(self.data_deal,
-                                      group_vars='p_cl_ord_id',
-                                      stats=dict([(x,config_stats[x]['slicer']) for x in config_stats.keys()]))
-            #---  initialize columns
-            for x in config_stats.keys():
-                self.data_sequence[x]=config_stats[x]['default']
-                    
-            #---  update data
-            if _add_data.shape[0]>0:
-                idx_col_in=mutils.ismember(np.array(_add_data.columns),np.array(self.data_sequence.columns))[1].tolist()
-                for idx in range(0,_add_data.shape[0]):
-                    idx_in=np.nonzero(self.data_sequence['p_cl_ord_id']==_add_data.iloc[idx]['p_cl_ord_id'])[0]
-                    self.data_sequence.iloc[idx_in,idx_col_in]=_add_data.iloc[idx].values.tolist()
-                    
-            #--- update enrichment colnames
-            self.__update_stats_enrichment( mode = 'db' ,level = 'sequence' , columns = config_stats.keys())
-            
-
-            #----------------
-            # STEP 2 : compute cumulative stats at occurence level : prefixed by occ_prev_
-            #----------------
-            
-            self.data_sequence.sort_index( by = ['p_cl_ord_id','nb_replace'], ascending = True , inplace = True)
-            
-            #---  config des stats to compute
-            config_stats={'occ_prev_exec_qty': {'default': 0.0 ,'formula' : lambda df : np.concatenate([[0.0],np.cumsum(df.exec_qty.values)[:-1]])},
-                    'occ_prev_exec_turnover': {'default': 0.0 ,'formula' : lambda df : np.concatenate([[0.0],np.cumsum(df.exec_turnover.values)[:-1]])}}            
-            
-            #---  initialize columns 
-            for x in config_stats.keys():
-                self.data_sequence[x]=config_stats[x]['default']            
-                
-            #---  update data
-            for p_occ_id in np.unique(self.data_sequence['p_occ_id']):
-                for x in config_stats.keys():
-                    self.data_sequence[x][self.data_sequence['p_occ_id']==p_occ_id]=config_stats[x]['formula'](self.data_sequence[self.data_sequence['p_occ_id']==p_occ_id])
-                    
-            #--- update enrichment colnames
-            self.__update_stats_enrichment( mode = 'db' ,level = 'sequence' , columns = config_stats.keys())
-                          
-            # print self.data_sequence[['exec_turnover','turnover','exec_qty','occ_prev_exec_turnover','occ_prev_exec_qty']]
-            
-        #-----------------------------------
-        # UPDATE occurrence
-        #-----------------------------------
-        if self.data_occurrence is not None and self.data_occurrence.shape[0]>0:
-            
-            if self.data_sequence is None or self.data_sequence.shape[0]==0:
-                logging.error('data_sequence should be loaded')
-                raise ValueError('data_sequence should be loaded')
-                
-            #----------------
-            # STEP 1 : compute aggregate stats from sequence
-            
-            #---  config des stats to compute
-            config_stats={'occ_strategy_name_mapped':
-                            {'default': np.nan ,'slicer' : lambda df : df.strategy_name_mapped.values[-1] if len(np.unique(df.strategy_name_mapped.values))==1 else 'MULTIPLE'},
-                    'occ_order_qty': {'default': 0.0 ,'slicer' : lambda df : df.OrderQty.values[-1]},
-                    'occ_nb_replace':
-                            {'default': 0.0 ,'slicer' : lambda df : np.size(df.p_occ_id.values)-1},
-                    'occ_exec_qty':
-                            {'default': 0.0 ,'slicer' : lambda df : np.sum(df.exec_qty.values)},
-                    'occ_exec_nb_trades': 
-                            {'default': 0.0 ,'slicer' : lambda df : np.sum(df.exec_nb_trades.values)},
-                    'occ_exec_turnover':
-                            {'default': 0.0 ,'slicer' : lambda df : np.sum(df.exec_turnover.values)}}
-               
-            #--- compute
-            _add_data=dftools.agg(self.data_sequence,
-                                  group_vars='p_occ_id',
-                                  stats=dict([(x,config_stats[x]['slicer']) for x in config_stats.keys()]))
-                                    
-            #---  initialize columns
-            for x in config_stats.keys():
-                self.data_occurrence[x]=config_stats[x]['default']
-                
-            #---  update data
-            if _add_data.shape[0]>0:
-                idx_col_in=mutils.ismember(np.array(_add_data.columns),np.array(self.data_occurrence.columns))[1].tolist()
-                for idx in range(0,_add_data.shape[0]):
-                    idx_in=np.nonzero(self.data_occurrence['p_occ_id']==_add_data.iloc[idx]['p_occ_id'])[0]
-                    self.data_occurrence.iloc[idx_in,idx_col_in]=_add_data.iloc[idx].values.tolist()                
-            
-            #--- update enrichment colnames
-            self.__update_stats_enrichment( mode = 'db' ,level = 'occurrence' , columns = config_stats.keys())
-            
-            
-            
-    def __update_stats_enrichment(self, mode = None , level = None, columns = None):
-        #-----------------------------------
-        # TESTS
-        #-----------------------------------
-        if mode is None or level is None or columns is None or not isinstance(columns,list):
-            raise ValueError('bad inputs')
+        #-- dark
+        self.data_deal['dark'][map(lambda x : x in ['BATD','CHID','BLNK','SGMX','TRQM','XUBS','XPOS'],self.data_deal['MIC'])] = 1
         
-        if mode =='db':
-            x = self.db_stats_enrichment
+        #--
+        #-- bidouille vu que les bases sont merdiques !
+        #-- create a fake MIC_ , and then merge with the referential
+        if referential_data.data_exchange_info.shape[0] == 0:
+            self.data_deal['exchange_id'] = None
+            return
+        
+        #-- fake MIC to handle dark
+        self.data_deal['MIC_'] = self.data_deal['MIC']
+        self.data_deal['MIC_'][map(lambda x : isinstance(x,basestring) and x == 'CHID',self.data_deal['MIC_'])] = 'CHIX'
+        self.data_deal['MIC_'][map(lambda x : isinstance(x,basestring) and x == 'TRQM',self.data_deal['MIC_'])] = 'TRQX'
+        self.data_deal['MIC_'][map(lambda x : isinstance(x,basestring) and x == 'BATD',self.data_deal['MIC_'])] = 'BATE'
+        referential_data.data_exchange_info.rename(columns = {'MIC' : 'MIC_'} , inplace = True)
+        
+        #-- add exchange_id
+        index_name = self.data_deal.index.name
+        self.data_deal = self.data_deal.reset_index().merge(referential_data.data_exchange_info[['MIC_','exchange_id']], how = 'left' , on = ['MIC_']).set_index(index_name)
+        
+        #-- fake MIC switch back
+        referential_data.data_exchange_info.rename(columns = {'MIC_' : 'MIC'} , inplace = True)
+        referential_data.data_exchange_info.sort_index() # to keep the ranking fine
+        self.data_deal.drop('MIC_' ,axis = 1)
+        
+        #-- bidouille with exchange main..only the first
+        main_exchange_id = None
+        if any(referential_data.data_exchange_info['EXCHANGETYPE'] == 'M'):
+            main_exchange_id = referential_data.data_exchange_info[referential_data.data_exchange_info['EXCHANGETYPE'] == 'M']['exchange_id'].values[0]
+            self.data_deal['EXCHANGETYPE'][self.data_deal['exchange_id'] == main_exchange_id] = 'M'
             
-        else:
-            raise ValueError('Unknown mode <' + mode + '>')
-        #-----------------------------------
-        # DO
-        #-----------------------------------        
-        if level not in x.keys():
-            x.update({level : columns})
-        else:
-            x.update({level : list(set(x[level]+columns))})
+        #-----------------
+        #-- COMPUTE
+        #-----------------
+        self.data_deal.sort_index(inplace = True)
+        #- check for the opening
+        if any(market_data.data_tick['opening_auction'] == 1):
             
+            price_ = market_data.data_tick[market_data.data_tick['opening_auction'] == 1]['price'].values[0]
+            volume_ = sum(market_data.data_tick[market_data.data_tick['opening_auction'] == 1]['volume'])
             
+            #- start
+            times_ = market_data.data_tick[market_data.data_tick['opening_auction'] == 1].index[0].to_datetime()
+            times_ = times_ - dt.timedelta(microseconds = times_.timetz().microsecond + 1) 
+            #- end
+            timee_ = market_data.data_tick[market_data.data_tick['opening_auction'] == 1].index[-1].to_datetime()
+            timee_ = timee_ - dt.timedelta(microseconds = timee_.timetz().microsecond) + dt.timedelta(seconds = 2) # idee on garde les deals a la même seconde +1...vu que nos deals sont flagge a la seconde
+            
+            ids_open = ((self.data_deal['exchange_id'] == main_exchange_id) & 
+                        (self.data_deal['price'] == price_) &
+                        (self.data_deal['volume'] < volume_) &
+                        (dftools.select_sorted_index_datetime(self.data_deal , start_date = times_, end_date = timee_ , start_strict = False , end_strict = True))
+                        )
+            
+#             if 'liquidity_ind' in self.data_deal.columns.tolist():
+#                 ids_open = ids_open & (formula.isfinite(self.data_deal.liquidity_ind.values , notfinite = True))
+                
+            idx_open = np.nonzero(ids_open)[0]
+            if len(idx_open) > 0:
+                for idx in idx_open:
+                    self.data_deal['tphase'].values[idx] = 'AO'
+                
+        #- check for the closing + manual fill
+        # TODO : manual fill should be donne with 'MAA...'
+        if any(market_data.data_tick['closing_auction'] == 1):
+            
+            price_ = market_data.data_tick[market_data.data_tick['closing_auction'] == 1]['price'].values[0]
+            volume_ = sum(market_data.data_tick[market_data.data_tick['closing_auction'] == 1]['volume'])
+            #- start
+            times_ = market_data.data_tick[market_data.data_tick['closing_auction'] == 1].index[0].to_datetime()
+            times_ = times_ - dt.timedelta(microseconds = times_.timetz().microsecond + 1) - dt.timedelta(seconds = 5)
+            #- end
+            timee_ = market_data.data_tick[market_data.data_tick['closing_auction'] == 1].index[-1].to_datetime()
+            timee_ = timee_ - dt.timedelta(microseconds = timee_.timetz().microsecond) + dt.timedelta(seconds = 5) # idee on garde les deals a la même seconde +4...vu que nos deals sont flagge a la seconde
+            
+            ids_close = ((self.data_deal['exchange_id'] == main_exchange_id) & 
+                         (self.data_deal['price'] == price_) &
+                         (self.data_deal['volume'] <= volume_) &
+                         (dftools.select_sorted_index_datetime(self.data_deal , start_date = times_, end_date = timee_ , start_strict = False , end_strict = True))
+                         )
+            
+#             if 'liquidity_ind' in self.data_deal.columns.tolist():
+#                 ids_close = ids_close & (formula.isfinite(self.data_deal.liquidity_ind.values , notfinite = True))
+                
+            idx_close = np.nonzero(ids_close)[0]
+            
+            idx_manual = np.nonzero(map(lambda x,y : x is None and y > timee_,self.data_deal['MIC'],[x.to_datetime() for x in self.data_deal.index]))[0]
+            
+            if len(idx_close) > 0:
+                for idx in idx_close:
+                    self.data_deal['tphase'].values[idx] = 'AC'
+                
+            if len(idx_manual) > 0:
+                for idx in idx_manual:
+                    self.data_deal['tphase'].values[idx] = 'MF'  
+                    
+                         
     ###########################################################################
     # SELF COMPUTE METHODS ON DEALS
     ###########################################################################
@@ -710,10 +482,6 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             self.data_intraday_agg_deals=self.data_intraday_agg_deals.sort_index(by=['tmpindex',group_var]).drop(['tmpindex'],axis=1)
             
             
-    def __flag_deals(self,mktdataprocessor=None,refdataprocessor=None):
-        # check que dans deal il n'y qu'un security_id et qu'une date !
-        a=1
-        
     ###########################################################################
     # METHOD GET COLNAMES
     ###########################################################################
@@ -803,6 +571,26 @@ class AlgoStatsProcessor(AlgoDataProcessor):
     ###########################################################################
     # OTHERS
     ###########################################################################
+    def __update_stats_enrichment(self, mode = None , level = None, columns = None):
+        #-----------------------------------
+        # TESTS
+        #-----------------------------------
+        if mode is None or level is None or columns is None or not isinstance(columns,list):
+            raise ValueError('bad inputs')
+        
+        if mode =='db':
+            x = self.db_stats_enrichment
+            
+        else:
+            raise ValueError('Unknown mode <' + mode + '>')
+        #-----------------------------------
+        # DO
+        #-----------------------------------        
+        if level not in x.keys():
+            x.update({level : columns})
+        else:
+            x.update({level : list(set(x[level]+columns))})
+            
     def agg_stats(self,level='sequence',stats_config=None,gvar=None,gvar_vals=None,agg_step=None):
         # -- input check
         #if gvar is None:
@@ -896,6 +684,9 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         #-- GET_DATA
         #--------------------
         if 'get_data' in config.keys():
+            
+            t0 = time.clock()
+            
             #-- change mode_colnames ?
             if 'mode_colnames' in config['get_data'].keys():
                 self.set_mode_colnames(config['get_data']['mode_colnames'])
@@ -908,36 +699,64 @@ class AlgoStatsProcessor(AlgoDataProcessor):
                     
                 for level in  config['get_data']['level']:
                     self.get_db_data(level = level)
-                    
+            
+            logging.info('get_data took <%3.2f> secs ' %(time.clock()-t0))
+            
         #--------------------
         #-- APPLY
         #--------------------            
         if 'apply' in config.keys():
+            
+            t0 = time.clock()
+            
             if not isinstance(config['apply'],list):
                 raise ValueError('apply has to be a list')
             
             for i in range(0,len(config['apply'])):
+
+                config_tmp = copy.deepcopy(config['apply'][i])
+                t_1 = time.clock()
+                
                 #--- test
-                if not isinstance(config['apply'][i],dict):
+                if not isinstance(config_tmp,dict):
                     raise ValueError('apply has to be a list of dict')     
                 
-                if 'mode' not in config['apply'][i].keys() or 'info' not in config['apply'][i].keys():
+                if 'mode' not in config_tmp.keys() or 'info' not in config_tmp.keys():
                     raise ValueError('apply member has to be a dict with mode and info')
                     
                 #-- apply
-                if config['apply'][i]['mode'] == 'formula':
-                    self.apply_formula(**config['apply'][i]['info'])
+                if config_tmp['mode'] == 'formula':
+                    self.apply_formula(**config_tmp['info'])
                 
-                elif config['apply'][i]['mode'] == 'slicer':
-                    self.apply_slicer(**config['apply'][i]['info'])
+                elif config_tmp['mode'] == 'slicer':
+                    config_tmp['info'].update({'market_data' : market_data ,'referential_data' : referential_data})
+                    self.apply_slicer(**config_tmp['info'])
                 
-                elif config['apply'][i]['mode'] == 'aggregate_market_stats':
-                    config['apply'][i]['info'].update({'market_data' : market_data ,'referential_data' : referential_data})
-                    self.apply_aggregate_market_stats(**config['apply'][i]['info'])
+                elif config_tmp['mode'] == 'aggregate_market_stats':
+                    config_tmp['info'].update({'market_data' : market_data ,'referential_data' : referential_data})
+                    self.apply_aggregate_market_stats(**config_tmp['info'])
                 
+                elif config_tmp['mode'] == 'daily_market_stats':
+                    config_tmp['info'].update({'market_data' : market_data ,'referential_data' : referential_data})
+                    self.apply_daily_market_stats(**config_tmp['info'])
+                
+                elif config_tmp['mode'] == 'merge_level':
+                    self.__merge_level(**config_tmp['info'])
+                    
+                elif config_tmp['mode'] == 'merge_referential':
+                    config_tmp['info'].update({'referential_data' : referential_data})
+                    self.__merge_referential(**config_tmp['info'])
+                    
+                elif config_tmp['mode'] == 'flag_deals':
+                    config_tmp['info'].update({'market_data' : market_data ,'referential_data' : referential_data})
+                    self.__flag_deals(**config_tmp['info'])
+                                                           
                 else:
-                    raise ValueError('Unknwon apply_mode <' + config['apply'][i]['mode'] +'>')
+                    raise ValueError('Unknwon apply_mode <' + config_tmp['mode'] +'>')
                 
+                logging.debug('apply mode : ' + config_tmp['mode']  + ' <%3.2f> secs ' % (time.clock()-t_1))
+                
+            logging.info('apply took <%3.2f> secs ' %(time.clock()-t0))    
                     
     def apply_formula(self, level = None , formula = None , in_sort = None , in_sort_ascending = True):
         #--------------------
@@ -982,7 +801,11 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             self.__update_stats_enrichment(mode = 'db' ,level = level , columns = formula.keys())
             
             
-    def apply_slicer(self, in_level = None , out_level = None, group_vars = None , slicer = {} , in_sort = None , in_sort_ascending = True , replace_cols = False):
+    def apply_slicer(self, in_level = None , out_level = None, group_vars = None , group_vars_step = None , slicer_ = {} , 
+                     in_sort = None , in_sort_ascending = True , 
+                     replace_cols = False , merge_out_cols = None , merge_referential_cols = None ,
+                     market_data = None, referential_data = None):
+        
         #--------------------
         #-- compute aggregated statistics, return either a dataframe of the statistics (out_level = None) or add the statistics to the self.dataxxx
         #--------------------
@@ -995,8 +818,8 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             raise ValueError('out_level data should be extracted')   
             
         # - group_vars
-        if group_vars is None:
-            raise ValueError('group_vars should be indicated')
+        if group_vars is None and group_vars_step is None:
+            raise ValueError('at least group_vars or group_vars_step has to be indicated')
         
         elif isinstance(group_vars,basestring):
             group_vars = [group_vars]
@@ -1008,35 +831,102 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             raise ValueError('all group_vars should be into in_level')
         
         # - others
-        if not isinstance(slicer,dict):
-            raise ValueError('slicer has to be a dict')
+        if not isinstance(slicer_,dict):
+            raise ValueError('slicer_ has to be a dict')
             
         if (in_sort is not None) and (not isinstance(in_sort,list)):
             raise ValueError('in_sort has to be a list')
         elif (in_sort is not None) and (getattr(self,'data_' + in_level).shape[0] > 0) and any([not x in getattr(self,'data_' + in_level).columns.tolist() for x in in_sort]):
             raise ValueError('all in_sort should be into in_level')
-        
+            
         #--------------------
-        #-- SLICER
+        #-- slicer_
         #--------------------
         _add_agg_data = pd.DataFrame()
         
-        if len(slicer) == 0:
-            logging.info('no slicer to add')
+        if len(slicer_) == 0:
+            logging.info('no slicer_ to add')
             return
         
         if getattr(self,'data_' + in_level).shape[0] > 0:
+                        
+            #-- merge info from out to in
+            if (merge_out_cols is not None):
+                tmp_dict = copy.deepcopy(merge_out_cols)
+                self.__merge_level(**copy.deepcopy(merge_out_cols))
+                
+            #-- merge info from out to in
+            if (merge_referential_cols is not None):
+                tmp_dict = copy.deepcopy(merge_referential_cols)
+                tmp_dict.update({'referential_data' : referential_data})
+                self.__merge_referential(**tmp_dict)                
+                
             #-- sort input if needed
             if in_sort is not None and len(in_sort) > 0:
                 getattr(self,'data_' + in_level).sort_index( by = in_sort, ascending = in_sort_ascending , inplace = True)
+            
+            
+            #-- if there is a group_vars_step
+            agg_step_sec = None
+            
+            if group_vars_step is not None:
                 
+                #--- add temporary info on the in_level
+                if isinstance(group_vars_step,basestring):
+                    if group_vars_step == 'day':
+                        getattr(self,'data_' + in_level)['end_slice']=[dt.datetime.combine(x.to_datetime().date(),dt.time(23,59,59)) for x in getattr(self,'data_' + in_level).index]
+                        getattr(self,'data_' + in_level)['begin_slice']=[dt.datetime.combine(x.to_datetime().date(),dt.time(0,0,0)) for x in getattr(self,'data_' + in_level).index]
+                    elif group_vars_step == 'week':
+                        getattr(self,'data_' + in_level)['end_slice'] = [dt.datetime.combine(x.to_datetime().date()-dt.timedelta(days=x.to_datetime().date().weekday()-4),dt.time(0,0,0)) for x in getattr(self,'data_' + in_level).index]
+                        getattr(self,'data_' + in_level)['begin_slice'] = [dt.datetime.combine(x.to_datetime().date()-dt.timedelta(days=x.to_datetime().date().weekday()),dt.time(0,0,0)) for x in getattr(self,'data_' + in_level).index]
+                    elif group_vars_step == 'month':
+                        getattr(self,'data_' + in_level)['end_slice'] = [dt.datetime.combine(x.to_datetime().date().replace(month=x.to_datetime().date().month % 12 + 1, day = 1) - dt.timedelta(days=1),dt.time(0,0,0)) for x in getattr(self,'data_' + in_level).index]
+                        getattr(self,'data_' + in_level)['begin_slice'] = [dt.datetime.combine(x.to_datetime().date().replace(day=1),dt.time(0,0,0)) for x in getattr(self,'data_' + in_level).index]
+                    elif group_vars_step == 'year':
+                        getattr(self,'data_' + in_level)['end_slice'] = [dt.datetime.combine(x.to_datetime().date().replace(month=1,day=1),dt.time(0,0,0)) for x in getattr(self,'data_' + in_level).index]
+                        getattr(self,'data_' + in_level)['begin_slice'] = [dt.datetime.combine(x.to_datetime().date().replace(month=12,day=31),dt.time(0,0,0)) for x in getattr(self,'data_' + in_level).index]
+                    else:
+                        raise ValueError('Unknown group_vars_step <'+ group_vars_step + '>')
+                    
+                    #--- add to group_vars
+                    if group_vars is not None:
+                        group_vars = ['begin_slice','end_slice'] + group_vars
+                    else:
+                        group_vars = ['begin_slice','end_slice']
+                    
+                elif group_vars_step > 0:
+                    agg_step_sec = group_vars_step
+                    
+                else:
+                    raise ValueError('Bad inputs group_vars_step')
+                
+
+            
             #-- compute
             try:
                 _add_agg_data = dftools.agg(getattr(self,'data_' + in_level),
                                                 group_vars = group_vars,
-                                                stats = dict([(x, slicer[x]['slicer']) for x in slicer.keys()]))
+                                                step_sec = agg_step_sec,
+                                                stats = dict([(x, slicer_[x]['slicer']) for x in slicer_.keys()]))
             except:
+                get_traceback()
                 raise ValueError('Error on applying slicers>')
+            
+            #-- merge info from out to in, erase columns added
+            merge_cols_remove = []
+            
+            if (merge_out_cols is not None):
+                merge_cols_remove += merge_out_cols['cols']
+            
+            if (merge_referential_cols is not None):
+                merge_cols_remove += merge_referential_cols['cols']
+            
+            if len(merge_cols_remove) > 0:
+                setattr(self, 'data_' + in_level , getattr(self,'data_' + in_level).drop(merge_cols_remove, axis = 1))
+            
+            #-- erase temporary group_vars_step
+            if group_vars_step is not None and isinstance(group_vars_step,basestring):
+                setattr(self, 'data_' + in_level , getattr(self,'data_' + in_level).drop(['begin_slice','end_slice'], axis = 1))
             
         #--------------------
         #-- OUTPUT
@@ -1050,13 +940,10 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             #--
             if getattr(self,'data_' + in_level).shape[0] == 0:
                 #- no in data, default value is used
-                for x in slicer.keys():
-                    getattr(self,'data_' + out_level)[x] = slicer[x]['default']
+                for x in slicer_.keys():
+                    getattr(self,'data_' + out_level)[x] = slicer_[x]['default']
             else:
                 #-- if slicer compute values that already exist : parameter replace
-                #common_cols = list(set(_add_agg_data.columns.tolist()) - set(getattr(self,'data_' + out_level).columns.tolist()))
-                # TO DO !
-                
                 common_cols = list((set(_add_agg_data.columns.tolist()) - set(group_vars)).intersection(list(set(getattr(self,'data_' + out_level).columns.tolist()) - set(group_vars))))
                 
                 if len(common_cols) > 0:
@@ -1066,15 +953,86 @@ class AlgoStatsProcessor(AlgoDataProcessor):
                     else:
                         raise ValueError('common columns ')
                     
+                #-- case if one of the group vars is not in the in_level, you have to put the default values in _add_agg_data
+                for i_ in range(0,getattr(self,'data_' + out_level).shape[0]):
+                    #-- find the group var in the slicer values _add_agg_data
+                    ids = (_add_agg_data[group_vars[0]] == getattr(self,'data_' + out_level)[group_vars[0]].values[i_])
+                    if len(group_vars) > 1:
+                        for icol in range(1,len(group_vars)):
+                            ids = ids & (_add_agg_data[group_vars[icol]] == getattr(self,'data_' + out_level)[group_vars[icol]].values[i_])
+                        
+                    if not any(ids):
+                        #-- a default line has to be added to _add_agg_data
+                        tmp_ = dict([(x,slicer_[x]['default']) for x in slicer_.keys()])
+                        tmp_.update(dict([( x , getattr(self,'data_' + out_level)[x].values[i_]) for x in group_vars]))
+                        tmp_ = pd.DataFrame([tmp_])
+                        _add_agg_data = _add_agg_data.append(tmp_)
+                            
+                #-- if slicer compute values that already exist : parameter replace
+                
                 index_name = getattr(self,'data_' + out_level).index.name
                 setattr(self,'data_' + out_level,
                             getattr(self,'data_' + out_level).reset_index().merge(_add_agg_data, how = 'left' , on = group_vars).set_index(index_name))
-            
+                
+                       
+                        
             #-- update the enrichment !!
-            self.__update_stats_enrichment(mode = 'db' ,level = out_level , columns = slicer.keys())
+            self.__update_stats_enrichment(mode = 'db' ,level = out_level , columns = slicer_.keys())
             
         else:
             return _add_agg_data
+        
+        
+    def apply_daily_market_stats(self, level = None , market_formula = {} , market_data = None, referential_data = None):
+        #-----------------------------------
+        # TESTS INPUT
+        #-----------------------------------
+        # -
+        if level is None or getattr(self,'data_' + level) is None:
+            raise ValueError('level data should be extracted')
+        
+        # -
+        if (not isinstance(market_formula,dict)):
+            raise ValueError('market_formula has to be dict')
+        
+        # check inputs security matches
+        if (market_data.security_id != referential_data.security_id or 
+            len(np.unique(getattr(self,'data_' + level)['cheuvreux_secid']).tolist()) != 1 or
+            getattr(self,'data_' + level)['cheuvreux_secid'].values[0] != market_data.security_id):
+            logging.error('not the same security')
+            raise ValueError('not the same security')        
+        
+        #-----------------------------------
+        # ADD DAILY MARKET STATS
+        #-----------------------------------  
+        if getattr(self,'data_' + level).shape[0] == 0:
+            logging.info('no data on which to add market daily stats')
+            return      
+        
+        #--- compute
+        data_stats = {}
+        for periodstats in market_formula.keys():
+            #------
+            #-- create entry
+            formula_ = None
+            cols_ = None
+            filter_ = copy.deepcopy(market_formula[periodstats]['filter'])
+            
+            if 'formula' in market_formula[periodstats].keys():
+                formula_ = copy.deepcopy(market_formula[periodstats]['formula'])
+                
+            if 'cols' in market_formula[periodstats].keys():
+                cols_ = copy.deepcopy(market_formula[periodstats]['cols'])   
+                
+            #------
+            #-- compute
+            data_stats.update(market_data.compute_formula_daily(filterd = filter_, cols = cols_ , formulad = formula_ , output_mode = 'dict'))
+        
+        #--- add to level
+        for name in data_stats:
+            getattr(self,'data_' + level)[name] = data_stats[name]
+            
+        self.__update_stats_enrichment( mode = 'db' ,level = level , columns = data_stats.keys())
         
         
     def apply_aggregate_market_stats(self, level = None , market_slicer = {} , formula = {} , market_data = None, referential_data = None):
@@ -1095,7 +1053,21 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         # TEST LEVEL DATA
         #-----------------------------------
         if level == 'sequence':
-            primary_key_cols = 'p_cl_ord_id'
+            dict_cols = {'primary_key' : 'p_cl_ord_id',
+                         'bench_start' : 'bench_starttime',
+                         'bench_end' : 'bench_endtime',
+                         'side' : 'Side',
+                         'limit_price' : 'Price',
+                         'exec_opening' : 'exec_qty_opening',
+                         'exec_closing' : 'exec_qty_closing'}
+            
+        elif level == 'occurrence':
+            dict_cols = {'primary_key' : 'p_occ_id',
+                         'bench_start' : 'occ_bench_starttime',
+                         'bench_end' : 'occ_bench_endtime',
+                         'side' : 'Side',
+                         'exec_opening' : 'occ_exec_qty_opening',
+                         'exec_closing' : 'occ_exec_qty_closing'}         
         else:
             raise ValueError('This level is not yet handled <' + level + '>')
         
@@ -1129,39 +1101,68 @@ class AlgoStatsProcessor(AlgoDataProcessor):
         
         for iseq in range(0,getattr(self,'data_' + level).shape[0]):
             
-            data_this_seq = getattr(self,'data_' + level)[getattr(self,'data_' + level)[primary_key_cols] == getattr(self,'data_' + level).ix[iseq][primary_key_cols]]
+            data_this_seq = getattr(self,'data_' + level)[getattr(self,'data_' + level)[dict_cols['primary_key']] == getattr(self,'data_' + level).ix[iseq][dict_cols['primary_key']]]
             
             #---
             #- compute stats
             data_stats = {}
             for periodstats in market_slicer.keys():
                 
-                #-- create filter
-                filter_ = market_slicer[periodstats]['filter']
+                tp_0 = time.clock()
+                
+                # TODO 
+                #market_slicer[periodstats]['slicer'].
+                #------
+                #-- create filter and slicer
+                slicer_ = copy.deepcopy(market_slicer[periodstats]['slicer'])
+                filter_ = copy.deepcopy(market_slicer[periodstats]['filter'])
                 
                 if market_slicer[periodstats]['period_time_constr']:
-                    filter_.update({'start_date' : data_this_seq['bench_starttime'].values[0], 'end_date': data_this_seq['bench_endtime'].values[0]})
+                    filter_.update({'start_date' : data_this_seq[dict_cols['bench_start']].values[0], 'end_date': data_this_seq[dict_cols['bench_end']].values[0]})
                     
                 if market_slicer[periodstats]['period_phase_constr']:
-                    filter_.update({'exclude_auction': mapping.ExcludeAuction(data_this_seq['ExcludeAuction'].values[0])})
+                    filter_.update({'exclude_auction': mapping.ExcludeAuction(data_this_seq['ExcludeAuction'].values[0] , 
+                                                                              exec_opening = data_this_seq[dict_cols['exec_opening']].values[0] ,
+                                                                              exec_closing = data_this_seq[dict_cols['exec_closing']].values[0] ,)})
                 
                 if market_slicer[periodstats]['order_constr']:
-                    filter_.update({'order_limit': data_this_seq['Price'].values[0], 'order_side': data_this_seq['Side'].values[0]})
-                    
-                #-- compute           
-                # To DO : gérer si il n y ' a pas de data ? valeur par défaut ?            
-                data_stats.update(market_data.compute_agg_period_tick(filterd = filter_, 
-                                                    slicerd = market_slicer[periodstats]['slicer']))
+                    filter_.update({'order_limit': data_this_seq[dict_cols['limit_price']].values[0], 'order_side': data_this_seq[dict_cols['side']].values[0]})
+                
+                #------
+                #-- transform slicer dict_data !
+                for tmpkeys in slicer_.keys():
+                    if 'dict_data' in slicer_[tmpkeys]: 
+                        #-- check if it is a list
+                        if not isinstance(slicer_[tmpkeys]['dict_data'],list):
+                            raise ValueError('dict_data has to be a list in the config, slicer name : <'+ tmpkeys +'>')
+                            
+                        #-- transform list to dict
+                        if not all([x in data_this_seq.columns.tolist() for x in slicer_[tmpkeys]['dict_data']]):
+                            raise ValueError('all dict_data columns has to be in the dataset !!')
+                            
+                        tmp_ditc = {}
+                        for col in slicer_[tmpkeys]['dict_data']:
+                            tmp_ditc.update({col : data_this_seq[col].values[0]})
+                            
+                        slicer_[tmpkeys]['dict_data'] = tmp_ditc
+                        
+                #------
+                #-- compute
+                data_stats.update(market_data.compute_agg_period_tick(filterd = filter_, slicerd = slicer_))
+                
+                logging.debug('market slicer period ' + periodstats + '  took <%3.2f> secs ' %(time.clock()-tp_0))
                 
             new_added_columns = list(set(new_added_columns+data_stats.keys()))
             data_stats = pd.DataFrame([data_stats])
-            data_stats[primary_key_cols] = data_this_seq[primary_key_cols].values[0]
+            data_stats[dict_cols['primary_key']] = data_this_seq[dict_cols['primary_key']].values[0]
             
             #---
             #- add
             index_name = data_this_seq.index.name
-            data_this_seq = data_this_seq.reset_index().merge(data_stats,how='left',on=[primary_key_cols]).set_index(index_name)
+            data_this_seq = data_this_seq.reset_index().merge(data_stats,how='left',on=[dict_cols['primary_key']]).set_index(index_name)
             new_data = new_data.append(data_this_seq)
+            new_data.index.name = index_name
+            
             
         #--- update data + enrichment colnames
         setattr(self,'data_' + level,new_data) 
@@ -1176,6 +1177,75 @@ class AlgoStatsProcessor(AlgoDataProcessor):
             self.apply_formula(level = level ,  formula = formula)        
             
             
+    def __merge_level(self, from_level = None , to_level = None, group_vars = None, cols = None):
+        # add to to_level dataframe, the data "cols" from from_level dataframe, that we merged by "group_vars"
+        #-----------------------------------
+        # TESTS INPUT
+        #-----------------------------------
+        if from_level is None or to_level is None or group_vars is None or cols is None:
+            raise ValueError('bad inputs')
+        
+        if getattr(self,'data_' + from_level) is None or getattr(self,'data_' + to_level) is None:
+            raise ValueError('from_level and to_level has to be loaded')
+        
+        if not isinstance(cols,list) or not isinstance(group_vars,list):
+            raise ValueError('cols and group_vars has be list')
+        
+        #idea : add out colnames to the to_level
+        if any([not x in getattr(self,'data_' + from_level).columns.tolist() for x in group_vars]) or any([not x in getattr(self,'data_' + to_level).columns.tolist() for x in group_vars]):
+            raise ValueError('bad inputs group_vars, should be present in from_level and to_level')
+        
+        if any([not x in getattr(self,'data_' + from_level).columns.tolist() for x in cols]) or any([x in getattr(self,'data_' + to_level).columns.tolist() for x in cols]):
+            raise ValueError('bad inputs cols, should be present in from_level and not in to_level')
+        
+        #-----------------------------------
+        # COMPUTE
+        #-----------------------------------              
+        if (getattr(self,'data_' + from_level).shape[0] == 0) or (getattr(self,'data_' + to_level).shape[0] == 0):
+            logging.info('__merge_level nothing to add')
+            return
+        
+        index_name = getattr(self,'data_' + to_level).index.name
+        setattr(self,'data_' + to_level,
+                getattr(self,'data_' + to_level).reset_index().merge(getattr(self,'data_' + from_level)[group_vars + cols], how = 'left' , on = group_vars).set_index(index_name))
+            
+            
+    def __merge_referential(self, from_data = None , to_level = None, group_vars = None, cols = None ,  referential_data = None):
+        # add to to_level dataframe, the data "cols" from from_level dataframe, that we merged by "group_vars"
+        #-----------------------------------
+        # TESTS INPUT
+        #-----------------------------------
+        if from_data is None or to_level is None or group_vars is None or cols is None or referential_data is None:
+            raise ValueError('bad inputs')
+        
+        if getattr(self,'data_' + to_level) is None or getattr(referential_data,'data_' + from_data) is None:
+            raise ValueError('from_data and to_level has to be loaded')
+        
+        if not isinstance(cols,list) or not isinstance(group_vars,list):
+            raise ValueError('cols and group_vars has be list')
+        
+        #idea : add out colnames to the to_level
+        if any([not x in getattr(referential_data,'data_' + from_data).columns.tolist() for x in group_vars]) or any([not x in getattr(self,'data_' + to_level).columns.tolist() for x in group_vars]):
+            raise ValueError('bad inputs group_vars, should be present in from_level and to_level')
+        
+        if any([not x in getattr(referential_data,'data_' + from_data).columns.tolist() for x in cols]) or any([x in getattr(self,'data_' + to_level).columns.tolist() for x in cols]):
+            raise ValueError('bad inputs cols, should be present in from_level and not in to_level')
+        
+        #-----------------------------------
+        # COMPUTE
+        #-----------------------------------              
+        if (getattr(referential_data,'data_' + from_data).shape[0] == 0) or (getattr(self,'data_' + to_level).shape[0] == 0):
+            logging.info('__merge_referential nothing to add')
+            return
+        
+        index_name = getattr(self,'data_' + to_level).index.name
+        setattr(self,'data_' + to_level,
+                getattr(self,'data_' + to_level).reset_index().merge(getattr(referential_data,'data_' + from_data)[group_vars + cols], how = 'left' , on = group_vars).set_index(index_name))                
+
+
+        
+        
+                    
 def exdest2place(x,allx):
     ids=[tmp==x for tmp in allx['suffix']]
     if any(ids):
@@ -1199,6 +1269,11 @@ if __name__=='__main__':
     from lib.tca.marketdata import MarketDataProcessor
     from lib.dbtools.connections import Connections
     
+#     Connections.change_connections('dev')    
+#     test = AlgoStatsProcessor(filter = {"p_occ_id": {"$in" : ['20140306FY200017893259ESLO0WATFLT01']}} , mode_colnames = 'all')
+#     test.get_db_data(level = 'sequence')
+#     test.data_sequence['exec_first_deal_time']
+
     #--- occurence sending before market open
     # '20140109FY2DG14375c6673b-000WATFLT01'
     #-- occurrence with multiple sequence
@@ -1242,30 +1317,42 @@ if __name__=='__main__':
 #     occ_data.compute_tca_stats(market_data=mkt_data,referential_data=ref_data)
 #     print 'a'
     
-    #-----  COMPUTE TCA STATS   (base)
-    occ_id = '20130521FY000008193901LUIFLT01'
-    env = 'production_copy'
-    
-    Connections.change_connections(env)
-    
-    occ_data = AlgoStatsProcessor(filter = {"p_occ_id": {"$in" : [occ_id]}})
-    occ_data.get_db_data(level = 'occurrence')
-    sec_id = occ_data.data_occurrence['cheuvreux_secid'].values[0]
-    date = occ_data.data_occurrence.index[0].to_datetime()
-    
-    mkt_data = MarketDataProcessor(security_id = sec_id , date = date)
-    mkt_data.get_data_tick()
-    mkt_data.get_data_daily()
-    
-    ref_data = ReferentialDataProcessor(security_id = sec_id , date = date)
-    ref_data.get_data_exchange_info()
-    
-    occ_data = AlgoStatsProcessor(filter = {"p_occ_id": {"$in" : [occ_id]}})
-    occ_data.compute_stats(config_mode = 'db_one_occurrence' , market_data = mkt_data , referential_data = ref_data)
-    
-    print occ_data.data_sequence 
-    print occ_data.data_occurrence 
-    print occ_data.db_stats_enrichment
+#     #-----  COMPUTE TCA STATS   (base)
+#     ## occ with ùutliple sequence filled
+#     occ_id = '20130521FY000008193901LUIFLT01'
+#     ## occ with would level
+#     #occ_id = '20140127FY2000054382501WATFLT01'    
+#     ###-- occ with dark
+#     #occ_id = '20140130FY000055104901LUIFLT01'
+#     ###-- close
+#     #occ_id ='20130521FY000008263201LUIFLT01'
+#     ##-- south africa order
+#     #occ_id = '20140103FY2DG14356f0d5a3-000WATFLT01'
+#     
+#     env = 'production_copy'
+#     
+#     Connections.change_connections(env)
+#     
+#     occ_data = AlgoStatsProcessor(filter = {"p_occ_id": {"$in" : [occ_id]}})
+#     occ_data.get_db_data(level = 'occurrence')
+#     sec_id = occ_data.data_occurrence['cheuvreux_secid'].values[0]
+#     date = occ_data.data_occurrence.index[0].to_datetime()
+#     
+#     mkt_data = MarketDataProcessor(security_id = sec_id , date = date)
+#     mkt_data.get_data_tick()
+#     mkt_data.get_data_daily()
+#     
+#     ref_data = ReferentialDataProcessor(security_id = sec_id , date = date)
+#     ref_data.get_data_exchange_info()
+#     ref_data.get_data_security_info(ch_security_id = 'cheuvreux_secid')
+#     
+#     occ_data = AlgoStatsProcessor(filter = {"p_occ_id": {"$in" : [occ_id]}})
+#     occ_data.compute_stats(config_mode = 'db_one_occurrence' , market_data = mkt_data , referential_data = ref_data)
+#     
+#     print occ_data.data_sequence 
+#     print occ_data.data_occurrence 
+#     print occ_data.db_stats_enrichment
+#     print occ_data.data_occurrence.columns.tolist()
     
 #     #-----  COMPUTE STATS (base)
 #     occ_id = '20130521FY000008193901LUIFLT01'

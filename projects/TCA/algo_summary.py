@@ -117,7 +117,7 @@ if __name__=='__main__':
     sdate = day - timedelta(days=90)
     edate = day
     algo_data = AlgoStatsProcessor(start_date = sdate, end_date = edate)
-    algo_data.get_db_data(level='sequence',force_colnames_only=['strategy_name_mapped','rate_to_euro','turnover','TargetSubID','ExDestination'])
+    algo_data.get_db_data(level='sequence', force_colnames_only=['strategy_name_mapped','rate_to_euro','turnover','TargetSubID','ExDestination'])
     
     history = lib.tca.algoplot.PlotEngine()
     h, data = history.plot_algo_evolution(algo_data=algo_data,level='sequence',var='mturnover_euro',gvar='is_dma')
@@ -158,7 +158,7 @@ if __name__=='__main__':
     mday = datetime(year = mday.year, month=mday.month, day=mday.day, hour = 0, minute = 0, second = 1)
     
     #--- extract data
-    occ_data_4slippage = AlgoStatsProcessor(start_date = startday, end_date = day)
+    occ_data_4slippage = AlgoStatsProcessor(start_date = startday, end_date = day, mode_colnames = "base_fe")
     occ_data_4slippage.get_occ_fe_data()
     occ_data_4slippage = occ_data_4slippage.data_occurrence.copy()
     occ_data_dates = [x.to_datetime() for x in occ_data_4slippage.index]

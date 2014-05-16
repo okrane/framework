@@ -58,7 +58,7 @@ class ConversionRate:
         if curr not in ConversionRate.default_currencies:
             ConversionRate.default_currencies.append(curr)
             do_get_all = True
-        
+        self.list_of_dict
         # Convert dates from string to datetime
         dates_datetime = date_to_datetime(dates)
         
@@ -190,9 +190,9 @@ class DatabasePlug:
 
         self.ignore_tags            = [8, 21, 22, 9, 34, 49, 56, 10, 47, 369]
 
-        self.missing_id_receivers   = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
-        self.missing_tags_receivers = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
-        self.missing_enri_receivers = ["alababidi@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
+        self.missing_id_receivers   = ["alababidi@keplercheuvreux.com", "whuang@keplercheuvreux.com", "njoseph@keplercheuvreux.com"]
+        self.missing_tags_receivers = ["alababidi@keplercheuvreux.com", "whuang@keplercheuvreux.com","njoseph@keplercheuvreux.com"]
+        self.missing_enri_receivers = ["alababidi@keplercheuvreux.com", "whuang@keplercheuvreux.com","njoseph@keplercheuvreux.com"]
         
         # Parameters
         self.fix_translator = FixTranslator()
@@ -201,7 +201,7 @@ class DatabasePlug:
         full_path           = os.path.realpath(__file__)    
         path, f             = os.path.split(full_path)        
  
-        self.universe_file  = path + '/../cfg/KC_universe.xml'
+        self.universe_file  = path + '/../../../lib/io/KC_universe.xml'
         self.dico_FIX       = path + '/../cfg/FIX42.xml'    
         self.conf           = self.get_conf(self.environment, self.universe_file)
         
@@ -457,7 +457,7 @@ class DatabasePlug:
     def fill_algo_orders(self):
         to_return   = []
         self.io     = "I"
-        
+
         logging.info('---------------------------------') 
         logging.info('-------- Fill Algo Orders -------')
         logging.info('---------------------------------')
@@ -1380,14 +1380,14 @@ if __name__ == '__main__':
     environment         = 'prod'
     source              = 'CLNT1'
 
-    dates               = ['20131105']
+    dates               = ['20140402']
     
     df = DatabasePlug(database_server    = database_server, 
                      database           = database,
                      environment        = environment, 
                      source             = source, 
                      dates              = dates,
-                     mode               = "write").fill(order_deals=False)
+                     mode               = "write").fill()
     from lib.data.ui import Explorer
     print df
     #df.to_csv('C:\\temp.csv')

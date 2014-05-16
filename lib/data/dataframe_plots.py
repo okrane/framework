@@ -6,6 +6,7 @@ Created on Wed Sep 18 10:19:20 2013
 """
 
 import matplotlib as matplotlib
+from matplotlib.dates import YearLocator, MonthLocator, DateFormatter
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import pandas as pd
@@ -32,10 +33,11 @@ def stackbar(data,
             cmap=cm.spectral,
             show=True,
             VALS_MULTIPLIER=1.05,
-            FIG = None,
+            FIG = None, # OLD DO NOT USE ANYMORE
+            FIG_axes = None,
             FIG_SIZE = None,
             alpha = 0.85,
-            ROTATION_XTICK = 0):
+            ROTATION_XTICK = -60):
     
     #-----------------------------------
     # TEST input
@@ -113,7 +115,7 @@ def stackbar(data,
         colors_gvar_vals=color
         
     # -- set  
-    if FIG is None:
+    if FIG is None and FIG_axes is None:
         if FIG_SIZE is not None:
             out = plt.figure(figsize = FIG_SIZE)
         else:
@@ -121,8 +123,12 @@ def stackbar(data,
     else:
         out = None
         
+    if FIG_axes is not None:
+        axes = FIG_axes
+        plt.sca(FIG_axes)
+    else:
+        axes = plt.gca()
         
-    axes = plt.gca()
     axes.grid(True)
     plt.hold(True)
     if is_horizontal:
@@ -184,7 +190,7 @@ def stackbar(data,
                     uni_gvar_vals_islabeled[idx_gvar_vals]=True
                 
                 #--             
-                plt.gca().fill(*args,**kwargs)
+                axes.fill(*args,**kwargs)
         else:
             #----
             # Case with NO gvar_vals to separate in the bars
@@ -223,7 +229,7 @@ def stackbar(data,
             kwargs={'facecolor':colors_gvar_vals,'alpha':0.85}
             
             #--             
-            plt.gca().fill(*args,**kwargs)
+            axes.fill(*args,**kwargs)
     
         #-- 
         if is_horizontal:
@@ -260,12 +266,11 @@ def stackbar(data,
         else:
             xlim[1]*=VALS_MULTIPLIER
             ylim=[matplotlib.dates.date2num(first_dt_uni_gvar),matplotlib.dates.date2num(uni_gvar[-1])]
-        # special for subplot purpose
-        if FIG is not None:
-            plt.xticks([xlim[0],0.5*(xlim[1]+xlim[0]),xlim[1]],[first_dt_uni_gvar.strftime('%m/%d/%y'), uni_gvar[int(len(uni_gvar)/2)].strftime('%m/%d/%y'), uni_gvar[-1].strftime('%m/%d/%y')])
+#         # special for subplot purpose
+#         if FIG is not None or FIG_axes is not None:
+#             plt.xticks([xlim[0],0.5*(xlim[1]+xlim[0]),xlim[1]],[first_dt_uni_gvar.strftime('%m/%d/%y'), uni_gvar[int(len(uni_gvar)/2)].strftime('%m/%d/%y'), uni_gvar[-1].strftime('%m/%d/%y')])
     
     a,b = plt.xticks(rotation = ROTATION_XTICK)
-    
     axes.axis(tuple(xlim+ylim))
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
